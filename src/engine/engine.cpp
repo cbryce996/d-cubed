@@ -34,8 +34,6 @@ void Engine::run() {
 	while (running) {
 		auto frame_start = clock::now();
 
-		input.poll();
-
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
 			if (e.type == SDL_QUIT)
@@ -46,6 +44,8 @@ void Engine::run() {
 		const float delta_time_ms = std::chrono::duration<float, std::milli>(current_time - last_sim_time).count();
 		last_sim_time = current_time;
 
+		input.poll();
+		game.handle_input(input);
 		game.update(delta_time_ms, task_scheduler, input);
 
 		RenderState render_state;

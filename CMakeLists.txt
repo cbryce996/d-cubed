@@ -38,7 +38,7 @@ add_executable(game
         src/engine/inputs.cpp
         src/game/player.cpp
         src/render/render.cpp
-        src/engine/update.cpp
+        src/game/update.cpp
 )
 
 target_link_libraries(game PRIVATE ${SDL2_LIBRARIES})

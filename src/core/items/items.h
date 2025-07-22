@@ -7,6 +7,8 @@
 struct Items {
 	std::vector<size_t> ids;
 	std::vector<size_t> type_ids;
+	std::vector<int> x;
+	std::vector<int> y;
 };
 inline Items items;
 
@@ -28,7 +30,9 @@ void register_item(
 	size_t type_id,
 	float age,
 	float decay,
-	float value
+	float value,
+	int x,
+	int y
 );
 
 #endif	// ITEMS_H

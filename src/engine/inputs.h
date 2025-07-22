@@ -9,7 +9,7 @@ class InputManager {
 
 		[[nodiscard]] bool is_key_down(SDL_Scancode key) const;
 		[[nodiscard]] bool is_mouse_pressed(Uint8 button) const;
-		SDL_Point get_mouse_position() const;
+		[[nodiscard]] SDL_Point get_mouse_position() const;
 
 	private:
 		const Uint8* key_states = nullptr;

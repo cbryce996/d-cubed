@@ -25,7 +25,7 @@ void RenderManager::draw_rect(const SDL_Rect& rect, SDL_Color color) const {
     SDL_RenderFillRect(renderer, &rect);
 }
 
-void RenderManager::render_state(const RenderState& state) {
+void RenderManager::render_state(const RenderState& state) const {
     clear();
 
     for (const auto& rect : state.item_rects) {

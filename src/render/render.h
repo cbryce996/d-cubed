@@ -19,7 +19,7 @@ class RenderManager {
         void present() const;
         void draw_rect(const SDL_Rect& rect, SDL_Color color) const;
 
-        void render_state(const RenderState& state);
+        void render_state(const RenderState& state) const;
 
     private:
         SDL_Renderer* renderer = nullptr;
