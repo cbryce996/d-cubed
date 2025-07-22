@@ -1,0 +1,32 @@
+BasedOnStyle: Chromium
+
+SortIncludes: CaseSensitive
+
+# === Tabs and indentation ===
+UseTab: Always
+IndentWidth: 4
+TabWidth: 4
+
+# === Line breaks for readability ===
+BreakBeforeBraces: Attach
+AlignAfterOpenBracket: BlockIndent
+AlignOperands: AlignAfterOperator
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+BinPackArguments: false
+BinPackParameters: AlwaysOnePerLine
+
+# === Function formatting ===
+AlwaysBreakAfterReturnType: None  # ← This is the key change
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakBeforeMultilineStrings: true
+PenaltyBreakBeforeFirstCallParameter: 0
+PenaltyBreakString: 0
+
+# === Limits ===
+ColumnLimit: 120
+
+# === Misc ===
+Cpp11BracedListStyle: true
+DerivePointerAlignment: false
+PointerAlignment: Left
