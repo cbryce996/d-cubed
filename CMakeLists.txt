@@ -4,41 +4,38 @@ project(game_project)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_OSX_ARCHITECTURES arm64)
 
-# === Dependencies ===
+# === SDL3 (with GPU support) ===
+add_subdirectory(external/SDL EXCLUDE_FROM_ALL)
+include_directories(external/SDL/include)
 
-# SDL2 (via pkg-config)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SDL2 REQUIRED sdl2)
-include_directories(${SDL2_INCLUDE_DIRS})
-link_directories(${SDL2_LIBRARY_DIRS})
-add_definitions(${SDL2_CFLAGS_OTHER})
+# === Game Sources ===
+set(SRC_FILES
+        src/main.cpp
+        src/engine/engine.cpp
+        src/engine/tasks.cpp
+        src/engine/inputs.cpp
+        src/game/game.cpp
+        src/game/player.cpp
+        src/game/update.cpp
+        src/core/items/types.cpp
+        src/core/items/items.cpp
+        src/render/render.cpp
+)
 
-# Boost
-find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
+add_executable(game ${SRC_FILES})
 
-# === Common Include Paths ===
-include_directories(
+target_include_directories(game PRIVATE
         src
         src/core/items
         src/core/buildings
         src/core/world
+        src/engine
+        src/game
+        src/render
+        external/glm
 )
 
-# === Main Game Executable ===
-add_executable(game
-        src/main.cpp
-        src/core/world/world_generator.cpp
-        src/core/world/world_geometry.cpp
-        src/core/items/types.cpp
-        src/core/items/items.cpp
-        src/engine/engine.cpp
-        src/game/game.cpp
-        src/engine/tasks.cpp
-        src/engine/inputs.cpp
-        src/game/player.cpp
-        src/render/render.cpp
-        src/game/update.cpp
+# === Link SDL3 with GPU support ===
+target_link_libraries(game
+        SDL3::SDL3
 )
-
-target_link_libraries(game PRIVATE ${SDL2_LIBRARIES})

@@ -1,22 +1,18 @@
 #include "player.h"
-
 #include <cmath>
 
 Player::Player() {
-	rect.x = 100;
-	rect.y = 100;
-	rect.w = 50;
-	rect.h = 50;
+	rect.x = 100.0f;
+	rect.y = 100.0f;
+	rect.w = 50.0f;
+	rect.h = 50.0f;
 }
 
-SDL_Rect Player::get_rect() const {
+SDL_FRect Player::get_rect() const {
 	return rect;
 }
 
-void Player::update(
-	const InputManager& input,
-	const float delta_time
-) {
+void Player::update(const InputManager& input, float delta_time) {
 	float dt = delta_time / 1000.0f;
 
 	float dx = 0.0f;
@@ -37,8 +33,8 @@ void Player::update(
 		dy /= length;
 	}
 
-	rect.x += static_cast<int>(dx * speed * dt);
-	rect.y += static_cast<int>(dy * speed * dt);
+	rect.x += dx * speed * dt;
+	rect.y += dy * speed * dt;
 }
 
 void Player::render(SDL_Renderer* renderer) const {

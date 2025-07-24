@@ -6,6 +6,5 @@ int main(
 ) {
 	Engine engine;
 	engine.run();
-	engine.shutdown();
 	return 0;
 }

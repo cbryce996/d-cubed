@@ -114,7 +114,7 @@ void GameManager::write_render_state(RenderState& render_state) const {
 	const size_t item_count = items.ids.size();
 
 	for (size_t i = 0; i < item_count; ++i) {
-		SDL_Rect rect;
+		SDL_FRect rect;
 		rect.x = items.x[i];
 		rect.y = items.y[i];
 		rect.w = 10;

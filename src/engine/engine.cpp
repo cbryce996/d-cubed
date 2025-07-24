@@ -2,18 +2,44 @@
 
 #include <chrono>
 #include <iostream>
+#include <SDL3/SDL.h>
 
 #include "../game/game.h"
 
+
 Engine::Engine()
-	: window(SDL_CreateWindow("Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0)),
-	  render(*window)
 {
-	SDL_Init(SDL_INIT_VIDEO);
+	if (!SDL_Init(SDL_INIT_VIDEO)) {
+		std::cerr << "SDL Init failed: " << SDL_GetError() << "\n";
+		return;
+	}
+
+	window = SDL_CreateWindow("Game", 800, 600, SDL_WINDOW_RESIZABLE);
+
+	gpu_device = SDL_CreateGPUDevice(
+		SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL,
+		true,
+		"metal"
+	);
+
+	if (!gpu_device) {
+		std::cerr << "SDL_CreateGPUDevice failed: " << SDL_GetError() << "\n";
+		return;
+	}
+
+	if (!SDL_ClaimWindowForGPUDevice(gpu_device, window)) {
+		std::cerr << "SDL_ClaimWindowForGPUDevice failed: " << SDL_GetError() << "\n";
+		return;
+	}
+
+	render = std::make_unique<RenderManager>(gpu_device, window);
 }
 
-Engine::~Engine() = default;
-
+Engine::~Engine() {
+	SDL_DestroyGPUDevice(gpu_device);
+	SDL_DestroyWindow(window);
+	SDL_Quit();
+}
 
 void Engine::run() {
 	using clock = std::chrono::high_resolution_clock;
@@ -36,7 +62,7 @@ void Engine::run() {
 
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
-			if (e.type == SDL_QUIT)
+			if (e.type == SDL_EVENT_QUIT)
 				running = false;
 		}
 
@@ -50,7 +76,9 @@ void Engine::run() {
 
 		RenderState render_state;
 		game.write_render_state(render_state);
-		render.render_state(render_state);
+		render->update_camera(delta_time_ms, input.get_key_states());
+		render->render_state(render_state);
+
 
 		auto frame_end = clock::now();
 		float frame_time_ms = std::chrono::duration<float, std::milli>(frame_end - frame_start).count();
@@ -78,9 +106,4 @@ void Engine::run() {
 	}
 
 	task_scheduler.stop();
-}
-
-void Engine::shutdown() const {
-	SDL_DestroyWindow(window);
-	SDL_Quit();
 }
