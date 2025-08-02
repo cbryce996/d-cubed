@@ -1,38 +1,32 @@
 #include "inputs.h"
 
 #include <SDL3/SDL.h>
+#include <cstring>
+
+InputManager::InputManager() = default;
+
+InputManager::~InputManager() = default;
 
 void InputManager::poll() {
-	prev_mouse_button_state = mouse_button_state;
+	SDL_PumpEvents();
+	const bool* state = SDL_GetKeyboardState(nullptr);
+	memcpy(keyboard_input.keys, state, SDL_SCANCODE_COUNT);
 
 	float x, y;
-	mouse_button_state = SDL_GetMouseState(&x, &y);
-	mouse_x = static_cast<int>(x);
-	mouse_y = static_cast<int>(y);
+	mouse_input.button_state = SDL_GetMouseState(&x, &y);
 
-	SDL_PumpEvents();  // Fetch input
-	key_states = SDL_GetKeyboardState(nullptr);
-
-	memcpy(prev_key_states, key_states, SDL_SCANCODE_COUNT);
+	float dx, dy;
+	SDL_GetRelativeMouseState(&dx, &dy);
+	mouse_input.dx = dx;
+	mouse_input.dy = dy;
 }
 
-const bool* InputManager::get_key_states() const {
-	return key_states;
+
+const MouseInput& InputManager::get_mouse_input() const {
+	return mouse_input;
 }
 
-bool InputManager::is_mouse_pressed(const Uint32 button) const {
-	return (mouse_button_state & button) &&
-		   !(prev_mouse_button_state & button);
+const KeyboardInput& InputManager::get_keyboard_input() const {
+	return keyboard_input;
 }
 
-bool InputManager::is_key_down(SDL_Scancode key) const {
-	return key_states[key];
-}
-
-bool InputManager::is_key_pressed(SDL_Scancode key) const {
-	return key_states[key] && !prev_key_states[key];
-}
-
-SDL_Point InputManager::get_mouse_position() const {
-	return SDL_Point{mouse_x, mouse_y};
-}

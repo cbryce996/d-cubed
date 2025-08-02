@@ -3,12 +3,12 @@
 #include <iostream>
 
 #include "crafting.h"
+#include "engine/engine.h"
 #include "items.h"
 #include "recipes.h"
+#include "render/render.h"
 #include "types.h"
 #include "update.h"
-#include "engine/engine.h"
-#include "render/render.h"
 
 inline float fast_exp(const float x) {
 	// Approximate exp(x) using a 5th-degree
@@ -17,9 +17,7 @@ inline float fast_exp(const float x) {
 }
 
 GameManager::GameManager() {
-	update_managers.emplace_back(2500.0f, [this](const float delta_time_ms) {
-		calculate_item_decays(delta_time_ms);
-	});
+	update_managers.emplace_back(2500.0f, [this](const float delta_time_ms) { calculate_item_decays(delta_time_ms); });
 
 	update_managers.emplace_back(1000.0f, [this](const float delta_time_ms) {
 		calculate_item_crafting_progress(delta_time_ms);
@@ -29,7 +27,6 @@ GameManager::GameManager() {
 }
 
 GameManager::~GameManager() = default;
-
 
 void GameManager::update(
 	const float delta_time,
@@ -46,23 +43,8 @@ void GameManager::update(
 }
 
 void GameManager::handle_input(const InputManager& input) {
-	if (input.is_mouse_pressed(SDL_BUTTON_LEFT)) {
-		std::cout << "[Input] Mouse pressed" << "\n";
-		const SDL_Point pos = input.get_mouse_position();
-
-		register_item(
-			1,
-			1,
-			5,
-			0,
-			0,
-			pos.x,
-			pos.y
-		);
-		std::cout << "[Input] Spawned item at " << pos.x << "," << pos.y << "\n";
-	}
+	// TODO
 }
-
 
 void GameManager::calculate_item_decays(const float delta_time_ms) {
 	std::cout << "[Items] Calculating item decays\n";
@@ -75,11 +57,10 @@ void GameManager::calculate_item_decays(const float delta_time_ms) {
 		const float rate = item_type_decays.decay_rates[items.type_ids[i]];
 		const float age = item_decays.ages[i];
 
-		const float decay = fast_exp(-rate * (age / 1000.0f)); // Convert to seconds if needed
+		const float decay = fast_exp(-rate * (age / 1000.0f));	// Convert to seconds if needed
 		item_decays.decays[i] = 1.0f - decay;
 
-		std::cout << "[Items] Item " << i << " age: " << age
-				  << " | decay: " << item_decays.decays[i] << "\n";
+		std::cout << "[Items] Item " << i << " age: " << age << " | decay: " << item_decays.decays[i] << "\n";
 	}
 }
 
@@ -98,8 +79,8 @@ void GameManager::calculate_item_crafting_progress(const float delta_time_ms) {
 			const size_t output_type = item_recipe_outputs.outputs[recipe_id];
 			const float output_amount = item_recipe_outputs.output_amounts[recipe_id];
 
-			std::cout << "Recipe " << recipe_id << " completed. Produced item type: "
-					  << output_type << " (x" << output_amount << ")\n";
+			std::cout << "Recipe " << recipe_id << " completed. Produced item type: " << output_type << " (x"
+					  << output_amount << ")\n";
 
 			// Reset or remove the recipe from crafting
 			item_crafting.progress[i] = 0.0f;

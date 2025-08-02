@@ -6,14 +6,20 @@
 class TaskScheduler;
 
 class UpdateManager {
-public:
-    UpdateManager(float interval_ms, std::function<void(float)> task);
-    void update(float delta_time_ms, TaskScheduler& scheduler);
+   public:
+	UpdateManager(
+		float interval_ms,
+		std::function<void(float)> task
+	);
+	void update(
+		float delta_time_ms,
+		TaskScheduler& scheduler
+	);
 
-private:
-    float interval;
-    float accumulated = 0.0f;
-    std::function<void(float)> task;
+   private:
+	float interval;
+	float accumulated = 0.0f;
+	std::function<void(float)> task;
 };
 
-#endif // SYSTEM_TIMER_H
+#endif	// SYSTEM_TIMER_H

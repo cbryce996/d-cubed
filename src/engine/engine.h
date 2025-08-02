@@ -3,10 +3,11 @@
 
 #include <SDL3/SDL.h>
 
-#include "inputs.h"
-#include "tasks.h"
+#include "camera.h"
 #include "game/game.h"
+#include "inputs.h"
 #include "render/render.h"
+#include "tasks.h"
 
 struct ItemInstance {
 	SDL_Rect rect;
@@ -19,23 +20,24 @@ struct CraftingInstance {
 };
 
 class Engine {
-public:
+   public:
 	Engine();
 	~Engine();
 
 	void run();
 
-private:
+   private:
 	bool running = false;
 
 	SDL_GPUDevice* gpu_device = nullptr;
 	SDL_Window* window = nullptr;
 
-	InputManager input;
 	TaskScheduler task_scheduler;
+	InputManager input;
 	GameManager game;
+
+	std::unique_ptr<CameraManager> camera;
 	std::unique_ptr<RenderManager> render;
 };
-
 
 #endif	// ENGINE_H

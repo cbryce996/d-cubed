@@ -25,33 +25,9 @@ void register_item_type(
 }
 
 void initialize_item_types() {
-	register_item_type(
-		1,
-		"Fish",
-		std::nullopt,
-		10.0f,
-		0.05f,
-		0.3f,
-		{"Fresh", "Spoiling", "Rotten", "Disgusting"}
-	);
+	register_item_type(1, "Fish", std::nullopt, 10.0f, 0.05f, 0.3f, {"Fresh", "Spoiling", "Rotten", "Disgusting"});
 
-	register_item_type(
-		2,
-		"Fine Iron Sword",
-		14,
-		200.0f,
-		2.0f,
-		0.05f,
-		{"Sharp", "Dull"}
-	);
+	register_item_type(2, "Fine Iron Sword", 14, 200.0f, 2.0f, 0.05f, {"Sharp", "Dull"});
 
-	register_item_type(
-		3,
-		"Average Iron Sword",
-		14,
-		100.0f,
-		1.0f,
-		0.3f,
-		{"Sharp", "Dull", "Rusted"}
-	);
+	register_item_type(3, "Average Iron Sword", 14, 100.0f, 1.0f, 0.3f, {"Sharp", "Dull", "Rusted"});
 }

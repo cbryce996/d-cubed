@@ -2,240 +2,178 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
-#include <iostream>
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
-// Triangle in normalized device space (X/Y from -1 to 1)
-constexpr Vertex triangle_vertices[] = {
-    { glm::vec3( 0.0f,  0.5f, 0.0f) },
-    { glm::vec3( 0.5f, -0.5f, 0.0f) },
-    { glm::vec3(-0.5f, -0.5f, 0.0f) }
-};
+#include "entity.h"
+#include "utils.h"
 
-
-RenderManager::RenderManager(SDL_GPUDevice* device, SDL_Window* window)
-    : device(device), window(window) {
-    load_shaders();
-    setup_vertex_format();
-    create_pipeline();
-    create_buffers();
+RenderManager::RenderManager(
+	SDL_GPUDevice* device,
+	SDL_Window* window,
+	std::shared_ptr<ShaderManager> shader_manager,
+	std::shared_ptr<PipelineManager> pipeline_manager,
+	std::shared_ptr<BufferManager> buffer_manager,
+	std::shared_ptr<CameraManager> camera_manager
+)
+	: shader_manager(std::move(shader_manager)),
+	  pipeline_manager(std::move(pipeline_manager)),
+	  buffer_manager(std::move(buffer_manager)),
+	  camera_manager(std::move(camera_manager)),
+	  device(device),
+	  window(window) {
 }
 
 RenderManager::~RenderManager() = default;
 
-// Shader Compilation
-void RenderManager::load_shaders() {
-    vertex_shader   = load_shader("../shaders/msl/triangle_buffer_uniform.metal", SDL_GPU_SHADERSTAGE_VERTEX, "vert_main");
-    fragment_shader = load_shader("../shaders/msl/triangle_buffer_uniform.metal", SDL_GPU_SHADERSTAGE_FRAGMENT, "frag_main");
+void RenderManager::create_swap_chain_texture() {
+	SDL_GPUTexture* swap_chain_texture = nullptr;
+	if (!SDL_WaitAndAcquireGPUSwapchainTexture(buffer_manager->command_buffer, window, &swap_chain_texture, &width, &height)) {
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to acquire swap chain texture.");
+		return;
+	}
+	buffer_manager->swap_chain_texture = swap_chain_texture;
 }
 
-// Vertex Layout Setup
-void RenderManager::setup_vertex_format() {
-    // One buffer: position only, 3 floats (x/y/z)
-    vbo_desc.slot = 0;
-    vbo_desc.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
-    vbo_desc.pitch = sizeof(Vertex);
+void RenderManager::create_depth_texture() const {
+	if (buffer_manager->depth_texture) {
+		return;
+	}
 
-    attr.location = 0;
-    attr.buffer_slot = 0;
-    attr.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-    attr.offset = 0;
+	SDL_GPUTextureCreateInfo depth_info{};
+	depth_info.type = SDL_GPU_TEXTURETYPE_2D;
+	depth_info.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
+	depth_info.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+	depth_info.width = width;
+	depth_info.height = height;
+	depth_info.layer_count_or_depth = 1;
+	depth_info.num_levels = 1;
+	depth_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
 
-    vi_state.vertex_buffer_descriptions = &vbo_desc;
-    vi_state.num_vertex_buffers = 1;
-    vi_state.vertex_attributes = &attr;
-    vi_state.num_vertex_attributes = 1;
+	buffer_manager->depth_texture = SDL_CreateGPUTexture(device, &depth_info);
 }
 
-// Graphics Pipeline
-void RenderManager::create_pipeline() {
-    // Define the format of the output (render target)
-    SDL_GPUColorTargetDescription color_desc{};
-    color_desc.format = SDL_GetGPUSwapchainTextureFormat(device, window);
-    color_desc.blend_state = {}; // no blending
+SDL_GPURenderPass* RenderManager::create_render_pass() const {
+	if (!buffer_manager->depth_texture) {
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Depth texture not created.");
+		return nullptr;
+	}
 
-    SDL_GPUGraphicsPipelineTargetInfo target_info{};
-    target_info.num_color_targets = 1;
-    target_info.color_target_descriptions = &color_desc;
-    target_info.has_depth_stencil_target = false;
+	if (!buffer_manager->swap_chain_texture) {
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Swap chain texture not created.");
+		return nullptr;
+	}
 
-    // Create graphics pipeline
-    SDL_GPUGraphicsPipelineCreateInfo gp_info{};
-    gp_info.vertex_input_state = vi_state;
-    gp_info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
-    gp_info.vertex_shader = vertex_shader;
-    gp_info.fragment_shader = fragment_shader;
-    gp_info.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE;
-    gp_info.depth_stencil_state.enable_depth_test = false;
-    gp_info.depth_stencil_state.enable_depth_write = false;
-    gp_info.target_info = target_info;
-    gp_info.props = 0;
-    pipeline = SDL_CreateGPUGraphicsPipeline(device, &gp_info);
+	SDL_GPUDepthStencilTargetInfo depth_target_info{};
+	depth_target_info.texture = buffer_manager->depth_texture;
+	depth_target_info.clear_depth = 1.0f;
+	depth_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
+	depth_target_info.store_op = SDL_GPU_STOREOP_DONT_CARE;
+	depth_target_info.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
+	depth_target_info.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
+	depth_target_info.cycle = true;
+
+
+	SDL_GPUColorTargetInfo color_target_info{};
+	color_target_info.texture = buffer_manager->swap_chain_texture;
+	color_target_info.mip_level = 0;
+	color_target_info.layer_or_depth_plane = 0;
+	color_target_info.clear_color = {0.53f, 0.81f, 0.92f, 1.0f};
+	color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
+	color_target_info.store_op = SDL_GPU_STOREOP_STORE;
+	color_target_info.resolve_texture = nullptr;
+	color_target_info.resolve_mip_level = 0;
+	color_target_info.resolve_layer = 0;
+	color_target_info.cycle = true;
+	color_target_info.cycle_resolve_texture = true;
+
+	return SDL_BeginGPURenderPass(buffer_manager->command_buffer, &color_target_info, 1, &depth_target_info);
 }
 
-// Buffer Creation
-void RenderManager::create_buffers() {
-    // GPU-side buffer for drawing vertices
-    SDL_GPUBufferCreateInfo buf_info{};
-    buf_info.size = sizeof(triangle_vertices);
-    buf_info.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
-    buf_info.props = 0;
-    vertex_buffer = SDL_CreateGPUBuffer(device, &buf_info);
+void RenderManager::draw_mesh(
+	const Pipeline* pipeline,
+	const Buffer* buffer,
+	const Mesh* mesh,
+	const Uniform& uniform
+) {
+	if (!pipeline || !buffer) {
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Missing pipeline or buffer.");
+		return;
+	}
 
-    // CPU-side transfer buffer for uploading vertex data
-    SDL_GPUTransferBufferCreateInfo transfer_info{};
-    transfer_info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-    transfer_info.size = sizeof(triangle_vertices);
-    transfer_info.props = 0;
-    transfer_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_info);
+	SDL_GPURenderPass* pass = current_render_pass;
 
-    // Upload initial geometry to the transfer buffer
-    void* mapped = SDL_MapGPUTransferBuffer(device, transfer_buffer, true);
-    if (mapped) {
-        memcpy(mapped, triangle_vertices, sizeof(triangle_vertices));
-        SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
-    } else {
-        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to map vertex buffer: %s", SDL_GetError());
-    }
+	SDL_PushGPUVertexUniformData(buffer_manager->command_buffer, 0, &uniform, sizeof(Uniform));
+	SDL_PushGPUFragmentUniformData(buffer_manager->command_buffer, 0, &uniform, sizeof(Uniform)); // <-- THIS
+
+	SDL_BindGPUGraphicsPipeline(pass, pipeline->pipeline);
+	SDL_GPUBufferBinding bindings[1] = { { buffer->gpu_buffer.buffer, 0 }};
+	SDL_BindGPUVertexBuffers(pass, 0, bindings, 1);
+
+	SDL_DrawGPUPrimitives(pass, mesh->vertex_count, 1, 0, 0);
+
+	SDL_EndGPURenderPass(current_render_pass);
+	SDL_SubmitGPUCommandBuffer(buffer_manager->command_buffer);
 }
 
-// Frame Rendering
-void RenderManager::render_state(const RenderState& state) {
-    // Acquire command buffer for this frame
-    SDL_GPUCommandBuffer* command_buffer = SDL_AcquireGPUCommandBuffer(device);
+void RenderManager::render() {
+	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer(device);
 
-    // Upload geometry
-    SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass(command_buffer);
-    SDL_GPUTransferBufferLocation transfer_loc{transfer_buffer, 0};
-    SDL_GPUBufferRegion buffer_region{vertex_buffer, 0, sizeof(triangle_vertices)};
-    SDL_UploadToGPUBuffer(copy, &transfer_loc, &buffer_region, true);
-    SDL_EndGPUCopyPass(copy);
+	// Create cube mesh
+	Mesh cube_mesh = create_cube_mesh();
 
-    // Acquire backbuffer
-    SDL_GPUTexture* texture = nullptr;
+	// Create cube entity
+	Entity cube;
+	cube.name = "cube";
+	cube.mesh = &cube_mesh;
 
-    if (!SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer, window, &texture, &width, &height)) {
-        std::cerr << "[Render] Failed to acquire backbuffer: " << SDL_GetError() << "\n";
-        return;
-    }
+	// Get cube buffer
+	Buffer* cube_buffer = buffer_manager->get_buffer("cube_buffer");
 
-    // Begin render pass
-    const SDL_GPUColorTargetInfo target = {
-        .texture = texture,
-        .mip_level = 0,
-        .layer_or_depth_plane = 0,
-        .clear_color = {0.53f, 0.81f, 0.92f, 1.0f},
-        .load_op = SDL_GPU_LOADOP_CLEAR,
-        .store_op = SDL_GPU_STOREOP_STORE,
-        .resolve_texture = nullptr,
-        .resolve_mip_level = 0,
-        .resolve_layer = 0,
-        .cycle = false,
-        .cycle_resolve_texture = false
-    };
+	// Copy mesh to GPU
+	buffer_manager->copy(cube.mesh, cube_buffer);
+	buffer_manager->upload(cube_buffer);
 
-    SDL_GPURenderPass* pass = SDL_BeginGPURenderPass(command_buffer, &target, 1, nullptr);
+	// Create swap chain texture
+	create_swap_chain_texture();
 
-    // Setup viewport
-    SDL_GPUViewport viewport = {
-        .x = 0,
-        .y = 0,
-        .w = static_cast<float>(width),
-        .h = static_cast<float>(height),
-        .min_depth = 0.0f,
-        .max_depth = 1.0f
-    };
-    SDL_SetGPUViewport(pass, &viewport);
+	// Create depth texture
+	create_depth_texture();
 
-    // --- Compute MVP Matrix ---
-    Uniform ubo{};
-    ubo.mvp = rotate_matrix();
+	// Create render pass
+	current_render_pass = create_render_pass();
 
-    // Send it to the shader via slot 0
-    SDL_PushGPUVertexUniformData(command_buffer, 0, &ubo, sizeof(ubo));
+	// Setup viewport
+	SDL_GPUViewport viewport{};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.w = static_cast<float>(width);
+	viewport.h = static_cast<float>(height);
+	viewport.min_depth = 0.0f;
+	viewport.max_depth = 1.0f;
+	SDL_SetGPUViewport(current_render_pass, &viewport);
 
-    // Pipeline + vertex buffer bind
-    SDL_BindGPUGraphicsPipeline(pass, pipeline);
-    SDL_GPUBufferBinding bindings[1] = { { vertex_buffer, 0 } };
-    SDL_BindGPUVertexBuffers(pass, 0, bindings, 1);
+	// Get active camera
+	const Camera* active_camera = camera_manager->get_active_camera();
+	if (!active_camera) {
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "No active camera found!");
+		return;
+	}
 
-    // Draw call
-    SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
+	// Calculate transforms
+	const float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
+	const TransformData transform = compute_transform_data(*active_camera, aspect_ratio, cube);
 
-    // Finish
-    SDL_EndGPURenderPass(pass);
-    SDL_SubmitGPUCommandBuffer(command_buffer);
-}
+	// Create uniform
+	Uniform uniform{};
+	uniform.mvp = transform.mvp;
+	uniform.normal_matrix = transform.normal_matrix;
 
-void RenderManager::update_camera(float deltaTime, const bool* keys) {
-    const float speed = 0.01f;
+	constexpr glm::vec3 world_light_dir = glm::vec3(1.0f, -1.0f, -1.0f);
+	uniform.light_dir = compute_light_direction_model_space(world_light_dir, transform.model);
 
-    glm::vec3 forward = glm::normalize(camera_target - camera_position);
-    glm::vec3 right   = glm::normalize(glm::cross(forward, camera_up));
-
-    if (keys[SDL_SCANCODE_W]) camera_position += forward * speed * deltaTime;
-    if (keys[SDL_SCANCODE_S]) camera_position -= forward * speed * deltaTime;
-    if (keys[SDL_SCANCODE_A]) camera_position -= right   * speed * deltaTime;
-    if (keys[SDL_SCANCODE_D]) camera_position += right   * speed * deltaTime;
-
-    // Optional: keep target synced in front of camera
-    camera_target = camera_position + forward;
-}
-
-glm::mat4 RenderManager::rotate_matrix() {
-    // Optional: animate the camera around the origin
-    float time = SDL_GetTicks() / 1000.0f;
-
-    glm::mat4 model = glm::rotate(glm::mat4(1.0f), time * 5.0f, glm::vec3(0, 1, 0));
-    glm::mat4 view  = glm::lookAt(camera_position, camera_target, camera_up);
-    glm::mat4 proj  = glm::perspective(glm::radians(70.0f), width / (float)height, 0.1f, 100.0f);
-
-    return proj * view * model;
-}
-
-
-// Load shader from file
-SDL_GPUShader* RenderManager::load_shader(const std::string& path, const SDL_GPUShaderStage stage, const std::string& entry) const {
-    SDL_IOStream* file = SDL_IOFromFile(path.c_str(), "r");
-    if (!file) {
-        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to open shader: %s", path.c_str());
-        return nullptr;
-    }
-
-    const Sint64 size = SDL_GetIOSize(file);
-    if (size <= 0) {
-        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Shader file has invalid size: %s", path.c_str());
-        SDL_CloseIO(file);
-        return nullptr;
-    }
-
-    std::string source(size, '\0');
-    Sint64 read = SDL_ReadIO(file, source.data(), size);
-    SDL_CloseIO(file);
-
-    if (read != size) {
-        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to read entire shader file: %s", path.c_str());
-        return nullptr;
-    }
-
-    SDL_GPUShaderCreateInfo info = {
-        .code_size = static_cast<size_t>(size),
-        .code = reinterpret_cast<const Uint8*>(source.data()),
-        .entrypoint = entry.c_str(),
-        .format = SDL_GPU_SHADERFORMAT_MSL,
-        .stage = stage,
-        .num_samplers = 0,
-        .num_storage_textures = 0,
-        .num_storage_buffers = 0,
-        .num_uniform_buffers = 2,
-        .props = 0
-    };
-
-    SDL_GPUShader* shader = SDL_CreateGPUShader(device, &info);
-    if (!shader) {
-        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Shader compilation failed (%s): %s", entry.c_str(), SDL_GetError());
-    }
-    return shader;
+	// Draw frame
+	const Pipeline* cube_pipeline = pipeline_manager->get_pipeline("lit");
+	draw_mesh(cube_pipeline, cube_buffer, &cube_mesh, uniform);
 }

@@ -34,8 +34,8 @@ class GameManager {
 	float crafting_timer = 0.0f;
 	static constexpr float CRAFTING_INTERVAL_MS = 1000.0f;
 
-	static void calculate_item_decays(float delta_time_ms) ;
-	static void calculate_item_crafting_progress(float delta_time_ms) ;
+	static void calculate_item_decays(float delta_time_ms);
+	static void calculate_item_crafting_progress(float delta_time_ms);
 };
 
 #endif	// GAME_H

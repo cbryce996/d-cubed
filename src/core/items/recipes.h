@@ -27,7 +27,9 @@ inline ItemRecipeOutputs item_recipe_outputs;
 void register_item_recipe(
 	size_t id,
 	float crafting_time,
-	std::unordered_map<size_t, int>& inputs,
+	std::unordered_map<
+		size_t,
+		int>& inputs,
 	size_t output,
 	float output_amount
 );

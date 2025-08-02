@@ -20,6 +20,12 @@ set(SRC_FILES
         src/core/items/types.cpp
         src/core/items/items.cpp
         src/render/render.cpp
+        src/render/mesh.cpp
+        src/render/pipeline.cpp
+        src/render/buffer.cpp
+        src/render/camera.cpp
+        src/render/shader.cpp
+        src/game/entity.cpp
 )
 
 add_executable(game ${SRC_FILES})

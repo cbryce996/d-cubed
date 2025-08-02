@@ -3,14 +3,16 @@
 #include <iostream>
 
 TaskScheduler::TaskScheduler(const size_t num_threads)
-	: thread_count(num_threads), running(false) {}
+	: thread_count(num_threads),
+	  running(false) {}
 
 TaskScheduler::~TaskScheduler() {
 	stop();
 }
 
 void TaskScheduler::start() {
-	if (running) return;
+	if (running)
+		return;
 
 	running = true;
 	workers.reserve(thread_count);

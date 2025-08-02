@@ -8,7 +8,9 @@
 void register_item_recipe(
 	const size_t id,
 	const float crafting_time,
-	const std::unordered_map<size_t, int>& inputs,
+	const std::unordered_map<
+		size_t,
+		int>& inputs,
 	const size_t output,
 	const float output_amount
 ) {
@@ -24,11 +26,5 @@ void register_item_recipe(
 }
 
 void initialize_item_recipes() {
-	register_item_recipe(
-		1,
-		10.0f,
-		{{5, 5}},
-		6,
-		1
-	);
+	register_item_recipe(1, 10.0f, {{5, 5}}, 6, 1);
 }

@@ -3,25 +3,29 @@
 
 #include <SDL3/SDL.h>
 
+struct MouseInput {
+	float dx = 0.0f;
+	float dy = 0.0f;
+	Uint32 button_state = 0;
+};
+
+struct KeyboardInput {
+	bool keys[SDL_SCANCODE_COUNT]{};
+};
+
 class InputManager {
-	public:
-		void poll();
+   public:
+	InputManager();
+	~InputManager();
 
-		[[nodiscard]] const bool* get_key_states() const;
-		[[nodiscard]] bool is_key_down(SDL_Scancode key) const;
-		[[nodiscard]] bool is_key_pressed(SDL_Scancode key) const;
-		[[nodiscard]] bool is_mouse_pressed(Uint32 button) const;
-		[[nodiscard]] SDL_Point get_mouse_position() const;
+	void poll();
 
-	private:
-		const bool *key_states = nullptr;
-		Uint8 prev_key_states[SDL_SCANCODE_COUNT]{};
+	[[nodiscard]] const MouseInput& get_mouse_input() const;
+	[[nodiscard]] const KeyboardInput& get_keyboard_input() const;
 
-		int mouse_x = 0;
-		int mouse_y = 0;
-		Uint32 mouse_button_state = 0;
-		Uint32 prev_mouse_button_state = 0;
-	};
-
+   private:
+	MouseInput mouse_input;
+	KeyboardInput keyboard_input;
+};
 
 #endif	// INPUTS_H
