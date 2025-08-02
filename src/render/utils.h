@@ -9,16 +9,15 @@
 
 #include "camera.h"
 
-struct TransformData {
+struct ModelViewProjection {
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
     glm::mat4 mvp;
-    glm::mat3 normal_matrix;
 };
 
-inline TransformData compute_transform_data(const Camera& camera, float aspect_ratio, const Entity& entity) {
-    TransformData data{};
+inline ModelViewProjection compute_model_view_projection(const Camera& camera, float aspect_ratio, const Entity& entity) {
+    ModelViewProjection data{};
 
     // Model matrix from entity's transform
     data.model = glm::translate(glm::mat4(1.0f), entity.transform.position) *
@@ -45,10 +44,26 @@ inline TransformData compute_transform_data(const Camera& camera, float aspect_r
     return data;
 }
 
-inline glm::vec3 compute_light_direction_model_space(const glm::vec3& world_light_dir, const glm::mat4& model_matrix) {
-    return glm::normalize(glm::mat3(glm::inverse(model_matrix)) * glm::normalize(world_light_dir));
+inline glm::vec3 model_to_world(const glm::vec3& local_pos, const glm::mat4& model_matrix) {
+    return glm::vec3(model_matrix * glm::vec4(local_pos, 1.0f));
 }
 
+inline glm::vec3 world_to_view(const glm::vec3& world_pos, const glm::mat4& view_matrix) {
+    return glm::vec3(view_matrix * glm::vec4(world_pos, 1.0f));
+}
+
+inline glm::vec3 model_to_view(const glm::vec3& local_pos, const glm::mat4& model, const glm::mat4& view) {
+    return world_to_view(model_to_world(local_pos, model), view);
+}
+
+inline glm::vec3 normal_to_world(const glm::vec3& normal, const glm::mat4& model_matrix) {
+    glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+    return glm::normalize(normal_matrix * normal);
+}
+
+inline glm::vec3 normal_to_view(const glm::vec3& normal, const glm::mat4& model_matrix, const glm::mat4& view_matrix) {
+    return glm::normalize(glm::mat3(view_matrix) * normal_to_world(normal, model_matrix));
+}
 
 
 #endif //UTILS_H

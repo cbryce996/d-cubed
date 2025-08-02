@@ -6,9 +6,9 @@
 #include <gtc/type_ptr.hpp>
 
 struct Uniform {
+	glm::mat4 model;
 	glm::mat4 mvp;
-	glm::mat3 normal_matrix;
-	glm::vec3 light_dir;
+	glm::vec3 light_pos;
 	float pad;
 };
 

@@ -112,9 +112,6 @@ void RenderManager::draw_mesh(
 	SDL_BindGPUVertexBuffers(pass, 0, bindings, 1);
 
 	SDL_DrawGPUPrimitives(pass, mesh->vertex_count, 1, 0, 0);
-
-	SDL_EndGPURenderPass(current_render_pass);
-	SDL_SubmitGPUCommandBuffer(buffer_manager->command_buffer);
 }
 
 void RenderManager::render() {
@@ -124,9 +121,16 @@ void RenderManager::render() {
 	Mesh cube_mesh = create_cube_mesh();
 
 	// Create cube entity
+	std::vector<Entity> cubes;
+
 	Entity cube;
-	cube.name = "cube";
 	cube.mesh = &cube_mesh;
+
+	for (int i = 0; i < 10; ++i) {
+		cube.name = "cube_" + std::to_string(i);
+		cube.transform.position = glm::vec3(i * 1.5f, 0.0f, 0.0f);  // Spaced out on X
+		cubes.push_back(cube);
+	}
 
 	// Get cube buffer
 	Buffer* cube_buffer = buffer_manager->get_buffer("cube_buffer");
@@ -161,19 +165,26 @@ void RenderManager::render() {
 		return;
 	}
 
-	// Calculate transforms
-	const float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
-	const TransformData transform = compute_transform_data(*active_camera, aspect_ratio, cube);
-
-	// Create uniform
-	Uniform uniform{};
-	uniform.mvp = transform.mvp;
-	uniform.normal_matrix = transform.normal_matrix;
-
-	constexpr glm::vec3 world_light_dir = glm::vec3(1.0f, -1.0f, -1.0f);
-	uniform.light_dir = compute_light_direction_model_space(world_light_dir, transform.model);
-
 	// Draw frame
 	const Pipeline* cube_pipeline = pipeline_manager->get_pipeline("lit");
-	draw_mesh(cube_pipeline, cube_buffer, &cube_mesh, uniform);
+
+	const float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
+	const glm::vec3 light_pos_world = active_camera->transform.position;
+
+	for (const auto& cube_instance : cubes) {
+		// Compute transform for *this specific cube*
+		ModelViewProjection model_view_projection = compute_model_view_projection(*active_camera, aspect_ratio, cube_instance);
+
+		// Fill uniform for this draw call
+		Uniform uniform{};
+		uniform.mvp = model_view_projection.mvp;
+		uniform.model = model_view_projection.model;
+		uniform.light_pos = light_pos_world;
+
+		// Draw it
+		draw_mesh(cube_pipeline, cube_buffer, cube_instance.mesh, uniform);
+	}
+
+	SDL_EndGPURenderPass(current_render_pass);
+	SDL_SubmitGPUCommandBuffer(buffer_manager->command_buffer);
 }

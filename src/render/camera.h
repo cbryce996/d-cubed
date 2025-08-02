@@ -6,13 +6,8 @@
 #include <glm.hpp>
 #include <gtc/quaternion.hpp>
 
+#include "entity.h"
 #include "inputs.h"
-
-struct Transform {
-	glm::vec3 position = {0.0f, 0.0f, 0.0f};
-	glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-	glm::vec3 scale = {1.0f, 1.0f, 1.0f};
-};
 
 struct Lens {
 	float fov;

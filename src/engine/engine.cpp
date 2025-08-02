@@ -56,6 +56,9 @@ Engine::~Engine() {
 void Engine::run() {
 	using clock = std::chrono::high_resolution_clock;
 
+	static_assert(sizeof(glm::vec3) == 12, "vec3 isn't 12 bytes?");
+	static_assert(sizeof(Vertex) == 36, "Vertex struct is misaligned!");
+
 	GameManager game;
 	running = true;
 	task_scheduler.start();
@@ -77,7 +80,7 @@ void Engine::run() {
 	camera.transform.scale = glm::vec3(1.0f);
 
 	// Lens
-	camera.lens.fov = 70.0f;
+	camera.lens.fov = 90.0f;
 	camera.lens.aspect = 16.0f / 9.0f;
 	camera.lens.near_clip = 0.1f;
 	camera.lens.far_clip = 100.0f;
