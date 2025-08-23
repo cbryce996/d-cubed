@@ -7,6 +7,7 @@
 
 #include "buffer.h"
 #include "camera.h"
+#include "graph.h"
 #include "pipeline.h"
 #include "shader.h"
 
@@ -14,6 +15,19 @@ struct RenderState {
 	std::vector<SDL_FRect> item_rects;
 	std::vector<SDL_FRect> crafting_rects;
 	SDL_FRect player_rect{};
+};
+
+struct RenderContext {
+	CameraManager* camera_manager = nullptr;
+	PipelineManager* pipeline_manager = nullptr;
+	BufferManager* buffer_manager = nullptr;
+	ShaderManager* shader_manager = nullptr;
+
+	const std::vector<Entity>* entities = nullptr;
+	SDL_GPURenderPass* render_pass = nullptr;
+
+	uint32_t width = 0;
+	uint32_t height = 0;
 };
 
 class RenderManager {
@@ -53,6 +67,7 @@ class RenderManager {
 		SDL_Window* window = nullptr;
 		SDL_GPURenderPass* current_render_pass = nullptr;
 
+		RenderGraph render_graph;
 };
 
 #endif	// RENDERER_H
