@@ -7,6 +7,7 @@
 
 #include "buffer.h"
 #include "camera.h"
+#include "drawable.h"
 #include "graph.h"
 #include "pipeline.h"
 #include "shader.h"
@@ -23,7 +24,7 @@ struct RenderContext {
 	BufferManager* buffer_manager = nullptr;
 	ShaderManager* shader_manager = nullptr;
 
-	const std::vector<Entity>* entities = nullptr;
+	std::vector<Drawable>* geometry_drawables = nullptr;
 	SDL_GPURenderPass* render_pass = nullptr;
 
 	uint32_t width = 0;
@@ -42,8 +43,8 @@ class RenderManager {
 	);
 	~RenderManager();
 
-	Uint32 width = 800;
-	Uint32 height = 600;
+	Uint32 width = 1280;
+	Uint32 height = 720;
 
 	std::shared_ptr<ShaderManager> shader_manager;
 	std::shared_ptr<PipelineManager> pipeline_manager;

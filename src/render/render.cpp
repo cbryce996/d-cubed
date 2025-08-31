@@ -28,22 +28,21 @@ RenderManager::RenderManager(
 	render_pass.name = "geometry_pass";
 	render_pass.execute = [this](const RenderContext& render_context) {
 		const Camera* active_camera = render_context.camera_manager->get_active_camera();
-		const Pipeline* cube_pipeline = render_context.pipeline_manager->get_pipeline("lit");
-		const Buffer* cube_buffer = render_context.buffer_manager->get_buffer("cube_buffer");
-
-
 		const float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 		const glm::vec3 light_pos_world = active_camera->transform.position;
 
-		for (const Entity& entity : render_context.entities) {
-			const ModelViewProjection model_view_projection = compute_model_view_projection(*active_camera, aspect_ratio, entity);
+		for (const Drawable& drawable : *render_context.geometry_drawables) {
+			const ModelViewProjection model_view_projection = compute_model_view_projection(*active_camera, aspect_ratio, drawable);
+
+			const Pipeline* cube_pipeline = render_context.pipeline_manager->get_pipeline("lit");
+			const Buffer* cube_buffer = render_context.buffer_manager->get_buffer("cube_buffer");
 
 			Uniform uniform{};
 			uniform.mvp = model_view_projection.mvp;
 			uniform.model = model_view_projection.model;
 			uniform.light_pos = light_pos_world;
 
-			draw_mesh(cube_pipeline, cube_buffer, entity.mesh, uniform);
+			draw_mesh(cube_pipeline, cube_buffer, drawable.mesh, uniform);
 		}
 	};
 	render_graph.add_pass(render_pass);
@@ -182,16 +181,31 @@ void RenderManager::render() {
 	viewport.max_depth = 1.0f;
 	SDL_SetGPUViewport(current_render_pass, &viewport);
 
+
+	std::vector<Drawable> geometry_drawables;
+
 	RenderContext render_context{
 		.camera_manager = camera_manager.get(),
 		.pipeline_manager = pipeline_manager.get(),
 		.buffer_manager = buffer_manager.get(),
 		.shader_manager = shader_manager.get(),
-		.entities = &cubes,
+		.geometry_drawables = &geometry_drawables,
 		.render_pass = current_render_pass,
 		.width = width,
 		.height = height
 	};
+
+	// Now safe:
+	for (const Entity& entity : cubes) {
+		if (!entity.mesh) continue;
+
+		Drawable drawable{};
+		drawable.mesh = entity.mesh;
+		drawable.material = entity.material;
+		drawable.model = compute_model_matrix(entity.transform);
+
+		render_context.geometry_drawables->push_back(drawable);
+	}
 
 	render_graph.execute_all(render_context);
 

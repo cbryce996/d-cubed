@@ -12,7 +12,7 @@ Engine::Engine() {
 		return;
 	}
 
-	window = SDL_CreateWindow("Game", 800, 600, SDL_WINDOW_RESIZABLE);
+	window = SDL_CreateWindow("Game", 1280, 720, SDL_WINDOW_RESIZABLE);
 
 	gpu_device = SDL_CreateGPUDevice(
 		SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL,
@@ -30,10 +30,10 @@ Engine::Engine() {
 		return;
 	}
 
-	auto shader_manager   = std::make_shared<ShaderManager>(gpu_device);
+	auto shader_manager = std::make_shared<ShaderManager>(gpu_device);
 	auto pipeline_manager = std::make_shared<PipelineManager>(gpu_device, window, shader_manager);
-	auto buffer_manager   = std::make_shared<BufferManager>(gpu_device);
-	auto camera_manager   = std::make_shared<CameraManager>();
+	auto buffer_manager = std::make_shared<BufferManager>(gpu_device);
+	auto camera_manager = std::make_shared<CameraManager>();
 
 	render = std::make_unique<RenderManager>(
 		gpu_device,

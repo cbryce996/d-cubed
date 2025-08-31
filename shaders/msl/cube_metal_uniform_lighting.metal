@@ -46,14 +46,15 @@ fragment float4 frag_main(VertexOut in [[stage_in]],
                           constant Uniform& ubo [[buffer(0)]]) {
     float3 L = normalize(ubo.light_pos - in.frag_pos);
     float3 N = normalize(in.normal);
-
     float diff = max(dot(N, L), 0.0);
 
-    float strength = 1;
     float distance = length(ubo.light_pos - in.frag_pos);
+    float d = distance / 5.0;
+    float attenuation = 0.8 / (1.0 + d * d);
 
-    float attenuation = 1.0 / (1 + distance * distance); // softer near the light
+    float3 ambient = 0.1 * in.color;
+    float3 diffuse = in.color * diff * attenuation;
 
-    float3 lit_color = clamp(in.color * diff * attenuation * strength, 0.0, 0.8);
+    float3 lit_color = clamp(ambient + diffuse, 0.0, 0.7);
     return float4(lit_color, 1.0);
 }

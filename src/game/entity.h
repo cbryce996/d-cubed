@@ -2,6 +2,7 @@
 #define ENTITY_H
 
 #include "camera.h"
+#include "material.h"
 #include "mesh.h"
 
 struct Transform {
@@ -12,7 +13,9 @@ struct Transform {
 
 struct Entity {
   std::string name;
+  glm::mat4 model;
   Transform transform;
+  Material* material;
   Mesh* mesh;
 };
 

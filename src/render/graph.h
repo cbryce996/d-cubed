@@ -4,15 +4,13 @@
 #include <functional>
 #include <string>
 
-#include "render.h"
-#include "SDL3/SDL_gpu.h"
+struct RenderContext;
 
 struct RenderPassNode {
     std::string name;
     std::function<void(RenderContext&)> execute;
     std::vector<std::string> dependencies;
 };
-
 
 class RenderGraph {
 public:
