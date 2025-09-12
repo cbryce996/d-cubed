@@ -8,15 +8,7 @@ PipelineManager::PipelineManager(
 	const std::shared_ptr<ShaderManager>& shader_manager
 )	: device(device),
 	  window(window),
-	  shader_manager(shader_manager.get()) {
-	PipelineConfig lit_pipeline_config{
-		.name = "lit",
-		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-		.shader = shader_manager->get_shader("lit"),
-	};
-	Pipeline lit_pipeline{.pipeline = create_pipeline(lit_pipeline_config), .name = "lit"};
-	add_pipeline(lit_pipeline);
-}
+	  shader_manager(shader_manager.get()) {}
 
 PipelineManager::~PipelineManager() = default;
 
@@ -26,6 +18,20 @@ Pipeline* PipelineManager::get_pipeline(const std::string& name) {
 		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Pipeline not found.");
 		return nullptr;
 	}
+	return pipeline;
+}
+
+Pipeline* PipelineManager::get_or_create_pipeline(const Drawable* drawable) {
+	Pipeline* pipeline = pipelines.contains(drawable->mesh->name) ? &pipelines[drawable->mesh->name] : nullptr;
+	if (pipeline) {
+		return pipeline;
+	}
+
+	pipeline = new Pipeline{};
+	pipeline->pipeline = create_pipeline(drawable->material->pipeline_config),
+	pipeline->name = "lit";
+
+	add_pipeline(*pipeline);
 	return pipeline;
 }
 

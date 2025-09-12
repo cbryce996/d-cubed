@@ -61,6 +61,11 @@ class RenderManager {
 		const Mesh *mesh,
 		const Uniform &uniform
 	);
+
+	void prepare_drawables(std::vector<Drawable> &drawables) const;
+
+	void set_viewport(SDL_GPURenderPass *current_render_pass);
+
 	[[nodiscard]] SDL_GPURenderPass* create_render_pass() const;
 
 	private:

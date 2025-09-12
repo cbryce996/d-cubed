@@ -5,6 +5,8 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
+#include "pipeline.h"
+
 struct Uniform {
 	glm::mat4 model;
 	glm::mat4 mvp;
@@ -73,6 +75,7 @@ constexpr Vertex cube_vertices[] = {
 constexpr size_t cube_vertex_count = sizeof(cube_vertices) / sizeof(Vertex);
 
 struct Mesh {
+	std::string name;
 	const Vertex* vertex_data;
 	size_t vertex_size;
 	size_t vertex_count;
@@ -80,6 +83,7 @@ struct Mesh {
 
 inline Mesh create_cube_mesh() {
 	return Mesh{
+		.name = "cube",
 		.vertex_data = cube_vertices,
 		.vertex_size = sizeof(cube_vertices),
 		.vertex_count = cube_vertex_count

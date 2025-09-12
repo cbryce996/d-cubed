@@ -7,6 +7,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 
+#include "drawable.h"
 #include "shader.h"
 
 struct PipelineConfig {
@@ -38,6 +39,8 @@ class PipelineManager {
 	~PipelineManager();
 
 	Pipeline* get_pipeline(const std::string& name);
+	Pipeline* get_or_create_pipeline(const Drawable* drawable);
+
 	void add_pipeline(Pipeline& pipeline);
 
 	SDL_GPUGraphicsPipeline* create_pipeline(PipelineConfig& config) const;

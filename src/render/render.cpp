@@ -31,19 +31,27 @@ RenderManager::RenderManager(
 		const float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 		const glm::vec3 light_pos_world = active_camera->transform.position;
 
-		for (const Drawable& drawable : *render_context.geometry_drawables) {
-			const ModelViewProjection model_view_projection = compute_model_view_projection(*active_camera, aspect_ratio, drawable);
+		prepare_drawables(*render_context.geometry_drawables);
+		current_render_pass = create_render_pass();
+		set_viewport(current_render_pass);
 
-			const Pipeline* cube_pipeline = render_context.pipeline_manager->get_pipeline("lit");
-			const Buffer* cube_buffer = render_context.buffer_manager->get_buffer("cube_buffer");
+		for (const Drawable& drawable : *render_context.geometry_drawables) {
+			const ModelViewProjection model_view_projection =
+				compute_model_view_projection(*active_camera, aspect_ratio, drawable);
+
+			const Pipeline* pipeline = render_context.pipeline_manager->get_or_create_pipeline(&drawable);
+			const Buffer* buffer = render_context.buffer_manager->get_or_create_buffer(&drawable);
 
 			Uniform uniform{};
 			uniform.mvp = model_view_projection.mvp;
 			uniform.model = model_view_projection.model;
 			uniform.light_pos = light_pos_world;
 
-			draw_mesh(cube_pipeline, cube_buffer, drawable.mesh, uniform);
+			draw_mesh(pipeline, buffer, drawable.mesh, uniform);
 		}
+
+		SDL_EndGPURenderPass(current_render_pass);
+		SDL_SubmitGPUCommandBuffer(render_context.buffer_manager->command_buffer);
 	};
 	render_graph.add_pass(render_pass);
 }
@@ -137,6 +145,25 @@ void RenderManager::draw_mesh(
 	SDL_DrawGPUPrimitives(pass, mesh->vertex_count, 1, 0, 0);
 }
 
+void RenderManager::prepare_drawables(std::vector<Drawable>& drawables) const {
+	for (Drawable& drawable : drawables) {
+		Buffer* buffer = buffer_manager->get_or_create_buffer(&drawable);
+		buffer_manager->copy(drawable.mesh, buffer);
+		buffer_manager->upload(buffer);
+	}
+}
+
+void RenderManager::set_viewport(SDL_GPURenderPass* current_render_pass) {
+	SDL_GPUViewport viewport{};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.w = static_cast<float>(width);
+	viewport.h = static_cast<float>(height);
+	viewport.min_depth = 0.0f;
+	viewport.max_depth = 1.0f;
+	SDL_SetGPUViewport(current_render_pass, &viewport);
+}
+
 void RenderManager::render() {
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer(device);
 
@@ -149,38 +176,24 @@ void RenderManager::render() {
 	Entity cube;
 	cube.mesh = &cube_mesh;
 
+	Material material;
+	material.pipeline_config = {
+		.name = "cube_pipeline",
+		.shader = shader_manager->get_shader("lit"),
+	};
+
 	for (int i = 0; i < 10; ++i) {
 		cube.name = "cube_" + std::to_string(i);
-		cube.transform.position = glm::vec3(i * 1.5f, 0.0f, 0.0f);  // Spaced out on X
+		cube.transform.position = glm::vec3(i * 1.5f, 0.0f, 0.0f);
+		cube.material = &material;
 		cubes.push_back(cube);
 	}
-
-	// Get cube buffer
-	Buffer* cube_buffer = buffer_manager->get_buffer("cube_buffer");
-
-	// Copy mesh to GPU
-	buffer_manager->copy(cube.mesh, cube_buffer);
-	buffer_manager->upload(cube_buffer);
 
 	// Create swap chain texture
 	create_swap_chain_texture();
 
 	// Create depth texture
 	create_depth_texture();
-
-	// Create render pass
-	current_render_pass = create_render_pass();
-
-	// Setup viewport
-	SDL_GPUViewport viewport{};
-	viewport.x = 0;
-	viewport.y = 0;
-	viewport.w = static_cast<float>(width);
-	viewport.h = static_cast<float>(height);
-	viewport.min_depth = 0.0f;
-	viewport.max_depth = 1.0f;
-	SDL_SetGPUViewport(current_render_pass, &viewport);
-
 
 	std::vector<Drawable> geometry_drawables;
 
@@ -190,12 +203,10 @@ void RenderManager::render() {
 		.buffer_manager = buffer_manager.get(),
 		.shader_manager = shader_manager.get(),
 		.geometry_drawables = &geometry_drawables,
-		.render_pass = current_render_pass,
 		.width = width,
 		.height = height
 	};
 
-	// Now safe:
 	for (const Entity& entity : cubes) {
 		if (!entity.mesh) continue;
 
@@ -208,7 +219,4 @@ void RenderManager::render() {
 	}
 
 	render_graph.execute_all(render_context);
-
-	SDL_EndGPURenderPass(current_render_pass);
-	SDL_SubmitGPUCommandBuffer(buffer_manager->command_buffer);
 }

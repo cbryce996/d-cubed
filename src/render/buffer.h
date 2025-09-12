@@ -56,6 +56,8 @@ class BufferManager {
 	SDL_GPUTexture* swap_chain_texture = nullptr;
 
 	Buffer* get_buffer(const std::string& name);
+	Buffer* get_or_create_buffer(const Drawable* drawable);
+
 	void add_buffer(Buffer& buffer);
 
 	[[nodiscard]] SDL_GPUBuffer* create_buffer(BufferConfig buffer_config) const;

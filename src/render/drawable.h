@@ -1,12 +1,14 @@
 #ifndef DRAWABLE_H
 #define DRAWABLE_H
 
-#include "material.h"
-#include "mesh.h"
+#include <glm.hpp>
+
+struct Material;
+struct Mesh;
 
 struct Drawable {
-    Mesh* mesh;
-    Material* material;
+    Mesh* mesh = nullptr;
+    Material* material = nullptr;
     glm::mat4 model;
 };
 

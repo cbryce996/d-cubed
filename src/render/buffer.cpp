@@ -17,6 +17,29 @@ Buffer* BufferManager::get_buffer(const std::string& name) {
 	return buffer;
 }
 
+Buffer* BufferManager::get_or_create_buffer(const Drawable* drawable) {
+	Buffer* buffer = buffers.contains(drawable->mesh->name) ? &buffers[drawable->mesh->name] : nullptr;
+	if (buffer) {
+		return buffer;
+	}
+
+	buffer = new Buffer{};
+	buffer->name = drawable->mesh->name;
+	buffer->size = drawable->mesh->vertex_size;
+	buffer->gpu_buffer.buffer = create_buffer({
+		.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+		.size = buffer->size
+	});
+	buffer->cpu_buffer.buffer = create_transfer_buffer({
+		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+		.size = buffer->size
+	});
+
+	add_buffer(*buffer);
+	return buffer;
+}
+
+
 void BufferManager::add_buffer(Buffer& buffer) {
 	buffers.emplace(buffer.name, buffer);
 }

@@ -93,24 +93,6 @@ void Engine::run() {
 	render->camera_manager->add_camera(camera);
 	render->camera_manager->set_active_camera(&camera);
 
-	// Hardcode a cube buffer for now
-	Buffer cube_buffer;
-	cube_buffer.name = "cube_buffer";
-	cube_buffer.size = sizeof(cube_vertices);
-
-	// Create buffers
-	cube_buffer.gpu_buffer.buffer = render->buffer_manager->create_buffer({
-		.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-		.size = cube_buffer.size
-	});
-	cube_buffer.cpu_buffer.buffer = render->buffer_manager->create_transfer_buffer({
-		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-		.size = cube_buffer.size
-	});
-
-	// Register buffer
-	render->buffer_manager->add_buffer(cube_buffer);
-
 	while (running) {
 		auto frame_start = clock::now();
 
