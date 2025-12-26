@@ -20,7 +20,7 @@ set(SRC_FILES
         src/render/mesh.cpp
         src/render/pipeline.cpp
         src/render/buffer.cpp
-        src/render/camera.cpp
+        src/engine/cameras/camera.cpp
         src/render/shader.cpp
         src/game/entity.cpp
         src/engine/assets/asset.cpp
@@ -61,6 +61,7 @@ enable_testing()
 add_executable(run_tests
         tests/test_main.cpp
         tests/test_assets.cpp
+        tests/test_cameras.cpp
 )
 
 target_include_directories(run_tests PRIVATE src ${GTEST_INCLUDE_DIR})

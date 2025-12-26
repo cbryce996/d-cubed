@@ -5,8 +5,7 @@
 #include "../engine/tasks.h"
 #include "player.h"
 #include "render/render.h"
-
-class UpdateManager;
+#include "update.h"
 
 class GameManager {
    public:

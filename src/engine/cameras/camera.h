@@ -3,8 +3,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
 
 #include "entity.h"
 #include "inputs.h"
@@ -23,7 +21,6 @@ struct Camera {
 	float move_speed;
 	float look_sensitivity;
 };
-
 
 class CameraManager {
 public:

@@ -4,7 +4,7 @@
 #include <SDL3/SDL.h>
 
 #include "assets/asset.h"
-#include "camera.h"
+#include "cameras/camera.h"
 #include "game/game.h"
 #include "inputs.h"
 #include "render/render.h"

@@ -24,15 +24,15 @@ protected:
 
 TEST_F(AssetManagerTest, LoadCubeMesh) {
 	auto mesh = asset_manager->load_mesh("cube.obj");
-	ASSERT_NE(mesh, nullptr); // should not be null
-	EXPECT_GT(mesh->vertex_count, 0); // should have vertices
+	ASSERT_NE(mesh, nullptr);
+	EXPECT_GT(mesh->vertex_count, 0);
 	EXPECT_EQ(mesh->name, "cube.obj");
 }
 
 TEST_F(AssetManagerTest, LoadMeshCaching) {
 	auto mesh1 = asset_manager->load_mesh("cube.obj");
 	auto mesh2 = asset_manager->load_mesh("cube.obj");
-	ASSERT_EQ(mesh1, mesh2); // should return the same shared_ptr
+	ASSERT_EQ(mesh1, mesh2);
 }
 
 TEST_F(AssetManagerTest, GetMeshReturnsLoadedMesh) {
@@ -51,12 +51,10 @@ TEST_F(AssetManagerTest, ReloadMeshUpdatesMesh) {
 	auto mesh1 = asset_manager->load_mesh("cube.obj");
 	asset_manager->reload_mesh("cube.obj");
 
-	// Give hot-reload thread some time to complete
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 	auto mesh2 = asset_manager->get_mesh("cube.obj");
 	ASSERT_NE(mesh2, nullptr);
 
-	// The mesh object should be different after reload
 	EXPECT_NE(mesh1, mesh2);
 }
