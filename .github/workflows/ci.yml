@@ -17,16 +17,16 @@ jobs:
         run: docker compose build
 
       - name: Build project
-        run: docker compose run --rm dev ./scripts/build.sh
+        run: docker compose run --rm dev bash ./scripts/build.sh
 
       - name: Run tests
-        run: docker compose run --rm dev ./scripts/test.sh
+        run: docker compose run --rm dev bash ./scripts/test.sh
 
       - name: Check formatting
-        run: docker compose run --rm dev ./scripts/format.sh
+        run: docker compose run --rm dev bash ./scripts/format.sh
 
       - name: Run lint
-        run: docker compose run --rm dev ./scripts/lint.sh
+        run: docker compose run --rm dev bash ./scripts/lint.sh
 
       - name: Collect coverage
-        run: docker compose run --rm dev ./scripts/coverage.sh
+        run: docker compose run --rm dev bash ./scripts/coverage.sh
