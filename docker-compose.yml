@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  dev:
+    build: .
+    container_name: salt_and_iron_dev
+    volumes:
+      - .:/app
+    working_dir: /app
+    tty: true
+    command: /bin/bash
