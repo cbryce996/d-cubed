@@ -4,7 +4,7 @@ project(game_project)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_OSX_ARCHITECTURES arm64)
 
-# === Game Sources ===
+# === Game Library ===
 set(SRC_FILES
         src/main.cpp
         src/engine/engine.cpp
@@ -23,14 +23,13 @@ set(SRC_FILES
         src/render/camera.cpp
         src/render/shader.cpp
         src/game/entity.cpp
-        src/render/drawable.h
-        src/render/material.h
-        src/render/asset.cpp
+        src/engine/assets/asset.cpp
+        src/engine/assets/loader.cpp
 )
 
-add_executable(game ${SRC_FILES})
+add_library(game_lib STATIC ${SRC_FILES})
 
-target_include_directories(game PRIVATE
+target_include_directories(game_lib PUBLIC
         src
         src/core/items
         src/core/buildings
@@ -41,11 +40,30 @@ target_include_directories(game PRIVATE
         external/tinyobjloader
 )
 
-# === Link Libraries ===
 find_package(SDL3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-target_link_libraries(game
+target_link_libraries(game_lib PUBLIC
         SDL3::SDL3
         glm::glm
 )
+
+add_executable(game src/main.cpp)
+target_link_libraries(game PRIVATE game_lib)
+
+# === GoogleTest from Homebrew ===
+find_path(GTEST_INCLUDE_DIR gtest/gtest.h PATHS /opt/homebrew/include)
+find_library(GTEST_LIBRARY gtest PATHS /opt/homebrew/lib)
+find_library(GTEST_MAIN_LIBRARY gtest_main PATHS /opt/homebrew/lib)
+
+enable_testing()
+
+add_executable(run_tests
+        tests/test_main.cpp
+        tests/test_assets.cpp
+)
+
+target_include_directories(run_tests PRIVATE src ${GTEST_INCLUDE_DIR})
+target_link_libraries(run_tests PRIVATE game_lib ${GTEST_LIBRARY} ${GTEST_MAIN_LIBRARY})
+
+add_test(NAME EngineTests COMMAND run_tests)

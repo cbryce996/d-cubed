@@ -5,7 +5,7 @@
 #include <SDL3/SDL_gpu.h>
 #include <vector>
 
-#include "asset.h"
+#include "../engine/assets/asset.h"
 #include "buffer.h"
 #include "camera.h"
 #include "drawable.h"
