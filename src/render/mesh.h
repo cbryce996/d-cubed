@@ -1,9 +1,9 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include <gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "pipeline.h"
 
@@ -79,15 +79,22 @@ struct Mesh {
 	const Vertex* vertex_data;
 	size_t vertex_size;
 	size_t vertex_count;
+	std::shared_ptr<std::vector<Vertex>> vertex_storage;
 };
 
-inline Mesh create_cube_mesh() {
-	return Mesh{
-		.name = "cube",
-		.vertex_data = cube_vertices,
-		.vertex_size = sizeof(cube_vertices),
-		.vertex_count = cube_vertex_count
-	};
+inline std::shared_ptr<Mesh> create_cube_mesh() {
+	auto mesh = std::make_shared<Mesh>();
+	mesh->name = "cube";
+
+	mesh->vertex_storage = std::make_shared<std::vector<Vertex>>(
+		std::begin(cube_vertices), std::end(cube_vertices)
+	);
+
+	mesh->vertex_data  = mesh->vertex_storage->data();
+	mesh->vertex_count = mesh->vertex_storage->size();
+	mesh->vertex_size  = mesh->vertex_storage->size() * sizeof(Vertex);
+
+	return mesh;
 }
 
 #endif	// MESH_H

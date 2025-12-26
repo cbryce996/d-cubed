@@ -3,8 +3,8 @@
 
 #include <string>
 #include <unordered_map>
-#include <glm.hpp>
-#include <gtc/quaternion.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include "entity.h"
 #include "inputs.h"

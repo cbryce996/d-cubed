@@ -3,6 +3,7 @@
 
 #include <SDL3/SDL.h>
 
+#include "asset.h"
 #include "camera.h"
 #include "game/game.h"
 #include "inputs.h"
@@ -34,10 +35,11 @@ class Engine {
 
 	TaskScheduler task_scheduler;
 	InputManager input;
-	GameManager game;
 
+	std::shared_ptr<GameManager> game;
 	std::unique_ptr<CameraManager> camera;
 	std::unique_ptr<RenderManager> render;
+	std::unique_ptr<AssetManager> asset;
 };
 
 #endif	// ENGINE_H

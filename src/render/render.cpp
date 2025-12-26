@@ -2,9 +2,9 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include <gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "entity.h"
 #include "utils.h"
@@ -15,12 +15,14 @@ RenderManager::RenderManager(
 	std::shared_ptr<ShaderManager> shader_manager,
 	std::shared_ptr<PipelineManager> pipeline_manager,
 	std::shared_ptr<BufferManager> buffer_manager,
-	std::shared_ptr<CameraManager> camera_manager
+	std::shared_ptr<CameraManager> camera_manager,
+	std::shared_ptr<AssetManager> asset_manager
 )
 	: shader_manager(std::move(shader_manager)),
 	  pipeline_manager(std::move(pipeline_manager)),
 	  buffer_manager(std::move(buffer_manager)),
 	  camera_manager(std::move(camera_manager)),
+	  asset_manager(std::move(asset_manager)),
 	  device(device),
 	  window(window) {
 
@@ -31,11 +33,11 @@ RenderManager::RenderManager(
 		const float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 		const glm::vec3 light_pos_world = active_camera->transform.position;
 
-		prepare_drawables(*render_context.geometry_drawables);
+		prepare_drawables(*render_context.drawables);
 		current_render_pass = create_render_pass();
 		set_viewport(current_render_pass);
 
-		for (const Drawable& drawable : *render_context.geometry_drawables) {
+		for (const Drawable& drawable : *render_context.drawables) {
 			const ModelViewProjection model_view_projection =
 				compute_model_view_projection(*active_camera, aspect_ratio, drawable);
 
@@ -164,59 +166,22 @@ void RenderManager::set_viewport(SDL_GPURenderPass* current_render_pass) {
 	SDL_SetGPUViewport(current_render_pass, &viewport);
 }
 
-void RenderManager::render() {
+void RenderManager::render(RenderState& render_state) {
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer(device);
 
-	// Create cube mesh
-	Mesh cube_mesh = create_cube_mesh();
-
-	// Create cube entity
-	std::vector<Entity> cubes;
-
-	Entity cube;
-	cube.mesh = &cube_mesh;
-
-	Material material;
-	material.pipeline_config = {
-		.name = "cube_pipeline",
-		.shader = shader_manager->get_shader("lit"),
-	};
-
-	for (int i = 0; i < 10; ++i) {
-		cube.name = "cube_" + std::to_string(i);
-		cube.transform.position = glm::vec3(i * 1.5f, 0.0f, 0.0f);
-		cube.material = &material;
-		cubes.push_back(cube);
-	}
-
-	// Create swap chain texture
 	create_swap_chain_texture();
 
-	// Create depth texture
 	create_depth_texture();
-
-	std::vector<Drawable> geometry_drawables;
 
 	RenderContext render_context{
 		.camera_manager = camera_manager.get(),
 		.pipeline_manager = pipeline_manager.get(),
 		.buffer_manager = buffer_manager.get(),
 		.shader_manager = shader_manager.get(),
-		.geometry_drawables = &geometry_drawables,
+		.drawables = &render_state.drawables,
 		.width = width,
 		.height = height
 	};
-
-	for (const Entity& entity : cubes) {
-		if (!entity.mesh) continue;
-
-		Drawable drawable{};
-		drawable.mesh = entity.mesh;
-		drawable.material = entity.material;
-		drawable.model = compute_model_matrix(entity.transform);
-
-		render_context.geometry_drawables->push_back(drawable);
-	}
 
 	render_graph.execute_all(render_context);
 }

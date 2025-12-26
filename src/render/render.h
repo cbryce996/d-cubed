@@ -5,6 +5,7 @@
 #include <SDL3/SDL_gpu.h>
 #include <vector>
 
+#include "asset.h"
 #include "buffer.h"
 #include "camera.h"
 #include "drawable.h"
@@ -13,9 +14,7 @@
 #include "shader.h"
 
 struct RenderState {
-	std::vector<SDL_FRect> item_rects;
-	std::vector<SDL_FRect> crafting_rects;
-	SDL_FRect player_rect{};
+	std::vector<Drawable> drawables;
 };
 
 struct RenderContext {
@@ -24,7 +23,7 @@ struct RenderContext {
 	BufferManager* buffer_manager = nullptr;
 	ShaderManager* shader_manager = nullptr;
 
-	std::vector<Drawable>* geometry_drawables = nullptr;
+    std::vector<Drawable>* drawables = nullptr;
 	SDL_GPURenderPass* render_pass = nullptr;
 
 	uint32_t width = 0;
@@ -39,7 +38,8 @@ class RenderManager {
 		std::shared_ptr<ShaderManager> shader_manager,
 		std::shared_ptr<PipelineManager> pipeline_manager,
 		std::shared_ptr<BufferManager> buffer_manager,
-		std::shared_ptr<CameraManager> camera_manager
+		std::shared_ptr<CameraManager> camera_manager,
+		std::shared_ptr<AssetManager> asset_manager
 	);
 	~RenderManager();
 
@@ -50,8 +50,9 @@ class RenderManager {
 	std::shared_ptr<PipelineManager> pipeline_manager;
 	std::shared_ptr<BufferManager> buffer_manager;
 	std::shared_ptr<CameraManager> camera_manager;
+	std::shared_ptr<AssetManager> asset_manager;
 
-	void render();
+	void render(RenderState& render_state);
 
 	void create_swap_chain_texture();
 	void create_depth_texture() const;

@@ -4,10 +4,6 @@ project(game_project)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_OSX_ARCHITECTURES arm64)
 
-# === SDL3 (with GPU support) ===
-add_subdirectory(external/SDL EXCLUDE_FROM_ALL)
-include_directories(external/SDL/include)
-
 # === Game Sources ===
 set(SRC_FILES
         src/main.cpp
@@ -29,6 +25,7 @@ set(SRC_FILES
         src/game/entity.cpp
         src/render/drawable.h
         src/render/material.h
+        src/render/asset.cpp
 )
 
 add_executable(game ${SRC_FILES})
@@ -41,10 +38,14 @@ target_include_directories(game PRIVATE
         src/engine
         src/game
         src/render
-        external/glm
+        external/tinyobjloader
 )
 
-# === Link SDL3 with GPU support ===
+# === Link Libraries ===
+find_package(SDL3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+
 target_link_libraries(game
         SDL3::SDL3
+        glm::glm
 )

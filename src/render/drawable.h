@@ -1,7 +1,7 @@
 #ifndef DRAWABLE_H
 #define DRAWABLE_H
 
-#include <glm.hpp>
+#include <glm/glm.hpp>
 
 struct Material;
 struct Mesh;

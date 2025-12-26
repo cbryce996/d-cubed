@@ -28,7 +28,7 @@ Pipeline* PipelineManager::get_or_create_pipeline(const Drawable* drawable) {
 	}
 
 	pipeline = new Pipeline{};
-	pipeline->pipeline = create_pipeline(drawable->material->pipeline_config),
+	pipeline->pipeline = create_pipeline(drawable->material->pipeline_config);
 	pipeline->name = "lit";
 
 	add_pipeline(*pipeline);

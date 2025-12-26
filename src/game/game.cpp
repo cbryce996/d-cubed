@@ -9,6 +9,7 @@
 #include "render/render.h"
 #include "types.h"
 #include "update.h"
+#include "utils.h"
 
 inline float fast_exp(const float x) {
 	// Approximate exp(x) using a 5th-degree
@@ -16,7 +17,12 @@ inline float fast_exp(const float x) {
 	return 1.0f + x * (1.0f + x * (0.5f + x * (1.0f / 6.0f + x * (1.0f / 24.0f + x * (1.0f / 120.0f)))));
 }
 
-GameManager::GameManager() {
+GameManager::GameManager(
+	std::shared_ptr<AssetManager> asset_manager,
+	std::shared_ptr<ShaderManager> shader_manager
+) : asset_manager(std::move(asset_manager)),
+	shader_manager(std::move(shader_manager))
+{
 	update_managers.emplace_back(2500.0f, [this](const float delta_time_ms) { calculate_item_decays(delta_time_ms); });
 
 	update_managers.emplace_back(1000.0f, [this](const float delta_time_ms) {
@@ -90,18 +96,36 @@ void GameManager::calculate_item_crafting_progress(const float delta_time_ms) {
 	}
 }
 
-void GameManager::write_render_state(RenderState& render_state) const {
-	render_state.item_rects.clear();
-	const size_t item_count = items.ids.size();
+void GameManager::write_render_state(const float elapsed_time) {
+	render_state.drawables.clear();
 
-	for (size_t i = 0; i < item_count; ++i) {
-		SDL_FRect rect;
-		rect.x = items.x[i];
-		rect.y = items.y[i];
-		rect.w = 10;
-		rect.h = 10;
-		render_state.item_rects.push_back(rect);
+	static std::shared_ptr<Mesh> cube_mesh = create_cube_mesh();
+
+	static Material material;
+	material.pipeline_config = {
+		.name = "cube_pipeline",
+		.shader = shader_manager->get_shader("lit"),
+	};
+
+	for (int i = 0; i < 10; ++i) {
+		Entity cube;
+		cube.mesh = cube_mesh.get(); // safe, persists
+		cube.material = &material;
+
+		// Animate positions
+		float slow_factor = 0.001f; // 10x slower
+		cube.transform.position = glm::vec3(
+			i * 1.5f,
+			std::sin(elapsed_time * 2.0f * slow_factor + i) * 0.5f,
+			std::cos(elapsed_time * 1.5f * slow_factor + i) * 0.5f
+		);
+		cube.transform.rotation = glm::angleAxis((elapsed_time + i) * slow_factor, glm::vec3(0,1,0));
+
+		Drawable drawable{};
+		drawable.mesh = cube.mesh;
+		drawable.material = cube.material;
+		drawable.model = compute_model_matrix(cube.transform);
+
+		render_state.drawables.push_back(drawable);
 	}
-
-	render_state.player_rect = player.get_rect();
 }

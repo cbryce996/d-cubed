@@ -1,6 +1,7 @@
 #include "engine.h"
 
 #include <SDL3/SDL.h>
+#include <glm/glm.hpp>
 #include <chrono>
 #include <iostream>
 
@@ -30,10 +31,11 @@ Engine::Engine() {
 		return;
 	}
 
-	auto shader_manager = std::make_shared<ShaderManager>(gpu_device);
-	auto pipeline_manager = std::make_shared<PipelineManager>(gpu_device, window, shader_manager);
-	auto buffer_manager = std::make_shared<BufferManager>(gpu_device);
-	auto camera_manager = std::make_shared<CameraManager>();
+	std::shared_ptr<ShaderManager> shader_manager = std::make_shared<ShaderManager>(gpu_device);
+	std::shared_ptr<PipelineManager> pipeline_manager = std::make_shared<PipelineManager>(gpu_device, window, shader_manager);
+	std::shared_ptr<BufferManager> buffer_manager = std::make_shared<BufferManager>(gpu_device);
+	std::shared_ptr<CameraManager> camera_manager = std::make_shared<CameraManager>();
+	std::shared_ptr<AssetManager> asset_manager = std::make_shared<AssetManager>();
 
 	render = std::make_unique<RenderManager>(
 		gpu_device,
@@ -41,7 +43,13 @@ Engine::Engine() {
 		shader_manager,
 		pipeline_manager,
 		buffer_manager,
-		camera_manager
+		camera_manager,
+		asset_manager
+	);
+
+	game = std::make_unique<GameManager>(
+		asset_manager,
+		shader_manager
 	);
 
 	SDL_SetWindowRelativeMouseMode(window, true);
@@ -59,7 +67,6 @@ void Engine::run() {
 	static_assert(sizeof(glm::vec3) == 12, "vec3 isn't 12 bytes?");
 	static_assert(sizeof(Vertex) == 36, "Vertex struct is misaligned!");
 
-	GameManager game;
 	running = true;
 	task_scheduler.start();
 
@@ -105,17 +112,22 @@ void Engine::run() {
 		auto current_time = clock::now();
 		const float delta_time_ms = std::chrono::duration<float, std::milli>(current_time - last_sim_time).count();
 		last_sim_time = current_time;
+		accumulated_frame_time_ms += delta_time_ms;
 
 		input.poll();
 		GameManager::handle_input(input);
 		const KeyboardInput* keyboard_input = &input.get_keyboard_input();
 		const MouseInput* mouse_input = &input.get_mouse_input();
 
-		game.update(delta_time_ms, task_scheduler, input);
+		if (keyboard_input->keys[SDL_SCANCODE_ESCAPE])
+			running = false;
+
+		game->update(delta_time_ms, task_scheduler, input);
+		game->write_render_state(accumulated_frame_time_ms);
 
 		render->camera_manager->update_camera_position(delta_time_ms, keyboard_input->keys);
 		render->camera_manager->update_camera_look(mouse_input, render->camera_manager->get_active_camera());
-		render->render();
+		render->render(game->render_state);
 
 		auto frame_end = clock::now();
 		float frame_time_ms = std::chrono::duration<float, std::milli>(frame_end - frame_start).count();
