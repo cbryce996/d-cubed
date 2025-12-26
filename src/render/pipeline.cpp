@@ -6,7 +6,8 @@ PipelineManager::PipelineManager(
 	SDL_GPUDevice* device,
 	SDL_Window* window,
 	const std::shared_ptr<ShaderManager>& shader_manager
-)	: device(device),
+)
+	: device(device),
 	  window(window),
 	  shader_manager(shader_manager.get()) {}
 

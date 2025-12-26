@@ -3,7 +3,7 @@
 
 #include <SDL3/SDL.h>
 
-#include "../engine/inputs.h"
+#include "../engine/inputs/input.h"
 
 class Player {
    public:

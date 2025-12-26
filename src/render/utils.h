@@ -16,31 +16,6 @@ struct ModelViewProjection {
     glm::mat4 mvp;
 };
 
-inline ModelViewProjection compute_model_view_projection(
-    const Camera& camera,
-    float aspect_ratio,
-    const Drawable& drawable
-) {
-    ModelViewProjection data{};
-    data.model = drawable.model;
-
-    data.view = glm::lookAt(
-        camera.transform.position,
-        camera.transform.position + camera.transform.rotation * glm::vec3(0.0f, 0.0f, -1.0f),
-        camera.transform.rotation * glm::vec3(0.0f, 1.0f, 0.0f)
-    );
-
-    data.proj = glm::perspective(
-        glm::radians(camera.lens.fov),
-        aspect_ratio,
-        camera.lens.near_clip,
-        camera.lens.far_clip
-    );
-
-    data.mvp = data.proj * data.view * data.model;
-    return data;
-}
-
 
 inline glm::vec3 model_to_world(const glm::vec3& local_pos, const glm::mat4& model_matrix) {
     return glm::vec3(model_matrix * glm::vec4(local_pos, 1.0f));

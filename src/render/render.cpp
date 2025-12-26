@@ -25,7 +25,6 @@ RenderManager::RenderManager(
 	  asset_manager(std::move(asset_manager)),
 	  device(device),
 	  window(window) {
-
 	RenderPassNode render_pass;
 	render_pass.name = "geometry_pass";
 	render_pass.execute = [this](const RenderContext& render_context) {
@@ -39,7 +38,7 @@ RenderManager::RenderManager(
 
 		for (const Drawable& drawable : *render_context.drawables) {
 			const ModelViewProjection model_view_projection =
-				compute_model_view_projection(*active_camera, aspect_ratio, drawable);
+				CameraManager::compute_model_view_projection(*active_camera, aspect_ratio, drawable);
 
 			const Pipeline* pipeline = render_context.pipeline_manager->get_or_create_pipeline(&drawable);
 			const Buffer* buffer = render_context.buffer_manager->get_or_create_buffer(&drawable);
@@ -62,7 +61,13 @@ RenderManager::~RenderManager() = default;
 
 void RenderManager::create_swap_chain_texture() {
 	SDL_GPUTexture* swap_chain_texture = nullptr;
-	if (!SDL_WaitAndAcquireGPUSwapchainTexture(buffer_manager->command_buffer, window, &swap_chain_texture, &width, &height)) {
+	if (!SDL_WaitAndAcquireGPUSwapchainTexture(
+			buffer_manager->command_buffer,
+			window,
+			&swap_chain_texture,
+			&width,
+			&height
+		)) {
 		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to acquire swap chain texture.");
 		return;
 	}
@@ -107,7 +112,6 @@ SDL_GPURenderPass* RenderManager::create_render_pass() const {
 	depth_target_info.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
 	depth_target_info.cycle = true;
 
-
 	SDL_GPUColorTargetInfo color_target_info{};
 	color_target_info.texture = buffer_manager->swap_chain_texture;
 	color_target_info.mip_level = 0;
@@ -138,10 +142,10 @@ void RenderManager::draw_mesh(
 	SDL_GPURenderPass* pass = current_render_pass;
 
 	SDL_PushGPUVertexUniformData(buffer_manager->command_buffer, 0, &uniform, sizeof(Uniform));
-	SDL_PushGPUFragmentUniformData(buffer_manager->command_buffer, 0, &uniform, sizeof(Uniform)); // <-- THIS
+	SDL_PushGPUFragmentUniformData(buffer_manager->command_buffer, 0, &uniform, sizeof(Uniform));  // <-- THIS
 
 	SDL_BindGPUGraphicsPipeline(pass, pipeline->pipeline);
-	SDL_GPUBufferBinding bindings[1] = { { buffer->gpu_buffer.buffer, 0 }};
+	SDL_GPUBufferBinding bindings[1] = {{buffer->gpu_buffer.buffer, 0}};
 	SDL_BindGPUVertexBuffers(pass, 0, bindings, 1);
 
 	SDL_DrawGPUPrimitives(pass, mesh->vertex_count, 1, 0, 0);

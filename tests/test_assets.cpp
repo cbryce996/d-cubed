@@ -22,39 +22,38 @@ protected:
 	std::unique_ptr<AssetManager> asset_manager;
 };
 
-TEST_F(AssetManagerTest, LoadCubeMesh) {
+TEST_F(AssetManagerTest, LoadsMeshSuccessfully) {
 	auto mesh = asset_manager->load_mesh("cube.obj");
-	ASSERT_NE(mesh, nullptr);
-	EXPECT_GT(mesh->vertex_count, 0);
-	EXPECT_EQ(mesh->name, "cube.obj");
+	ASSERT_NE(mesh, nullptr) << "Expected mesh to not be null";
+	EXPECT_GT(mesh->vertex_count, 0) << "Expected loaded mesh to have vertices";
+	EXPECT_EQ(mesh->name, "cube.obj") << "Expected mesh to have name";
 }
 
-TEST_F(AssetManagerTest, LoadMeshCaching) {
+TEST_F(AssetManagerTest, CachesLoadedMesh) {
 	auto mesh1 = asset_manager->load_mesh("cube.obj");
 	auto mesh2 = asset_manager->load_mesh("cube.obj");
-	ASSERT_EQ(mesh1, mesh2);
+	ASSERT_EQ(mesh1, mesh2) << "Expected cached mesh";
 }
 
-TEST_F(AssetManagerTest, GetMeshReturnsLoadedMesh) {
+TEST_F(AssetManagerTest, RetrievesLoadedMesh) {
 	asset_manager->load_mesh("cube.obj");
 	auto mesh = asset_manager->get_mesh("cube.obj");
-	ASSERT_NE(mesh, nullptr);
-	EXPECT_EQ(mesh->name, "cube.obj");
+	ASSERT_NE(mesh, nullptr) << "Expected mesh to not be null";
+	EXPECT_EQ(mesh->name, "cube.obj") << "Expected mesh to have name'";
 }
 
-TEST_F(AssetManagerTest, GetMeshReturnsNullForMissingMesh) {
-	auto mesh = asset_manager->get_mesh("nonexistent.obj");
-	EXPECT_EQ(mesh, nullptr);
+TEST_F(AssetManagerTest, ReturnsNullForMissingMesh) {
+	auto mesh = asset_manager->get_mesh("null.obj");
+	EXPECT_EQ(mesh, nullptr) << "Expected mesh to be null";
 }
 
-TEST_F(AssetManagerTest, ReloadMeshUpdatesMesh) {
+TEST_F(AssetManagerTest, ReloadsMeshUpdatesCache) {
 	auto mesh1 = asset_manager->load_mesh("cube.obj");
 	asset_manager->reload_mesh("cube.obj");
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 	auto mesh2 = asset_manager->get_mesh("cube.obj");
-	ASSERT_NE(mesh2, nullptr);
-
-	EXPECT_NE(mesh1, mesh2);
+	ASSERT_NE(mesh2, nullptr) << "Expected mesh to not be null";
+	EXPECT_NE(mesh1, mesh2) << "Expected mesh to not be cached";
 }

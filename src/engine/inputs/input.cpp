@@ -1,4 +1,4 @@
-#include "inputs.h"
+#include "input.h"
 
 #include <SDL3/SDL.h>
 #include <cstring>
@@ -21,7 +21,6 @@ void InputManager::poll() {
 	mouse_input.dy = dy;
 }
 
-
 const MouseInput& InputManager::get_mouse_input() const {
 	return mouse_input;
 }
@@ -29,4 +28,3 @@ const MouseInput& InputManager::get_mouse_input() const {
 const KeyboardInput& InputManager::get_keyboard_input() const {
 	return keyboard_input;
 }
-

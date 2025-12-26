@@ -26,19 +26,13 @@ Buffer* BufferManager::get_or_create_buffer(const Drawable* drawable) {
 	buffer = new Buffer{};
 	buffer->name = drawable->mesh->name;
 	buffer->size = drawable->mesh->vertex_size;
-	buffer->gpu_buffer.buffer = create_buffer({
-		.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-		.size = buffer->size
-	});
-	buffer->cpu_buffer.buffer = create_transfer_buffer({
-		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-		.size = buffer->size
-	});
+	buffer->gpu_buffer.buffer = create_buffer({.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = buffer->size});
+	buffer->cpu_buffer.buffer =
+		create_transfer_buffer({.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = buffer->size});
 
 	add_buffer(*buffer);
 	return buffer;
 }
-
 
 void BufferManager::add_buffer(Buffer& buffer) {
 	buffers.emplace(buffer.name, buffer);
@@ -60,9 +54,7 @@ SDL_GPUTransferBuffer* BufferManager::create_transfer_buffer(const TransferBuffe
 	return SDL_CreateGPUTransferBuffer(device, &buffer_create_info);
 }
 
-void BufferManager::upload(
-	const Buffer* buffer
-) const {
+void BufferManager::upload(const Buffer* buffer) const {
 	SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass(command_buffer);
 
 	const SDL_GPUTransferBufferLocation transfer_loc{buffer->cpu_buffer.buffer, 0};

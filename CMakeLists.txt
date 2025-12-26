@@ -6,46 +6,46 @@ set(CMAKE_OSX_ARCHITECTURES arm64)
 
 # === Game Library ===
 set(SRC_FILES
-        src/main.cpp
-        src/engine/engine.cpp
-        src/engine/tasks.cpp
-        src/engine/inputs.cpp
-        src/game/game.cpp
-        src/game/player.cpp
-        src/game/update.cpp
-        src/core/items/types.cpp
-        src/core/items/items.cpp
-        src/render/render.cpp
-        src/render/graph.cpp
-        src/render/mesh.cpp
-        src/render/pipeline.cpp
-        src/render/buffer.cpp
-        src/engine/cameras/camera.cpp
-        src/render/shader.cpp
-        src/game/entity.cpp
-        src/engine/assets/asset.cpp
-        src/engine/assets/loader.cpp
+    src/main.cpp
+    src/engine/engine.cpp
+    src/engine/tasks.cpp
+        src/engine/inputs/input.cpp
+    src/game/game.cpp
+    src/game/player.cpp
+    src/game/update.cpp
+    src/core/items/types.cpp
+    src/core/items/items.cpp
+    src/render/render.cpp
+    src/render/graph.cpp
+    src/render/mesh.cpp
+    src/render/pipeline.cpp
+    src/render/buffer.cpp
+    src/engine/cameras/camera.cpp
+    src/render/shader.cpp
+    src/game/entity.cpp
+    src/engine/assets/asset.cpp
+    src/engine/assets/loader.cpp
 )
 
 add_library(game_lib STATIC ${SRC_FILES})
 
 target_include_directories(game_lib PUBLIC
-        src
-        src/core/items
-        src/core/buildings
-        src/core/world
-        src/engine
-        src/game
-        src/render
-        external/tinyobjloader
+    src
+    src/core/items
+    src/core/buildings
+    src/core/world
+    src/engine
+    src/game
+    src/render
+    external/tinyobjloader
 )
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 target_link_libraries(game_lib PUBLIC
-        SDL3::SDL3
-        glm::glm
+    SDL3::SDL3
+    glm::glm
 )
 
 add_executable(game src/main.cpp)
@@ -57,14 +57,22 @@ find_library(GTEST_LIBRARY gtest PATHS /opt/homebrew/lib)
 find_library(GTEST_MAIN_LIBRARY gtest_main PATHS /opt/homebrew/lib)
 
 enable_testing()
+include(CTest)
 
-add_executable(run_tests
-        tests/test_main.cpp
-        tests/test_assets.cpp
-        tests/test_cameras.cpp
+add_executable(engine_tests
+    tests/test_main.cpp
+    tests/test_assets.cpp
+    tests/test_cameras.cpp
 )
 
-target_include_directories(run_tests PRIVATE src ${GTEST_INCLUDE_DIR})
-target_link_libraries(run_tests PRIVATE game_lib ${GTEST_LIBRARY} ${GTEST_MAIN_LIBRARY})
+target_include_directories(engine_tests PRIVATE src ${GTEST_INCLUDE_DIR})
+target_link_libraries(engine_tests PRIVATE game_lib ${GTEST_LIBRARY} ${GTEST_MAIN_LIBRARY})
 
-add_test(NAME EngineTests COMMAND run_tests)
+add_custom_target(check
+    COMMAND ${CMAKE_COMMAND} -E echo "Running unit tests..."
+    COMMAND engine_tests || ${CMAKE_COMMAND} -E echo "❌ Tests failed" && exit 1
+    DEPENDS engine_tests
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_test(NAME EngineTests COMMAND engine_tests)

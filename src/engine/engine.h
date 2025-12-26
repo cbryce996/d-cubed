@@ -6,7 +6,7 @@
 #include "assets/asset.h"
 #include "cameras/camera.h"
 #include "game/game.h"
-#include "inputs.h"
+#include "inputs/input.h"
 #include "render/render.h"
 #include "tasks.h"
 

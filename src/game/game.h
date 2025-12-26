@@ -1,7 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "../engine/inputs.h"
+#include "../engine/inputs/input.h"
 #include "../engine/tasks.h"
 #include "player.h"
 #include "render/render.h"

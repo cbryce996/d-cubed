@@ -4,8 +4,9 @@
 #include <string>
 #include <unordered_map>
 
+#include "../inputs/input.h"
 #include "entity.h"
-#include "inputs.h"
+#include "utils.h"
 
 struct Lens {
 	float fov;
@@ -31,8 +32,17 @@ public:
 	Camera* get_active_camera();
 
 	void update_camera_position(float delta_time, const bool* keys);
-	void update_camera_look(const MouseInput *mouse_input, Camera *camera);
-private:
+	void update_camera_look(
+		const MouseInput* mouse_input,
+		Camera* camera
+	);
+	static ModelViewProjection compute_model_view_projection(
+		const Camera& camera,
+		float aspect_ratio,
+		const Drawable& drawable
+	);
+
+   private:
 	std::unordered_map<std::string, Camera> cameras;
 	const Camera* active_camera = nullptr;
 };

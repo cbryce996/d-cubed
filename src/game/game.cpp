@@ -20,9 +20,9 @@ inline float fast_exp(const float x) {
 GameManager::GameManager(
 	std::shared_ptr<AssetManager> asset_manager,
 	std::shared_ptr<ShaderManager> shader_manager
-) : asset_manager(std::move(asset_manager)),
-	shader_manager(std::move(shader_manager))
-{
+)
+	: asset_manager(std::move(asset_manager)),
+	  shader_manager(std::move(shader_manager)) {
 	update_managers.emplace_back(2500.0f, [this](const float delta_time_ms) { calculate_item_decays(delta_time_ms); });
 
 	update_managers.emplace_back(1000.0f, [this](const float delta_time_ms) {
@@ -109,17 +109,17 @@ void GameManager::write_render_state(const float elapsed_time) {
 
 	for (int i = 0; i < 10; ++i) {
 		Entity cube;
-		cube.mesh = cube_mesh.get(); // safe, persists
+		cube.mesh = cube_mesh.get();  // safe, persists
 		cube.material = &material;
 
 		// Animate positions
-		float slow_factor = 0.001f; // 10x slower
+		float slow_factor = 0.001f;	 // 10x slower
 		cube.transform.position = glm::vec3(
 			i * 1.5f,
 			std::sin(elapsed_time * 2.0f * slow_factor + i) * 0.5f,
 			std::cos(elapsed_time * 1.5f * slow_factor + i) * 0.5f
 		);
-		cube.transform.rotation = glm::angleAxis((elapsed_time + i) * slow_factor, glm::vec3(0,1,0));
+		cube.transform.rotation = glm::angleAxis((elapsed_time + i) * slow_factor, glm::vec3(0, 1, 0));
 
 		Drawable drawable{};
 		drawable.mesh = cube.mesh;

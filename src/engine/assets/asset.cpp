@@ -1,17 +1,15 @@
-#include <thread>
 #include <SDL3/SDL_log.h>
+#include <thread>
 
 #include "engine/assets/asset.h"
 
-AssetManager::AssetManager(std::shared_ptr<IMeshLoader> loader)
-: loader(std::move(loader)) {
-}
+AssetManager::AssetManager(std::shared_ptr<IMeshLoader> loader) : loader(std::move(loader)) {}
 
 std::shared_ptr<Mesh> AssetManager::load_mesh_from_file(const std::string& path) {
-    auto mesh = std::make_shared<Mesh>();
-    mesh->name = path;
+	auto mesh = std::make_shared<Mesh>();
+	mesh->name = path;
 
-    std::vector<Vertex> vertices;
+	std::vector<Vertex> vertices;
 
 	if (!loader->load(path, vertices)) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load %s: %s", path.c_str());
@@ -22,10 +20,10 @@ std::shared_ptr<Mesh> AssetManager::load_mesh_from_file(const std::string& path)
 	mesh->vertex_data = mesh->vertex_storage->data();
 	mesh->vertex_count = mesh->vertex_storage->size();
 	mesh->vertex_size = mesh->vertex_storage->size() * sizeof(Vertex);
-    meshes[path] = mesh;
+	meshes[path] = mesh;
 
-    SDL_Log("Loaded mesh: %s (%zu vertices)", path.c_str(), mesh->vertex_count);
-    return mesh;
+	SDL_Log("Loaded mesh: %s (%zu vertices)", path.c_str(), mesh->vertex_count);
+	return mesh;
 }
 
 std::shared_ptr<Mesh> AssetManager::load_mesh(const std::string& path) {

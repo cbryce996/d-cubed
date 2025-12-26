@@ -3,7 +3,10 @@
 
 #include "tiny_obj_loader.h"
 
-bool TinyObjMeshLoader::load(const std::string& path, std::vector<Vertex>& out_vertices) {
+bool TinyObjMeshLoader::load(
+	const std::string& path,
+	std::vector<Vertex>& out_vertices
+) {
 	out_vertices.clear();
 
 	tinyobj::attrib_t attrib;

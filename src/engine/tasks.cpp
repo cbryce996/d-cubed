@@ -2,9 +2,7 @@
 
 #include <iostream>
 
-TaskScheduler::TaskScheduler(const size_t num_threads)
-	: thread_count(num_threads),
-	  running(false) {}
+TaskScheduler::TaskScheduler(const size_t num_threads) : thread_count(num_threads) {}
 
 TaskScheduler::~TaskScheduler() {
 	stop();

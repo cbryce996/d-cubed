@@ -1,8 +1,10 @@
 #include "engine.h"
 
 #include <SDL3/SDL.h>
-#include <glm/glm.hpp>
+#include <inputs/input.h>
+
 #include <chrono>
+#include <glm/glm.hpp>
 #include <iostream>
 
 #include "../game/game.h"
@@ -32,7 +34,8 @@ Engine::Engine() {
 	}
 
 	std::shared_ptr<ShaderManager> shader_manager = std::make_shared<ShaderManager>(gpu_device);
-	std::shared_ptr<PipelineManager> pipeline_manager = std::make_shared<PipelineManager>(gpu_device, window, shader_manager);
+	std::shared_ptr<PipelineManager> pipeline_manager =
+		std::make_shared<PipelineManager>(gpu_device, window, shader_manager);
 	std::shared_ptr<BufferManager> buffer_manager = std::make_shared<BufferManager>(gpu_device);
 	std::shared_ptr<CameraManager> camera_manager = std::make_shared<CameraManager>();
 	std::shared_ptr<AssetManager> asset_manager = std::make_shared<AssetManager>();
@@ -47,10 +50,7 @@ Engine::Engine() {
 		asset_manager
 	);
 
-	game = std::make_unique<GameManager>(
-		asset_manager,
-		shader_manager
-	);
+	game = std::make_unique<GameManager>(asset_manager, shader_manager);
 
 	SDL_SetWindowRelativeMouseMode(window, true);
 }
@@ -81,22 +81,18 @@ void Engine::run() {
 	Camera camera{};
 	camera.name = "main";
 
-	// Transform
 	camera.transform.position = glm::vec3(0.0f, 0.0f, 3.0f);
 	camera.transform.rotation = glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f));
 	camera.transform.scale = glm::vec3(1.0f);
 
-	// Lens
 	camera.lens.fov = 90.0f;
 	camera.lens.aspect = 16.0f / 9.0f;
 	camera.lens.near_clip = 0.1f;
 	camera.lens.far_clip = 100.0f;
 
-	// Movement
-	camera.move_speed = 5.0f;
-	camera.look_sensitivity = 0.2f;
+	camera.move_speed = 0.2f;
+	camera.look_sensitivity = 0.1f;
 
-	// Register camera
 	render->camera_manager->add_camera(camera);
 	render->camera_manager->set_active_camera(&camera);
 
