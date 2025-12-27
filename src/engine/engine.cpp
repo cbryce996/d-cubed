@@ -101,7 +101,7 @@ void Engine::run() {
 	camera.look_sensitivity = 0.1f;
 
 	render->camera_manager->add_camera(camera);
-	render->camera_manager->set_active_camera(&camera);
+	render->camera_manager->set_active_camera(camera);
 
 	while (running) {
 		auto frame_start = clock::now();
@@ -135,10 +135,7 @@ void Engine::run() {
 			delta_time_ms,
 			keyboard_input->keys
 		);
-		render->camera_manager->update_camera_look(
-			mouse_input,
-			render->camera_manager->get_active_camera()
-		);
+		render->camera_manager->update_camera_look(mouse_input);
 		render->render(game->render_state);
 
 		auto frame_end = clock::now();

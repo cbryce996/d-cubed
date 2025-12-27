@@ -20,6 +20,9 @@ class TaskScheduler {
 	void start();
 	void stop();
 
+	size_t thread_count = 0;
+	std::atomic<bool> running = false;
+
    private:
 	void do_work();
 
@@ -27,8 +30,6 @@ class TaskScheduler {
 	std::queue<std::function<void()>> task_queue;
 	std::mutex queue_mutex;
 	std::condition_variable cv;
-	std::atomic<bool> running = false;
-	size_t thread_count = 0;
 };
 
 #endif	// TASKS_H

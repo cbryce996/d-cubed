@@ -8,8 +8,8 @@ set(CMAKE_OSX_ARCHITECTURES arm64)
 set(SRC_FILES
     src/main.cpp
     src/engine/engine.cpp
-    src/engine/tasks.cpp
-        src/engine/inputs/input.cpp
+        src/engine/tasks/tasks.cpp
+    src/engine/inputs/input.cpp
     src/game/game.cpp
     src/game/player.cpp
     src/game/update.cpp
@@ -63,6 +63,7 @@ add_executable(engine_tests
     tests/test_main.cpp
     tests/test_assets.cpp
     tests/test_cameras.cpp
+    tests/test_tasks.cpp
 )
 
 target_include_directories(engine_tests PRIVATE src ${GTEST_INCLUDE_DIR})

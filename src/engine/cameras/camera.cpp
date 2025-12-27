@@ -21,9 +21,9 @@ Camera* CameraManager::get_camera(const std::string& name) {
 	return camera;
 }
 
-void CameraManager::set_active_camera(const Camera* camera) {
-	if (cameras.contains(camera->name)) {
-		active_camera = camera;
+void CameraManager::set_active_camera(const Camera& camera) {
+	if (cameras.contains(camera.name)) {
+		active_camera = &camera;
 	}
 }
 
@@ -40,6 +40,10 @@ void CameraManager::update_camera_position(
 	const bool* keys
 ) {
 	Camera* camera = get_active_camera();
+
+	if (!camera) {
+		return;
+	}
 
 	const glm::vec3 forward =
 		camera->transform.rotation * glm::vec3(0.0f, 0.0f, -1.0f);
@@ -62,12 +66,12 @@ void CameraManager::update_camera_position(
 		camera->transform.position += right * speed;
 }
 
-void CameraManager::update_camera_look(
-	const MouseInput* mouse_input,
-	Camera* camera
-) {
-	if (!camera || !mouse_input)
+void CameraManager::update_camera_look(const MouseInput* mouse_input) {
+	Camera* camera = get_active_camera();
+
+	if (!camera) {
 		return;
+	}
 
 	const float yaw_delta =
 		glm::radians(-mouse_input->dx * camera->look_sensitivity);

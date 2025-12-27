@@ -28,17 +28,14 @@ class CameraManager {
 	void add_camera(const Camera& camera);
 	Camera* get_camera(const std::string& name);
 
-	void set_active_camera(const Camera* camera);
+	void set_active_camera(const Camera& camera);
 	Camera* get_active_camera();
 
 	void update_camera_position(
 		float delta_time,
 		const bool* keys
 	);
-	void update_camera_look(
-		const MouseInput* mouse_input,
-		Camera* camera
-	);
+	void update_camera_look(const MouseInput* mouse_input);
 	static ModelViewProjection compute_model_view_projection(
 		const Camera& camera,
 		float aspect_ratio,

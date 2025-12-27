@@ -8,7 +8,7 @@
 #include "game/game.h"
 #include "inputs/input.h"
 #include "render/render.h"
-#include "tasks.h"
+#include "tasks/tasks.h"
 
 struct ItemInstance {
 	SDL_Rect rect;
