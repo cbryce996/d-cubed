@@ -12,7 +12,7 @@ std::shared_ptr<Mesh> AssetManager::load_mesh_from_file(const std::string& path)
 	std::vector<Vertex> vertices;
 
 	if (!loader->load(path, vertices)) {
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load %s: %s", path.c_str());
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load %s", path.c_str());
 		return nullptr;
 	}
 
