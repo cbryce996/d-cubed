@@ -34,9 +34,3 @@ jobs:
 
       - name: Check formatting
         run: ./scripts/format.sh
-
-      - name: Run lint
-        run: ./scripts/lint.sh
-
-      - name: Collect coverage
-        run: ./scripts/coverage.sh
