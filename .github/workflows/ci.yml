@@ -19,7 +19,7 @@ jobs:
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           fi
           brew update
-          brew install cmake ninja glm sdl3 lcov clang-format cppcheck
+          brew install cmake ninja glm sdl3 lcov clang-format cppcheck googletest
 
       - name: Build project
         run: ./scripts/build.sh
