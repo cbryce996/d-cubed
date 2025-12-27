@@ -7,30 +7,56 @@ on:
     branches: [ master ]
 
 jobs:
-  build-and-test:
+  format:
     runs-on: macos-latest
-
     steps:
       - uses: actions/checkout@v3
-
-      - name: Fetch tinyobjloader
-        run: |
-          mkdir -p external
-          git clone https://github.com/tinyobjloader/tinyobjloader.git external/tinyobjloader
-
-      - name: Install dependencies
+      - name: Install dependencies for formatting
         run: |
           if ! command -v brew &> /dev/null; then
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           fi
           brew update
-          brew install cmake ninja glm sdl3 lcov clang-format cppcheck googletest
+          brew install clang-format cppcheck
+      - name: Check code format
+        run: ./scripts/format.sh
+      - name: Run linter
+        run: ./scripts/lint.sh
 
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Fetch tinyobjloader
+        run: |
+          mkdir -p external
+          git clone https://github.com/tinyobjloader/tinyobjloader.git external/tinyobjloader
+      - name: Install build dependencies
+        run: |
+          if ! command -v brew &> /dev/null; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+          brew update
+          brew install cmake ninja glm sdl3 lcov googletest
       - name: Build project
         run: ./scripts/build.sh
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-folder
+          path: build
 
-      - name: Run tests
+  test:
+    runs-on: macos-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-folder
+          path: build
+      - name: Run unit tests
         run: ./scripts/test.sh
-
-      - name: Check formatting
-        run: ./scripts/format.sh
+      - name: Collect coverage
+        run: ./scripts/coverage.sh

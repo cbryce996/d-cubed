@@ -4,7 +4,7 @@
 #include "pipeline.h"
 
 struct Material {
-    PipelineConfig pipeline_config;
+	PipelineConfig pipeline_config;
 };
 
-#endif //MATERIAL_H
+#endif	// MATERIAL_H

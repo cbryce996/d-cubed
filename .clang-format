@@ -17,7 +17,7 @@ BinPackArguments: false
 BinPackParameters: AlwaysOnePerLine
 
 # === Function formatting ===
-AlwaysBreakAfterReturnType: None  # ← This is the key change
+AlwaysBreakAfterReturnType: None
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakBeforeMultilineStrings: true
 PenaltyBreakBeforeFirstCallParameter: 0

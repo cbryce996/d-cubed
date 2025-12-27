@@ -67,9 +67,7 @@ class BufferManager {
 		const Mesh* mesh,
 		Buffer* buffer
 	) const;
-	void upload(
-		const Buffer* buffer
-	) const;
+	void upload(const Buffer* buffer) const;
 
    private:
 	SDL_GPUDevice* device = nullptr;

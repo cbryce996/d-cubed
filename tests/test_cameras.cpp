@@ -6,7 +6,7 @@
 #include <SDL3/SDL.h>
 
 class CameraTest : public ::testing::Test {
-protected:
+   protected:
 	void SetUp() override {
 		Camera cam;
 		cam.name = "test_cam";
@@ -22,24 +22,36 @@ protected:
 	CameraManager manager;
 };
 
-TEST_F(CameraTest, RetrieveCamera) {
+TEST_F(
+	CameraTest,
+	RetrieveCamera
+) {
 	Camera* cam = manager.get_camera("test_cam");
 	ASSERT_NE(cam, nullptr) << "Expected camera to not be null";
 	EXPECT_EQ(cam->name, "test_cam") << "Expected camera to have name";
 }
 
-TEST_F(CameraTest, ReturnsNullForMissingCamera) {
+TEST_F(
+	CameraTest,
+	ReturnsNullForMissingCamera
+) {
 	Camera* cam = manager.get_camera("null_cam");
 	ASSERT_EQ(cam, nullptr) << "Expected camera to be null";
 }
 
-TEST_F(CameraTest, GetActiveCamera) {
+TEST_F(
+	CameraTest,
+	GetActiveCamera
+) {
 	Camera* active = manager.get_active_camera();
 	ASSERT_NE(active, nullptr) << "Expected camera to not be null";
 	EXPECT_EQ(active->name, "test_cam") << "Expected camera to have name";
 }
 
-TEST_F(CameraTest, UpdatePositionForward) {
+TEST_F(
+	CameraTest,
+	UpdatePositionForward
+) {
 	Camera* cam = manager.get_active_camera();
 	glm::vec3 start_pos = cam->transform.position;
 
@@ -51,7 +63,10 @@ TEST_F(CameraTest, UpdatePositionForward) {
 	EXPECT_LT(cam->transform.position.z, start_pos.z) << "Expected camera position to move backward";
 }
 
-TEST_F(CameraTest, UpdatePositionBackward) {
+TEST_F(
+	CameraTest,
+	UpdatePositionBackward
+) {
 	Camera* cam = manager.get_active_camera();
 	glm::vec3 start_pos = cam->transform.position;
 
@@ -63,7 +78,10 @@ TEST_F(CameraTest, UpdatePositionBackward) {
 	EXPECT_GT(cam->transform.position.z, start_pos.z) << "Expected camera position to move forward";
 }
 
-TEST_F(CameraTest, UpdatePositionRight) {
+TEST_F(
+	CameraTest,
+	UpdatePositionRight
+) {
 	Camera* cam = manager.get_active_camera();
 	glm::vec3 start_pos = cam->transform.position;
 
@@ -75,7 +93,10 @@ TEST_F(CameraTest, UpdatePositionRight) {
 	EXPECT_GT(cam->transform.position.x, start_pos.x) << "Expected camera position to move right";
 }
 
-TEST_F(CameraTest, UpdatePositionLeft) {
+TEST_F(
+	CameraTest,
+	UpdatePositionLeft
+) {
 	Camera* cam = manager.get_active_camera();
 	glm::vec3 start_pos = cam->transform.position;
 
@@ -87,7 +108,10 @@ TEST_F(CameraTest, UpdatePositionLeft) {
 	EXPECT_LT(cam->transform.position.x, start_pos.x) << "Expected camera position to move left";
 }
 
-TEST_F(CameraTest, UpdateLookChangesRotation) {
+TEST_F(
+	CameraTest,
+	UpdateLookChangesRotation
+) {
 	Camera* cam = manager.get_active_camera();
 	glm::quat before = cam->transform.rotation;
 

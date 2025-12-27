@@ -5,17 +5,17 @@
 #include <string>
 #include <unordered_map>
 
-#include "render/mesh.h"
 #include "loader.h"
+#include "render/mesh.h"
 
 class AssetManager {
-public:
+   public:
 	explicit AssetManager(std::shared_ptr<IMeshLoader> loader = std::make_shared<TinyObjMeshLoader>());
 	std::shared_ptr<Mesh> load_mesh(const std::string& path);
 	void reload_mesh(const std::string& path);
 	std::shared_ptr<Mesh> get_mesh(const std::string& path);
 
-private:
+   private:
 	std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes;
 	std::mutex mesh_mutex;
 

@@ -7,9 +7,9 @@ struct Material;
 struct Mesh;
 
 struct Drawable {
-    Mesh* mesh = nullptr;
-    Material* material = nullptr;
-    glm::mat4 model;
+	Mesh* mesh = nullptr;
+	Material* material = nullptr;
+	glm::mat4 model;
 };
 
-#endif //DRAWABLE_H
+#endif	// DRAWABLE_H

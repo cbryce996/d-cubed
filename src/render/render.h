@@ -23,7 +23,7 @@ struct RenderContext {
 	BufferManager* buffer_manager = nullptr;
 	ShaderManager* shader_manager = nullptr;
 
-    std::vector<Drawable>* drawables = nullptr;
+	std::vector<Drawable>* drawables = nullptr;
 	SDL_GPURenderPass* render_pass = nullptr;
 
 	uint32_t width = 0;
@@ -57,24 +57,24 @@ class RenderManager {
 	void create_swap_chain_texture();
 	void create_depth_texture() const;
 	void draw_mesh(
-		const Pipeline *pipeline,
-		const Buffer *buffer,
-		const Mesh *mesh,
-		const Uniform &uniform
+		const Pipeline* pipeline,
+		const Buffer* buffer,
+		const Mesh* mesh,
+		const Uniform& uniform
 	);
 
-	void prepare_drawables(std::vector<Drawable> &drawables) const;
+	void prepare_drawables(std::vector<Drawable>& drawables) const;
 
-	void set_viewport(SDL_GPURenderPass *current_render_pass);
+	void set_viewport(SDL_GPURenderPass* current_render_pass);
 
 	[[nodiscard]] SDL_GPURenderPass* create_render_pass() const;
 
-	private:
-		SDL_GPUDevice* device = nullptr;
-		SDL_Window* window = nullptr;
-		SDL_GPURenderPass* current_render_pass = nullptr;
+   private:
+	SDL_GPUDevice* device = nullptr;
+	SDL_Window* window = nullptr;
+	SDL_GPURenderPass* current_render_pass = nullptr;
 
-		RenderGraph render_graph;
+	RenderGraph render_graph;
 };
 
 #endif	// RENDERER_H
