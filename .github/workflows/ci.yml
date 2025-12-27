@@ -36,7 +36,7 @@ jobs:
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           fi
           brew update
-          brew install cmake ninja glm sdl3 lcov googletest
+          brew install cmake ninja glm sdl3 googletest
       - name: Build project
         run: ./scripts/build.sh
       - name: Upload build artifacts
@@ -56,7 +56,7 @@ jobs:
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           fi
           brew update
-          brew install sdl3 googletest
+          brew install cmake ninja glm sdl3 googletest
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
