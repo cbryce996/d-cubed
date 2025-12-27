@@ -10,26 +10,26 @@
 #include <vector>
 
 class TaskScheduler {
-   public:
-	explicit TaskScheduler(
-		size_t num_threads = std::thread::hardware_concurrency()
+  public:
+	explicit TaskScheduler (
+		size_t num_threads = std::thread::hardware_concurrency ()
 	);
-	~TaskScheduler();
+	~TaskScheduler ();
 
-	void submit(std::function<void()> job);
-	void start();
-	void stop();
+	void submit (std::function<void ()> job);
+	void start ();
+	void stop ();
 
 	size_t thread_count = 0;
 	std::atomic<bool> running = false;
 
-   private:
-	void do_work();
+  private:
+	void do_work ();
 
 	std::vector<std::thread> workers;
-	std::queue<std::function<void()>> task_queue;
+	std::queue<std::function<void ()>> task_queue;
 	std::mutex queue_mutex;
 	std::condition_variable cv;
 };
 
-#endif	// TASKS_H
+#endif // TASKS_H

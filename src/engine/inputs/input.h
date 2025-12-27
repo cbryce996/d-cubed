@@ -14,18 +14,18 @@ struct KeyboardInput {
 };
 
 class InputManager {
-   public:
-	InputManager();
-	~InputManager();
+  public:
+	InputManager ();
+	~InputManager ();
 
-	void poll();
+	void poll ();
 
-	[[nodiscard]] const MouseInput& get_mouse_input() const;
-	[[nodiscard]] const KeyboardInput& get_keyboard_input() const;
+	[[nodiscard]] const MouseInput& get_mouse_input () const;
+	[[nodiscard]] const KeyboardInput& get_keyboard_input () const;
 
-   private:
+  private:
 	MouseInput mouse_input;
 	KeyboardInput keyboard_input;
 };
 
-#endif	// INPUTS_H
+#endif // INPUTS_H

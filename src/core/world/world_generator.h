@@ -15,17 +15,17 @@ struct VoronoiWorldConfig {
 };
 
 class WorldGenerator {
-   public:
-	explicit WorldGenerator(const VoronoiWorldConfig& cfg);
+  public:
+	explicit WorldGenerator (const VoronoiWorldConfig& cfg);
 
-	void generate();
-	void render(SDL_Renderer* renderer);
+	void generate ();
+	void render (SDL_Renderer* renderer);
 
 	std::vector<Region> regions;
 
-   private:
+  private:
 	VoronoiWorldConfig config;
-	SDL_Color generate_color(int index);
+	SDL_Color generate_color (int index);
 	std::vector<SDL_Color> region_colors;
 };
 

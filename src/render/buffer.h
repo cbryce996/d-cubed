@@ -52,37 +52,32 @@ struct Buffer {
 };
 
 class BufferManager {
-   public:
-	explicit BufferManager(SDL_GPUDevice* device);
-	~BufferManager();
+  public:
+	explicit BufferManager (SDL_GPUDevice* device);
+	~BufferManager ();
 
 	// Refactor to FrameContext object
 	SDL_GPUCommandBuffer* command_buffer = nullptr;
 	SDL_GPUTexture* depth_texture = nullptr;
 	SDL_GPUTexture* swap_chain_texture = nullptr;
 
-	Buffer* get_buffer(const std::string& name);
-	Buffer* get_or_create_buffer(const Drawable* drawable);
+	Buffer* get_buffer (const std::string& name);
+	Buffer* get_or_create_buffer (const Drawable* drawable);
 
-	void add_buffer(Buffer& buffer);
+	void add_buffer (Buffer& buffer);
 
-	[[nodiscard]] SDL_GPUBuffer* create_buffer(
-		BufferConfig buffer_config
-	) const;
-	[[nodiscard]] SDL_GPUTransferBuffer* create_transfer_buffer(
-		TransferBufferConfig buffer_config
-	) const;
+	[[nodiscard]] SDL_GPUBuffer*
+	create_buffer (BufferConfig buffer_config) const;
+	[[nodiscard]] SDL_GPUTransferBuffer*
+	create_transfer_buffer (TransferBufferConfig buffer_config) const;
 
-	void copy(
-		const Mesh* mesh,
-		Buffer* buffer
-	) const;
-	void upload(const Buffer* buffer) const;
+	void copy (const Mesh* mesh, Buffer* buffer) const;
+	void upload (const Buffer* buffer) const;
 
-   private:
+  private:
 	SDL_GPUDevice* device = nullptr;
 
 	std::unordered_map<std::string, Buffer> buffers;
 };
 
-#endif	// BUFFERS_H
+#endif // BUFFERS_H

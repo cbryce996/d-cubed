@@ -1,11 +1,11 @@
 #ifndef PIPELINE_H
 #define PIPELINE_H
 
-#include <string>
-#include <unordered_map>
-
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
+
+#include <string>
+#include <unordered_map>
 
 #include "drawable.h"
 #include "shader.h"
@@ -30,22 +30,21 @@ struct Pipeline {
 };
 
 class PipelineManager {
-   public:
-	explicit PipelineManager(
-		SDL_GPUDevice* device,
-		SDL_Window* window,
+  public:
+	explicit PipelineManager (
+		SDL_GPUDevice* device, SDL_Window* window,
 		const std::shared_ptr<ShaderManager>& shader_manager
 	);
-	~PipelineManager();
+	~PipelineManager ();
 
-	Pipeline* get_pipeline(const std::string& name);
-	Pipeline* get_or_create_pipeline(const Drawable* drawable);
+	Pipeline* get_pipeline (const std::string& name);
+	Pipeline* get_or_create_pipeline (const Drawable* drawable);
 
-	void add_pipeline(Pipeline& pipeline);
+	void add_pipeline (Pipeline& pipeline);
 
-	SDL_GPUGraphicsPipeline* create_pipeline(PipelineConfig& config) const;
+	SDL_GPUGraphicsPipeline* create_pipeline (PipelineConfig& config) const;
 
-   private:
+  private:
 	SDL_GPUDevice* device = nullptr;
 	SDL_Window* window = nullptr;
 
@@ -54,4 +53,4 @@ class PipelineManager {
 	std::unordered_map<std::string, Pipeline> pipelines;
 };
 
-#endif	// PIPELINE_H
+#endif // PIPELINE_H

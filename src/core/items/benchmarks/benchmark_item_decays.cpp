@@ -6,36 +6,35 @@
 
 constexpr uint32_t num_items = 1'000'000;
 
-int main() {
-	initialize_item_types();  // Populate global
+int main () {
+	initialize_item_types (); // Populate global
 							  // item_types
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
 
 	// === Load & Init ===
-	start = std::chrono::high_resolution_clock::now();
+	start = std::chrono::high_resolution_clock::now ();
 
 	for (uint32_t i = 0; i < num_items; ++i) {
-		register_item(
-			ItemId{i},
-			ItemTypeId{1},
-			1.0f,  // age
-			0.0f,  // initial decay
-			0.0f   // initial value
+		register_item (
+			ItemId{i}, ItemTypeId{1},
+			1.0f, // age
+			0.0f, // initial decay
+			0.0f  // initial value
 		);
 	}
 
-	end = std::chrono::high_resolution_clock::now();
-	const auto load_time =
-		std::chrono::duration<double, std::milli>(end - start).count();
+	end = std::chrono::high_resolution_clock::now ();
+	const auto load_time
+		= std::chrono::duration<double, std::milli> (end - start).count ();
 	std::cout << "[Load & Init] " << load_time << " ms\n";
 
 	// === Compute (Decay Calculation) ===
-	start = std::chrono::high_resolution_clock::now();
-	calculate_item_decays(item_decays, items);
-	end = std::chrono::high_resolution_clock::now();
-	const auto compute_time =
-		std::chrono::duration<double, std::milli>(end - start).count();
+	start = std::chrono::high_resolution_clock::now ();
+	calculate_item_decays (item_decays, items);
+	end = std::chrono::high_resolution_clock::now ();
+	const auto compute_time
+		= std::chrono::duration<double, std::milli> (end - start).count ();
 	std::cout << "[Decay Compute] " << compute_time << " ms\n";
 
 	// === Summary

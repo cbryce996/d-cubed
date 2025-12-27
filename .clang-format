@@ -1,4 +1,4 @@
-BasedOnStyle: Chromium
+BasedOnStyle: GNU
 
 SortIncludes: CaseSensitive
 
@@ -10,18 +10,17 @@ TabWidth: 4
 # === Line breaks for readability ===
 BreakBeforeBraces: Attach
 AlignAfterOpenBracket: BlockIndent
-AlignOperands: AlignAfterOperator
-AllowAllParametersOfDeclarationOnNextLine: false
-AllowAllArgumentsOnNextLine: false
-BinPackArguments: false
-BinPackParameters: AlwaysOnePerLine
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine: true
+PenaltyBreakAssignment: 100
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 150
 
 # === Function formatting ===
 AlwaysBreakAfterReturnType: None
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakBeforeMultilineStrings: true
 PenaltyBreakBeforeFirstCallParameter: 0
-PenaltyBreakString: 0
 
 # === Limits ===
 ColumnLimit: 80

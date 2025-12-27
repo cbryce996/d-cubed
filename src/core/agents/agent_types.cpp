@@ -4,11 +4,8 @@
 
 std::unordered_map<AgentId, AgentType> ItemTypes;
 
-void register_item_type(
-	const ItemTypeId& id,
-	ItemType type
-) {
-	ItemTypes[id] = std::move(type);
+void register_item_type (const ItemTypeId& id, ItemType type) {
+	ItemTypes[id] = std::move (type);
 }
 
-void initialize_item_types();
+void initialize_item_types ();

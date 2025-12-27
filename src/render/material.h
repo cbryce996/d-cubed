@@ -7,4 +7,4 @@ struct Material {
 	PipelineConfig pipeline_config;
 };
 
-#endif	// MATERIAL_H
+#endif // MATERIAL_H

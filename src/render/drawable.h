@@ -12,4 +12,4 @@ struct Drawable {
 	glm::mat4 model;
 };
 
-#endif	// DRAWABLE_H
+#endif // DRAWABLE_H

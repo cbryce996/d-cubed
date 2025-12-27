@@ -25,14 +25,8 @@ struct ItemValues {
 };
 inline ItemValues item_values;
 
-void register_item(
-	size_t id,
-	size_t type_id,
-	float age,
-	float decay,
-	float value,
-	int x,
-	int y
+void register_item (
+	size_t id, size_t type_id, float age, float decay, float value, int x, int y
 );
 
-#endif	// ITEMS_H
+#endif // ITEMS_H

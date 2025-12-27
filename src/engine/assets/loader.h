@@ -5,18 +5,15 @@
 #include "mesh.h"
 
 struct IMeshLoader {
-	virtual ~IMeshLoader() = default;
-	virtual bool load(
-		const std::string& path,
-		std::vector<Vertex>& out_vertices
+	virtual ~IMeshLoader () = default;
+	virtual bool load (
+		const std::string& path, std::vector<Vertex>& out_vertices
 	) = 0;
 };
 
 struct TinyObjMeshLoader : IMeshLoader {
-	bool load(
-		const std::string& path,
-		std::vector<Vertex>& out_vertices
-	) override;
+	bool
+	load (const std::string& path, std::vector<Vertex>& out_vertices) override;
 };
 
-#endif	// LOADER_H
+#endif // LOADER_H

@@ -6,19 +6,16 @@
 #include "../engine/inputs/input.h"
 
 class Player {
-   public:
-	Player();
+  public:
+	Player ();
 
-	[[nodiscard]] SDL_FRect get_rect() const;
-	void update(
-		const InputManager& input,
-		float delta_time
-	);
-	void render(SDL_Renderer* renderer) const;
+	[[nodiscard]] SDL_FRect get_rect () const;
+	void update (const InputManager& input, float delta_time);
+	void render (SDL_Renderer* renderer) const;
 
-   private:
+  private:
 	SDL_FRect rect;
 	float speed = 200.0f;
 };
 
-#endif	// PLAYER_H
+#endif // PLAYER_H

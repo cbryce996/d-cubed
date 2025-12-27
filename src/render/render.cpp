@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -9,90 +10,79 @@
 #include "entity.h"
 #include "utils.h"
 
-RenderManager::RenderManager(
-	SDL_GPUDevice* device,
-	SDL_Window* window,
+RenderManager::RenderManager (
+	SDL_GPUDevice* device, SDL_Window* window,
 	std::shared_ptr<ShaderManager> shader_manager,
 	std::shared_ptr<PipelineManager> pipeline_manager,
 	std::shared_ptr<BufferManager> buffer_manager,
 	std::shared_ptr<CameraManager> camera_manager,
 	std::shared_ptr<AssetManager> asset_manager
 )
-	: shader_manager(std::move(shader_manager)),
-	  pipeline_manager(std::move(pipeline_manager)),
-	  buffer_manager(std::move(buffer_manager)),
-	  camera_manager(std::move(camera_manager)),
-	  asset_manager(std::move(asset_manager)),
-	  device(device),
-	  window(window) {
+	: shader_manager (std::move (shader_manager)),
+	  pipeline_manager (std::move (pipeline_manager)),
+	  buffer_manager (std::move (buffer_manager)),
+	  camera_manager (std::move (camera_manager)),
+	  asset_manager (std::move (asset_manager)), device (device),
+	  window (window) {
 	RenderPassNode render_pass;
 	render_pass.name = "geometry_pass";
-	render_pass.execute = [this](const RenderContext& render_context) {
-		const Camera* active_camera =
-			render_context.camera_manager->get_active_camera();
-		const float aspect_ratio =
-			static_cast<float>(width) / static_cast<float>(height);
+	render_pass.execute = [this] (const RenderContext& render_context) {
+		const Camera* active_camera
+			= render_context.camera_manager->get_active_camera ();
+		const float aspect_ratio = static_cast<float> (width)
+								   / static_cast<float> (height);
 		const glm::vec3 light_pos_world = active_camera->transform.position;
 
-		prepare_drawables(*render_context.drawables);
-		current_render_pass = create_render_pass();
-		set_viewport(current_render_pass);
+		prepare_drawables (*render_context.drawables);
+		current_render_pass = create_render_pass ();
+		set_viewport (current_render_pass);
 
 		for (const Drawable& drawable : *render_context.drawables) {
-			const ModelViewProjection model_view_projection =
-				CameraManager::compute_model_view_projection(
-					*active_camera,
-					aspect_ratio,
-					drawable
+			const ModelViewProjection model_view_projection
+				= CameraManager::compute_model_view_projection (
+					*active_camera, aspect_ratio, drawable
 				);
 
-			const Pipeline* pipeline =
-				render_context.pipeline_manager->get_or_create_pipeline(
-					&drawable
-				);
-			const Buffer* buffer =
-				render_context.buffer_manager->get_or_create_buffer(&drawable);
+			const Pipeline* pipeline = render_context.pipeline_manager
+										   ->get_or_create_pipeline (&drawable);
+			const Buffer* buffer = render_context.buffer_manager
+									   ->get_or_create_buffer (&drawable);
 
 			Uniform uniform{};
 			uniform.mvp = model_view_projection.mvp;
 			uniform.model = model_view_projection.model;
 			uniform.light_pos = light_pos_world;
 
-			draw_mesh(pipeline, buffer, drawable.mesh, uniform);
+			draw_mesh (pipeline, buffer, drawable.mesh, uniform);
 		}
 
-		SDL_EndGPURenderPass(current_render_pass);
-		SDL_SubmitGPUCommandBuffer(
+		SDL_EndGPURenderPass (current_render_pass);
+		SDL_SubmitGPUCommandBuffer (
 			render_context.buffer_manager->command_buffer
 		);
 	};
-	render_graph.add_pass(render_pass);
+	render_graph.add_pass (render_pass);
 }
 
-RenderManager::~RenderManager() = default;
+RenderManager::~RenderManager () = default;
 
-void RenderManager::create_swap_chain_texture() {
+void RenderManager::create_swap_chain_texture () {
 	SDL_GPUTexture* swap_chain_texture = nullptr;
-	if (!SDL_WaitAndAcquireGPUSwapchainTexture(
-			buffer_manager->command_buffer,
-			window,
-			&swap_chain_texture,
-			&width,
+	if (!SDL_WaitAndAcquireGPUSwapchainTexture (
+			buffer_manager->command_buffer, window, &swap_chain_texture, &width,
 			&height
 		)) {
-		SDL_LogError(
-			SDL_LOG_CATEGORY_RENDER,
-			"Failed to acquire swap chain texture."
+		SDL_LogError (
+			SDL_LOG_CATEGORY_RENDER, "Failed to acquire swap chain texture."
 		);
 		return;
 	}
 	buffer_manager->swap_chain_texture = swap_chain_texture;
 }
 
-void RenderManager::create_depth_texture() const {
-	if (buffer_manager->depth_texture) {
+void RenderManager::create_depth_texture () const {
+	if (buffer_manager->depth_texture)
 		return;
-	}
 
 	SDL_GPUTextureCreateInfo depth_info{};
 	depth_info.type = SDL_GPU_TEXTURETYPE_2D;
@@ -104,19 +94,18 @@ void RenderManager::create_depth_texture() const {
 	depth_info.num_levels = 1;
 	depth_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
 
-	buffer_manager->depth_texture = SDL_CreateGPUTexture(device, &depth_info);
+	buffer_manager->depth_texture = SDL_CreateGPUTexture (device, &depth_info);
 }
 
-SDL_GPURenderPass* RenderManager::create_render_pass() const {
+SDL_GPURenderPass* RenderManager::create_render_pass () const {
 	if (!buffer_manager->depth_texture) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Depth texture not created.");
+		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Depth texture not created.");
 		return nullptr;
 	}
 
 	if (!buffer_manager->swap_chain_texture) {
-		SDL_LogError(
-			SDL_LOG_CATEGORY_RENDER,
-			"Swap chain texture not created."
+		SDL_LogError (
+			SDL_LOG_CATEGORY_RENDER, "Swap chain texture not created."
 		);
 		return nullptr;
 	}
@@ -143,82 +132,73 @@ SDL_GPURenderPass* RenderManager::create_render_pass() const {
 	color_target_info.cycle = true;
 	color_target_info.cycle_resolve_texture = true;
 
-	return SDL_BeginGPURenderPass(
-		buffer_manager->command_buffer,
-		&color_target_info,
-		1,
+	return SDL_BeginGPURenderPass (
+		buffer_manager->command_buffer, &color_target_info, 1,
 		&depth_target_info
 	);
 }
 
-void RenderManager::draw_mesh(
-	const Pipeline* pipeline,
-	const Buffer* buffer,
-	const Mesh* mesh,
+void RenderManager::draw_mesh (
+	const Pipeline* pipeline, const Buffer* buffer, const Mesh* mesh,
 	const Uniform& uniform
 ) {
 	if (!pipeline || !buffer) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Missing pipeline or buffer.");
+		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Missing pipeline or buffer.");
 		return;
 	}
 
 	SDL_GPURenderPass* pass = current_render_pass;
 
-	SDL_PushGPUVertexUniformData(
-		buffer_manager->command_buffer,
-		0,
-		&uniform,
-		sizeof(Uniform)
+	SDL_PushGPUVertexUniformData (
+		buffer_manager->command_buffer, 0, &uniform, sizeof (Uniform)
 	);
-	SDL_PushGPUFragmentUniformData(
-		buffer_manager->command_buffer,
-		0,
-		&uniform,
-		sizeof(Uniform)
-	);	// <-- THIS
+	SDL_PushGPUFragmentUniformData (
+		buffer_manager->command_buffer, 0, &uniform,
+		sizeof (Uniform)
+	); // <-- THIS
 
-	SDL_BindGPUGraphicsPipeline(pass, pipeline->pipeline);
+	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
 	SDL_GPUBufferBinding bindings[1] = {{buffer->gpu_buffer.buffer, 0}};
-	SDL_BindGPUVertexBuffers(pass, 0, bindings, 1);
+	SDL_BindGPUVertexBuffers (pass, 0, bindings, 1);
 
-	SDL_DrawGPUPrimitives(pass, mesh->vertex_count, 1, 0, 0);
+	SDL_DrawGPUPrimitives (pass, mesh->vertex_count, 1, 0, 0);
 }
 
-void RenderManager::prepare_drawables(std::vector<Drawable>& drawables) const {
+void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 	for (Drawable& drawable : drawables) {
-		Buffer* buffer = buffer_manager->get_or_create_buffer(&drawable);
-		buffer_manager->copy(drawable.mesh, buffer);
-		buffer_manager->upload(buffer);
+		Buffer* buffer = buffer_manager->get_or_create_buffer (&drawable);
+		buffer_manager->copy (drawable.mesh, buffer);
+		buffer_manager->upload (buffer);
 	}
 }
 
-void RenderManager::set_viewport(SDL_GPURenderPass* current_render_pass) {
+void RenderManager::set_viewport (SDL_GPURenderPass* current_render_pass) {
 	SDL_GPUViewport viewport{};
 	viewport.x = 0;
 	viewport.y = 0;
-	viewport.w = static_cast<float>(width);
-	viewport.h = static_cast<float>(height);
+	viewport.w = static_cast<float> (width);
+	viewport.h = static_cast<float> (height);
 	viewport.min_depth = 0.0f;
 	viewport.max_depth = 1.0f;
-	SDL_SetGPUViewport(current_render_pass, &viewport);
+	SDL_SetGPUViewport (current_render_pass, &viewport);
 }
 
-void RenderManager::render(RenderState& render_state) {
-	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer(device);
+void RenderManager::render (RenderState& render_state) {
+	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
 
-	create_swap_chain_texture();
+	create_swap_chain_texture ();
 
-	create_depth_texture();
+	create_depth_texture ();
 
 	RenderContext render_context{
-		.camera_manager = camera_manager.get(),
-		.pipeline_manager = pipeline_manager.get(),
-		.buffer_manager = buffer_manager.get(),
-		.shader_manager = shader_manager.get(),
+		.camera_manager = camera_manager.get (),
+		.pipeline_manager = pipeline_manager.get (),
+		.buffer_manager = buffer_manager.get (),
+		.shader_manager = shader_manager.get (),
 		.drawables = &render_state.drawables,
 		.width = width,
 		.height = height
 	};
 
-	render_graph.execute_all(render_context);
+	render_graph.execute_all (render_context);
 }

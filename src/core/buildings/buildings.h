@@ -11,4 +11,4 @@ inline Buildings buildings;
 
 struct
 
-#endif	// BUILDING_H
+#endif // BUILDING_H

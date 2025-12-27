@@ -8,7 +8,7 @@
 #include "update.h"
 
 class GameManager {
-   public:
+  public:
 	float delta_time_ms = 0.0f;
 	std::vector<UpdateManager> update_managers;
 	RenderState render_state;
@@ -16,21 +16,19 @@ class GameManager {
 
 	std::mutex mutex;
 
-	explicit GameManager(
+	explicit GameManager (
 		std::shared_ptr<AssetManager> asset_manager,
 		std::shared_ptr<ShaderManager> shader_manager
 	);
-	~GameManager();
+	~GameManager ();
 
-	void update(
-		float delta_time,
-		TaskScheduler& scheduler,
-		const InputManager& input
+	void update (
+		float delta_time, TaskScheduler& scheduler, const InputManager& input
 	);
-	static void handle_input(const InputManager& input);
-	void write_render_state(float elapsed_time);
+	static void handle_input (const InputManager& input);
+	void write_render_state (float elapsed_time);
 
-   private:
+  private:
 	std::shared_ptr<AssetManager> asset_manager;
 	std::shared_ptr<ShaderManager> shader_manager;
 
@@ -40,8 +38,8 @@ class GameManager {
 	float crafting_timer = 0.0f;
 	static constexpr float CRAFTING_INTERVAL_MS = 1000.0f;
 
-	static void calculate_item_decays(float delta_time_ms);
-	static void calculate_item_crafting_progress(float delta_time_ms);
+	static void calculate_item_decays (float delta_time_ms);
+	static void calculate_item_crafting_progress (float delta_time_ms);
 };
 
-#endif	// GAME_H
+#endif // GAME_H

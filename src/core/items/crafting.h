@@ -11,10 +11,6 @@ struct ItemCrafting {
 };
 inline ItemCrafting item_crafting;
 
-void register_item_crafting(
-	size_t id,
-	size_t recipe_id,
-	float progress
-);
+void register_item_crafting (size_t id, size_t recipe_id, float progress);
 
-#endif	// CRAFTING_H
+#endif // CRAFTING_H

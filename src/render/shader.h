@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+
 #include "SDL3/SDL_gpu.h"
 
 struct ShaderConfig {
@@ -24,25 +25,23 @@ struct Shader {
 };
 
 class ShaderManager {
-   public:
-	explicit ShaderManager(SDL_GPUDevice* device);
-	~ShaderManager();
+  public:
+	explicit ShaderManager (SDL_GPUDevice* device);
+	~ShaderManager ();
 
-	void load_shader(
-		const ShaderConfig& vertex_shader,
-		const ShaderConfig& fragment_shader,
+	void load_shader (
+		const ShaderConfig& vertex_shader, const ShaderConfig& fragment_shader,
 		const std::string& name
 	);
-	void add_shader(Shader& shader);
-	Shader* get_shader(const std::string& name);
+	void add_shader (Shader& shader);
+	Shader* get_shader (const std::string& name);
 
-   private:
-	[[nodiscard]] SDL_GPUShader* compile_shader(
-		const ShaderConfig& shader_config
-	) const;
+  private:
+	[[nodiscard]] SDL_GPUShader*
+	compile_shader (const ShaderConfig& shader_config) const;
 
 	SDL_GPUDevice* device = nullptr;
 	std::unordered_map<std::string, Shader> shaders;
 };
 
-#endif	// SHADER_H
+#endif // SHADER_H

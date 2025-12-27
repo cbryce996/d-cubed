@@ -2,52 +2,49 @@
 
 #include "render.h"
 
-PipelineManager::PipelineManager(
-	SDL_GPUDevice* device,
-	SDL_Window* window,
+PipelineManager::PipelineManager (
+	SDL_GPUDevice* device, SDL_Window* window,
 	const std::shared_ptr<ShaderManager>& shader_manager
 )
-	: device(device),
-	  window(window),
-	  shader_manager(shader_manager.get()) {}
+	: device (device), window (window), shader_manager (shader_manager.get ()) {
+}
 
-PipelineManager::~PipelineManager() = default;
+PipelineManager::~PipelineManager () = default;
 
-Pipeline* PipelineManager::get_pipeline(const std::string& name) {
-	Pipeline* pipeline = pipelines.contains(name) ? &pipelines[name] : nullptr;
+Pipeline* PipelineManager::get_pipeline (const std::string& name) {
+	Pipeline* pipeline = pipelines.contains (name) ? &pipelines[name] : nullptr;
 	if (!pipeline) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Pipeline not found.");
+		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Pipeline not found.");
 		return nullptr;
 	}
 	return pipeline;
 }
 
-Pipeline* PipelineManager::get_or_create_pipeline(const Drawable* drawable) {
-	Pipeline* pipeline = pipelines.contains(drawable->mesh->name)
-						   ? &pipelines[drawable->mesh->name]
-						   : nullptr;
-	if (pipeline) {
+Pipeline* PipelineManager::get_or_create_pipeline (const Drawable* drawable) {
+	Pipeline* pipeline = pipelines.contains (drawable->mesh->name)
+							 ? &pipelines[drawable->mesh->name]
+							 : nullptr;
+	if (pipeline)
 		return pipeline;
-	}
 
 	pipeline = new Pipeline{};
-	pipeline->pipeline = create_pipeline(drawable->material->pipeline_config);
+	pipeline->pipeline = create_pipeline (drawable->material->pipeline_config);
 	pipeline->name = "lit";
 
-	add_pipeline(*pipeline);
+	add_pipeline (*pipeline);
 	return pipeline;
 }
 
-void PipelineManager::add_pipeline(Pipeline& pipeline) {
-	pipelines.emplace(pipeline.name, pipeline);
+void PipelineManager::add_pipeline (Pipeline& pipeline) {
+	pipelines.emplace (pipeline.name, pipeline);
 }
 
-SDL_GPUGraphicsPipeline* PipelineManager::create_pipeline(
-	PipelineConfig& config
-) const {
+SDL_GPUGraphicsPipeline*
+PipelineManager::create_pipeline (PipelineConfig& config) const {
 	SDL_GPUColorTargetDescription color_target_description{};
-	color_target_description.format =
-		SDL_GetGPUSwapchainTextureFormat(device, window);
+	color_target_description.format = SDL_GetGPUSwapchainTextureFormat (
+		device, window
+	);
 	color_target_description.blend_state = {};
 
 	SDL_GPUGraphicsPipelineTargetInfo pipeline_target_info{};
@@ -59,23 +56,23 @@ SDL_GPUGraphicsPipeline* PipelineManager::create_pipeline(
 	SDL_GPUVertexBufferDescription vertex_buffer_description{};
 	vertex_buffer_description.slot = 0;
 	vertex_buffer_description.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
-	vertex_buffer_description.pitch = sizeof(Vertex);
+	vertex_buffer_description.pitch = sizeof (Vertex);
 
 	SDL_GPUVertexAttribute vertex_attributes[3]{};
 	vertex_attributes[0].location = 0;
 	vertex_attributes[0].buffer_slot = 0;
 	vertex_attributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-	vertex_attributes[0].offset = offsetof(Vertex, position);
+	vertex_attributes[0].offset = offsetof (Vertex, position);
 
 	vertex_attributes[1].location = 1;
 	vertex_attributes[1].buffer_slot = 0;
 	vertex_attributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-	vertex_attributes[1].offset = offsetof(Vertex, normal);
+	vertex_attributes[1].offset = offsetof (Vertex, normal);
 
 	vertex_attributes[2].location = 2;
 	vertex_attributes[2].buffer_slot = 0;
 	vertex_attributes[2].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-	vertex_attributes[2].offset = offsetof(Vertex, color);
+	vertex_attributes[2].offset = offsetof (Vertex, color);
 
 	SDL_GPUVertexInputState vertex_input_state{};
 	vertex_input_state.vertex_buffer_descriptions = &vertex_buffer_description;
@@ -97,5 +94,5 @@ SDL_GPUGraphicsPipeline* PipelineManager::create_pipeline(
 	gp_info.target_info = pipeline_target_info;
 	gp_info.props = 0;
 
-	return SDL_CreateGPUGraphicsPipeline(device, &gp_info);
+	return SDL_CreateGPUGraphicsPipeline (device, &gp_info);
 }

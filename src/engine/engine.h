@@ -21,13 +21,13 @@ struct CraftingInstance {
 };
 
 class Engine {
-   public:
-	Engine();
-	~Engine();
+  public:
+	Engine ();
+	~Engine ();
 
-	void run();
+	void run ();
 
-   private:
+  private:
 	bool running = false;
 
 	SDL_GPUDevice* gpu_device = nullptr;
@@ -42,4 +42,4 @@ class Engine {
 	std::unique_ptr<AssetManager> asset;
 };
 
-#endif	// ENGINE_H
+#endif // ENGINE_H

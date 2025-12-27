@@ -26,6 +26,6 @@ struct ItemTypeValues {
 };
 inline ItemTypeValues item_type_values;
 
-void initialize_item_types();
+void initialize_item_types ();
 
-#endif	// ITEM_TYPES_H
+#endif // ITEM_TYPES_H

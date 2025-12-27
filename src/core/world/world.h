@@ -14,4 +14,4 @@ struct Pressures {
 	float technological_pressure;
 };
 
-#endif	// WORLD_H
+#endif // WORLD_H
