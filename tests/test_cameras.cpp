@@ -60,7 +60,9 @@ TEST_F(
 
 	manager.update_camera_position(1.0f, keys);
 
-	EXPECT_LT(cam->transform.position.z, start_pos.z) << "Expected camera position to move backward";
+	EXPECT_LT(cam->transform.position.z, start_pos.z) << "Expected camera "
+														 "position to move "
+														 "backward";
 }
 
 TEST_F(
@@ -75,7 +77,9 @@ TEST_F(
 
 	manager.update_camera_position(1.0f, keys);
 
-	EXPECT_GT(cam->transform.position.z, start_pos.z) << "Expected camera position to move forward";
+	EXPECT_GT(cam->transform.position.z, start_pos.z) << "Expected camera "
+														 "position to move "
+														 "forward";
 }
 
 TEST_F(
@@ -90,7 +94,9 @@ TEST_F(
 
 	manager.update_camera_position(1.0f, keys);
 
-	EXPECT_GT(cam->transform.position.x, start_pos.x) << "Expected camera position to move right";
+	EXPECT_GT(cam->transform.position.x, start_pos.x) << "Expected camera "
+														 "position to move "
+														 "right";
 }
 
 TEST_F(
@@ -105,7 +111,9 @@ TEST_F(
 
 	manager.update_camera_position(1.0f, keys);
 
-	EXPECT_LT(cam->transform.position.x, start_pos.x) << "Expected camera position to move left";
+	EXPECT_LT(cam->transform.position.x, start_pos.x) << "Expected camera "
+														 "position to move "
+														 "left";
 }
 
 TEST_F(
@@ -121,5 +129,6 @@ TEST_F(
 	glm::quat after = cam->transform.rotation;
 
 	// The rotation should have changed
-	EXPECT_FALSE(glm::all(glm::equal(before, after))) << "Expected camera rotation to change";
+	EXPECT_FALSE(glm::all(glm::equal(before, after))) << "Expected camera "
+														 "rotation to change";
 }

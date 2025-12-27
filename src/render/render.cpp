@@ -28,8 +28,10 @@ RenderManager::RenderManager(
 	RenderPassNode render_pass;
 	render_pass.name = "geometry_pass";
 	render_pass.execute = [this](const RenderContext& render_context) {
-		const Camera* active_camera = render_context.camera_manager->get_active_camera();
-		const float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
+		const Camera* active_camera =
+			render_context.camera_manager->get_active_camera();
+		const float aspect_ratio =
+			static_cast<float>(width) / static_cast<float>(height);
 		const glm::vec3 light_pos_world = active_camera->transform.position;
 
 		prepare_drawables(*render_context.drawables);
@@ -38,10 +40,18 @@ RenderManager::RenderManager(
 
 		for (const Drawable& drawable : *render_context.drawables) {
 			const ModelViewProjection model_view_projection =
-				CameraManager::compute_model_view_projection(*active_camera, aspect_ratio, drawable);
+				CameraManager::compute_model_view_projection(
+					*active_camera,
+					aspect_ratio,
+					drawable
+				);
 
-			const Pipeline* pipeline = render_context.pipeline_manager->get_or_create_pipeline(&drawable);
-			const Buffer* buffer = render_context.buffer_manager->get_or_create_buffer(&drawable);
+			const Pipeline* pipeline =
+				render_context.pipeline_manager->get_or_create_pipeline(
+					&drawable
+				);
+			const Buffer* buffer =
+				render_context.buffer_manager->get_or_create_buffer(&drawable);
 
 			Uniform uniform{};
 			uniform.mvp = model_view_projection.mvp;
@@ -52,7 +62,9 @@ RenderManager::RenderManager(
 		}
 
 		SDL_EndGPURenderPass(current_render_pass);
-		SDL_SubmitGPUCommandBuffer(render_context.buffer_manager->command_buffer);
+		SDL_SubmitGPUCommandBuffer(
+			render_context.buffer_manager->command_buffer
+		);
 	};
 	render_graph.add_pass(render_pass);
 }
@@ -68,7 +80,10 @@ void RenderManager::create_swap_chain_texture() {
 			&width,
 			&height
 		)) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to acquire swap chain texture.");
+		SDL_LogError(
+			SDL_LOG_CATEGORY_RENDER,
+			"Failed to acquire swap chain texture."
+		);
 		return;
 	}
 	buffer_manager->swap_chain_texture = swap_chain_texture;
@@ -99,7 +114,10 @@ SDL_GPURenderPass* RenderManager::create_render_pass() const {
 	}
 
 	if (!buffer_manager->swap_chain_texture) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Swap chain texture not created.");
+		SDL_LogError(
+			SDL_LOG_CATEGORY_RENDER,
+			"Swap chain texture not created."
+		);
 		return nullptr;
 	}
 
@@ -125,7 +143,12 @@ SDL_GPURenderPass* RenderManager::create_render_pass() const {
 	color_target_info.cycle = true;
 	color_target_info.cycle_resolve_texture = true;
 
-	return SDL_BeginGPURenderPass(buffer_manager->command_buffer, &color_target_info, 1, &depth_target_info);
+	return SDL_BeginGPURenderPass(
+		buffer_manager->command_buffer,
+		&color_target_info,
+		1,
+		&depth_target_info
+	);
 }
 
 void RenderManager::draw_mesh(
@@ -141,8 +164,18 @@ void RenderManager::draw_mesh(
 
 	SDL_GPURenderPass* pass = current_render_pass;
 
-	SDL_PushGPUVertexUniformData(buffer_manager->command_buffer, 0, &uniform, sizeof(Uniform));
-	SDL_PushGPUFragmentUniformData(buffer_manager->command_buffer, 0, &uniform, sizeof(Uniform));  // <-- THIS
+	SDL_PushGPUVertexUniformData(
+		buffer_manager->command_buffer,
+		0,
+		&uniform,
+		sizeof(Uniform)
+	);
+	SDL_PushGPUFragmentUniformData(
+		buffer_manager->command_buffer,
+		0,
+		&uniform,
+		sizeof(Uniform)
+	);	// <-- THIS
 
 	SDL_BindGPUGraphicsPipeline(pass, pipeline->pipeline);
 	SDL_GPUBufferBinding bindings[1] = {{buffer->gpu_buffer.buffer, 0}};

@@ -2,7 +2,8 @@
 
 #include <iostream>
 
-TaskScheduler::TaskScheduler(const size_t num_threads) : thread_count(num_threads) {}
+TaskScheduler::TaskScheduler(const size_t num_threads)
+	: thread_count(num_threads) {}
 
 TaskScheduler::~TaskScheduler() {
 	stop();
@@ -58,7 +59,8 @@ void TaskScheduler::do_work() {
 			task_queue.pop();
 		}
 
-		std::cout << "[Worker] Executing job on thread " << std::this_thread::get_id() << "\n";
+		std::cout << "[Worker] Executing job on thread "
+				  << std::this_thread::get_id() << "\n";
 		task();
 	}
 }

@@ -18,7 +18,10 @@ struct FakeLoader : IMeshLoader {
 
 class AssetManagerTest : public ::testing::Test {
    protected:
-	void SetUp() override { asset_manager = std::make_unique<AssetManager>(std::make_shared<FakeLoader>()); }
+	void SetUp() override {
+		asset_manager =
+			std::make_unique<AssetManager>(std::make_shared<FakeLoader>());
+	}
 
 	std::unique_ptr<AssetManager> asset_manager;
 };

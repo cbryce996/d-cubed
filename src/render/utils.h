@@ -42,7 +42,8 @@ inline glm::vec3 normal_to_world(
 	const glm::vec3& normal,
 	const glm::mat4& model_matrix
 ) {
-	glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+	glm::mat3 normal_matrix =
+		glm::transpose(glm::inverse(glm::mat3(model_matrix)));
 	return glm::normalize(normal_matrix * normal);
 }
 
@@ -51,7 +52,9 @@ inline glm::vec3 normal_to_view(
 	const glm::mat4& model_matrix,
 	const glm::mat4& view_matrix
 ) {
-	return glm::normalize(glm::mat3(view_matrix) * normal_to_world(normal, model_matrix));
+	return glm::normalize(
+		glm::mat3(view_matrix) * normal_to_world(normal, model_matrix)
+	);
 }
 
 inline glm::mat4 compute_model_matrix(const Transform& transform) {

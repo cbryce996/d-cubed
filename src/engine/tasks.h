@@ -11,7 +11,9 @@
 
 class TaskScheduler {
    public:
-	explicit TaskScheduler(size_t num_threads = std::thread::hardware_concurrency());
+	explicit TaskScheduler(
+		size_t num_threads = std::thread::hardware_concurrency()
+	);
 	~TaskScheduler();
 
 	void submit(std::function<void()> job);

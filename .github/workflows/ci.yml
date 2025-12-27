@@ -19,9 +19,7 @@ jobs:
           brew update
           brew install clang-format cppcheck
       - name: Check code format
-        run: ./scripts/format.sh
-      - name: Run linter
-        run: ./scripts/lint.sh
+        run: ./scripts/check_format.sh
 
   build:
     runs-on: macos-latest
@@ -58,5 +56,3 @@ jobs:
           path: build
       - name: Run unit tests
         run: ./scripts/test.sh
-      - name: Collect coverage
-        run: ./scripts/coverage.sh

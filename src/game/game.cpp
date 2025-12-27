@@ -14,7 +14,10 @@
 inline float fast_exp(const float x) {
 	// Approximate exp(x) using a 5th-degree
 	// polynomial Accurate for x in [-6, 0]
-	return 1.0f + x * (1.0f + x * (0.5f + x * (1.0f / 6.0f + x * (1.0f / 24.0f + x * (1.0f / 120.0f)))));
+	return 1.0f +
+		   x * (1.0f +
+				x * (0.5f + x * (1.0f / 6.0f +
+								 x * (1.0f / 24.0f + x * (1.0f / 120.0f)))));
 }
 
 GameManager::GameManager(
@@ -23,7 +26,9 @@ GameManager::GameManager(
 )
 	: asset_manager(std::move(asset_manager)),
 	  shader_manager(std::move(shader_manager)) {
-	update_managers.emplace_back(2500.0f, [this](const float delta_time_ms) { calculate_item_decays(delta_time_ms); });
+	update_managers.emplace_back(2500.0f, [this](const float delta_time_ms) {
+		calculate_item_decays(delta_time_ms);
+	});
 
 	update_managers.emplace_back(1000.0f, [this](const float delta_time_ms) {
 		calculate_item_crafting_progress(delta_time_ms);
@@ -63,10 +68,12 @@ void GameManager::calculate_item_decays(const float delta_time_ms) {
 		const float rate = item_type_decays.decay_rates[items.type_ids[i]];
 		const float age = item_decays.ages[i];
 
-		const float decay = fast_exp(-rate * (age / 1000.0f));	// Convert to seconds if needed
+		const float decay =
+			fast_exp(-rate * (age / 1000.0f));	// Convert to seconds if needed
 		item_decays.decays[i] = 1.0f - decay;
 
-		std::cout << "[Items] Item " << i << " age: " << age << " | decay: " << item_decays.decays[i] << "\n";
+		std::cout << "[Items] Item " << i << " age: " << age
+				  << " | decay: " << item_decays.decays[i] << "\n";
 	}
 }
 
@@ -83,10 +90,12 @@ void GameManager::calculate_item_crafting_progress(const float delta_time_ms) {
 
 		if (item_crafting.progress[i] >= crafting_time) {
 			const size_t output_type = item_recipe_outputs.outputs[recipe_id];
-			const float output_amount = item_recipe_outputs.output_amounts[recipe_id];
+			const float output_amount =
+				item_recipe_outputs.output_amounts[recipe_id];
 
-			std::cout << "Recipe " << recipe_id << " completed. Produced item type: " << output_type << " (x"
-					  << output_amount << ")\n";
+			std::cout << "Recipe " << recipe_id
+					  << " completed. Produced item type: " << output_type
+					  << " (x" << output_amount << ")\n";
 
 			// Reset or remove the recipe from crafting
 			item_crafting.progress[i] = 0.0f;
@@ -119,7 +128,10 @@ void GameManager::write_render_state(const float elapsed_time) {
 			std::sin(elapsed_time * 2.0f * slow_factor + i) * 0.5f,
 			std::cos(elapsed_time * 1.5f * slow_factor + i) * 0.5f
 		);
-		cube.transform.rotation = glm::angleAxis((elapsed_time + i) * slow_factor, glm::vec3(0, 1, 0));
+		cube.transform.rotation = glm::angleAxis(
+			(elapsed_time + i) * slow_factor,
+			glm::vec3(0, 1, 0)
+		);
 
 		Drawable drawable{};
 		drawable.mesh = cube.mesh;

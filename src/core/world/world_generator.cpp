@@ -55,7 +55,8 @@ void WorldGenerator::generate() {
 		points = new_points;
 	}
 
-	regions = WorldGeometry::generate_regions(points, config.width, config.height);
+	regions =
+		WorldGeometry::generate_regions(points, config.width, config.height);
 
 	region_colors.clear();
 	for (int i = 0; i < config.num_points; ++i) {
@@ -86,7 +87,12 @@ void WorldGenerator::render(SDL_Renderer* renderer) {
 	// Draw centers
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	for (const auto& region : regions) {
-		SDL_Rect dot = {static_cast<int>(region.center.x) - 2, static_cast<int>(region.center.y) - 2, 4, 4};
+		SDL_Rect dot = {
+			static_cast<int>(region.center.x) - 2,
+			static_cast<int>(region.center.y) - 2,
+			4,
+			4
+		};
 		SDL_RenderFillRect(renderer, &dot);
 	}
 }

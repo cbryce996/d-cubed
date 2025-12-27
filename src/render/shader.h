@@ -37,7 +37,9 @@ class ShaderManager {
 	Shader* get_shader(const std::string& name);
 
    private:
-	[[nodiscard]] SDL_GPUShader* compile_shader(const ShaderConfig& shader_config) const;
+	[[nodiscard]] SDL_GPUShader* compile_shader(
+		const ShaderConfig& shader_config
+	) const;
 
 	SDL_GPUDevice* device = nullptr;
 	std::unordered_map<std::string, Shader> shaders;

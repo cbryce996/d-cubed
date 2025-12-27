@@ -23,7 +23,9 @@ Pipeline* PipelineManager::get_pipeline(const std::string& name) {
 }
 
 Pipeline* PipelineManager::get_or_create_pipeline(const Drawable* drawable) {
-	Pipeline* pipeline = pipelines.contains(drawable->mesh->name) ? &pipelines[drawable->mesh->name] : nullptr;
+	Pipeline* pipeline = pipelines.contains(drawable->mesh->name)
+						   ? &pipelines[drawable->mesh->name]
+						   : nullptr;
 	if (pipeline) {
 		return pipeline;
 	}
@@ -40,9 +42,12 @@ void PipelineManager::add_pipeline(Pipeline& pipeline) {
 	pipelines.emplace(pipeline.name, pipeline);
 }
 
-SDL_GPUGraphicsPipeline* PipelineManager::create_pipeline(PipelineConfig& config) const {
+SDL_GPUGraphicsPipeline* PipelineManager::create_pipeline(
+	PipelineConfig& config
+) const {
 	SDL_GPUColorTargetDescription color_target_description{};
-	color_target_description.format = SDL_GetGPUSwapchainTextureFormat(device, window);
+	color_target_description.format =
+		SDL_GetGPUSwapchainTextureFormat(device, window);
 	color_target_description.blend_state = {};
 
 	SDL_GPUGraphicsPipelineTargetInfo pipeline_target_info{};

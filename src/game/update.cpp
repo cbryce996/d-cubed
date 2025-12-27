@@ -14,7 +14,9 @@ void UpdateManager::update(
 ) {
 	accumulated += delta_time_ms;
 	if (accumulated >= interval) {
-		scheduler.submit([delta_time_ms, task = this->task]() { task(delta_time_ms); });
+		scheduler.submit([delta_time_ms, task = this->task]() {
+			task(delta_time_ms);
+		});
 		accumulated = 0.0f;
 	}
 }

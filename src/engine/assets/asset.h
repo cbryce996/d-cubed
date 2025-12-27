@@ -10,7 +10,10 @@
 
 class AssetManager {
    public:
-	explicit AssetManager(std::shared_ptr<IMeshLoader> loader = std::make_shared<TinyObjMeshLoader>());
+	explicit AssetManager(
+		std::shared_ptr<IMeshLoader> loader =
+			std::make_shared<TinyObjMeshLoader>()
+	);
 	std::shared_ptr<Mesh> load_mesh(const std::string& path);
 	void reload_mesh(const std::string& path);
 	std::shared_ptr<Mesh> get_mesh(const std::string& path);

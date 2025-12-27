@@ -49,17 +49,27 @@ void ShaderManager::add_shader(Shader& shader) {
 	shaders.emplace(shader.name, shader);
 }
 
-SDL_GPUShader* ShaderManager::compile_shader(const ShaderConfig& shader_config) const {
+SDL_GPUShader* ShaderManager::compile_shader(
+	const ShaderConfig& shader_config
+) const {
 	SDL_IOStream* file = SDL_IOFromFile(shader_config.path.c_str(), "r");
 	if (!file) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to open shader: %s", shader_config.path.c_str());
+		SDL_LogError(
+			SDL_LOG_CATEGORY_RENDER,
+			"Failed to open shader: %s",
+			shader_config.path.c_str()
+		);
 		SDL_CloseIO(file);
 		return nullptr;
 	}
 
 	const Sint64 size = SDL_GetIOSize(file);
 	if (size <= 0) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Shader file has invalid size: %s", shader_config.path.c_str());
+		SDL_LogError(
+			SDL_LOG_CATEGORY_RENDER,
+			"Shader file has invalid size: %s",
+			shader_config.path.c_str()
+		);
 		SDL_CloseIO(file);
 		return nullptr;
 	}
@@ -67,7 +77,11 @@ SDL_GPUShader* ShaderManager::compile_shader(const ShaderConfig& shader_config) 
 	std::string source(size, '\0');
 	const Sint64 read = SDL_ReadIO(file, source.data(), size);
 	if (read != size) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to read entire shader file: %s", shader_config.path.c_str());
+		SDL_LogError(
+			SDL_LOG_CATEGORY_RENDER,
+			"Failed to read entire shader file: %s",
+			shader_config.path.c_str()
+		);
 		SDL_CloseIO(file);
 		return nullptr;
 	}

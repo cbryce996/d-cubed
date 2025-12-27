@@ -20,7 +20,11 @@ struct Vertex {
 	glm::vec3 color;
 };
 
-constexpr Vertex triangle_vertices[] = {{{0.0f, 0.5f, 0.0f}}, {{0.5f, -0.5f, 0.0f}}, {{-0.5f, -0.5f, 0.0f}}};
+constexpr Vertex triangle_vertices[] = {
+	{{0.0f, 0.5f, 0.0f}},
+	{{0.5f, -0.5f, 0.0f}},
+	{{-0.5f, -0.5f, 0.0f}}
+};
 
 constexpr Vertex cube_vertices[] = {
 	// Front face (Z+) - Red
@@ -86,7 +90,10 @@ inline std::shared_ptr<Mesh> create_cube_mesh() {
 	auto mesh = std::make_shared<Mesh>();
 	mesh->name = "cube";
 
-	mesh->vertex_storage = std::make_shared<std::vector<Vertex>>(std::begin(cube_vertices), std::end(cube_vertices));
+	mesh->vertex_storage = std::make_shared<std::vector<Vertex>>(
+		std::begin(cube_vertices),
+		std::end(cube_vertices)
+	);
 
 	mesh->vertex_data = mesh->vertex_storage->data();
 	mesh->vertex_count = mesh->vertex_storage->size();

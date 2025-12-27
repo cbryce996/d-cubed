@@ -76,7 +76,10 @@ std::vector<Region> WorldGeometry::generate_regions(
 				if (edge->is_finite()) {
 					auto v0 = edge->vertex0();
 					if (v0) {
-						polygon_points.push_back({static_cast<float>(v0->x()), static_cast<float>(v0->y())});
+						polygon_points.push_back(
+							{static_cast<float>(v0->x()),
+							 static_cast<float>(v0->y())}
+						);
 					}
 				} else {
 					// Handle infinite edges: clip
@@ -95,7 +98,10 @@ std::vector<Region> WorldGeometry::generate_regions(
 			edge = edge->next();
 		} while (edge != start);
 
-		regions[region_id].neighbors.assign(neighbor_set.begin(), neighbor_set.end());
+		regions[region_id].neighbors.assign(
+			neighbor_set.begin(),
+			neighbor_set.end()
+		);
 
 		if (!polygon_points.empty()) {
 			Vec2 centroid{0, 0};
@@ -107,11 +113,17 @@ std::vector<Region> WorldGeometry::generate_regions(
 			centroid.y /= polygon_points.size();
 
 			// Sort points around centroid
-			std::sort(polygon_points.begin(), polygon_points.end(), [&](const Vec2& a, const Vec2& b) {
-				float angleA = std::atan2(a.y - centroid.y, a.x - centroid.x);
-				float angleB = std::atan2(b.y - centroid.y, b.x - centroid.x);
-				return angleA < angleB;
-			});
+			std::sort(
+				polygon_points.begin(),
+				polygon_points.end(),
+				[&](const Vec2& a, const Vec2& b) {
+					float angleA =
+						std::atan2(a.y - centroid.y, a.x - centroid.x);
+					float angleB =
+						std::atan2(b.y - centroid.y, b.x - centroid.x);
+					return angleA < angleB;
+				}
+			);
 
 			regions[region_id].polygon = std::move(polygon_points);
 			regions[region_id].center = centroid;

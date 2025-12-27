@@ -26,14 +26,16 @@ int main() {
 	}
 
 	end = std::chrono::high_resolution_clock::now();
-	const auto load_time = std::chrono::duration<double, std::milli>(end - start).count();
+	const auto load_time =
+		std::chrono::duration<double, std::milli>(end - start).count();
 	std::cout << "[Load & Init] " << load_time << " ms\n";
 
 	// === Compute (Decay Calculation) ===
 	start = std::chrono::high_resolution_clock::now();
 	calculate_item_decays(item_decays, items);
 	end = std::chrono::high_resolution_clock::now();
-	const auto compute_time = std::chrono::duration<double, std::milli>(end - start).count();
+	const auto compute_time =
+		std::chrono::duration<double, std::milli>(end - start).count();
 	std::cout << "[Decay Compute] " << compute_time << " ms\n";
 
 	// === Summary

@@ -24,7 +24,7 @@ PenaltyBreakBeforeFirstCallParameter: 0
 PenaltyBreakString: 0
 
 # === Limits ===
-ColumnLimit: 120
+ColumnLimit: 80
 
 # === Misc ===
 Cpp11BracedListStyle: true

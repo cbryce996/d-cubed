@@ -18,7 +18,9 @@ Buffer* BufferManager::get_buffer(const std::string& name) {
 }
 
 Buffer* BufferManager::get_or_create_buffer(const Drawable* drawable) {
-	Buffer* buffer = buffers.contains(drawable->mesh->name) ? &buffers[drawable->mesh->name] : nullptr;
+	Buffer* buffer = buffers.contains(drawable->mesh->name)
+					   ? &buffers[drawable->mesh->name]
+					   : nullptr;
 	if (buffer) {
 		return buffer;
 	}
@@ -26,9 +28,12 @@ Buffer* BufferManager::get_or_create_buffer(const Drawable* drawable) {
 	buffer = new Buffer{};
 	buffer->name = drawable->mesh->name;
 	buffer->size = drawable->mesh->vertex_size;
-	buffer->gpu_buffer.buffer = create_buffer({.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = buffer->size});
-	buffer->cpu_buffer.buffer =
-		create_transfer_buffer({.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = buffer->size});
+	buffer->gpu_buffer.buffer = create_buffer(
+		{.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = buffer->size}
+	);
+	buffer->cpu_buffer.buffer = create_transfer_buffer(
+		{.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = buffer->size}
+	);
 
 	add_buffer(*buffer);
 	return buffer;
@@ -38,7 +43,9 @@ void BufferManager::add_buffer(Buffer& buffer) {
 	buffers.emplace(buffer.name, buffer);
 }
 
-SDL_GPUBuffer* BufferManager::create_buffer(const BufferConfig buffer_config) const {
+SDL_GPUBuffer* BufferManager::create_buffer(
+	const BufferConfig buffer_config
+) const {
 	SDL_GPUBufferCreateInfo buffer_create_info{};
 	buffer_create_info.usage = buffer_config.usage;
 	buffer_create_info.size = buffer_config.size;
@@ -46,7 +53,9 @@ SDL_GPUBuffer* BufferManager::create_buffer(const BufferConfig buffer_config) co
 	return SDL_CreateGPUBuffer(device, &buffer_create_info);
 }
 
-SDL_GPUTransferBuffer* BufferManager::create_transfer_buffer(const TransferBufferConfig buffer_config) const {
+SDL_GPUTransferBuffer* BufferManager::create_transfer_buffer(
+	const TransferBufferConfig buffer_config
+) const {
 	SDL_GPUTransferBufferCreateInfo buffer_create_info{};
 	buffer_create_info.usage = buffer_config.usage;
 	buffer_create_info.size = buffer_config.size;
@@ -57,8 +66,15 @@ SDL_GPUTransferBuffer* BufferManager::create_transfer_buffer(const TransferBuffe
 void BufferManager::upload(const Buffer* buffer) const {
 	SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass(command_buffer);
 
-	const SDL_GPUTransferBufferLocation transfer_loc{buffer->cpu_buffer.buffer, 0};
-	const SDL_GPUBufferRegion buffer_region{buffer->gpu_buffer.buffer, 0, static_cast<Uint32>(buffer->size)};
+	const SDL_GPUTransferBufferLocation transfer_loc{
+		buffer->cpu_buffer.buffer,
+		0
+	};
+	const SDL_GPUBufferRegion buffer_region{
+		buffer->gpu_buffer.buffer,
+		0,
+		static_cast<Uint32>(buffer->size)
+	};
 
 	SDL_UploadToGPUBuffer(copy, &transfer_loc, &buffer_region, true);
 	SDL_EndGPUCopyPass(copy);
@@ -69,14 +85,22 @@ void BufferManager::copy(
 	Buffer* buffer
 ) const {
 	if (mesh->vertex_size > buffer->size) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Mesh too large to copy into buffer.");
+		SDL_LogError(
+			SDL_LOG_CATEGORY_RENDER,
+			"Mesh too large to copy into buffer."
+		);
 		return;
 	}
 
-	void* mapped_buffer = SDL_MapGPUTransferBuffer(device, buffer->cpu_buffer.buffer, true);
+	void* mapped_buffer =
+		SDL_MapGPUTransferBuffer(device, buffer->cpu_buffer.buffer, true);
 
 	if (!mapped_buffer) {
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Failed to map vertex buffer: %s", SDL_GetError());
+		SDL_LogError(
+			SDL_LOG_CATEGORY_RENDER,
+			"Failed to map vertex buffer: %s",
+			SDL_GetError()
+		);
 		return;
 	}
 

@@ -20,7 +20,13 @@ struct TransferBufferConfig {
 	SDL_GPUTransferBufferUsage usage;
 };
 
-enum class BufferType { Vertex, Index, Uniform, TransferUpload, TransferDownload };
+enum class BufferType {
+	Vertex,
+	Index,
+	Uniform,
+	TransferUpload,
+	TransferDownload
+};
 
 struct CPUBuffer {
 	BufferType type;
@@ -60,8 +66,12 @@ class BufferManager {
 
 	void add_buffer(Buffer& buffer);
 
-	[[nodiscard]] SDL_GPUBuffer* create_buffer(BufferConfig buffer_config) const;
-	[[nodiscard]] SDL_GPUTransferBuffer* create_transfer_buffer(TransferBufferConfig buffer_config) const;
+	[[nodiscard]] SDL_GPUBuffer* create_buffer(
+		BufferConfig buffer_config
+	) const;
+	[[nodiscard]] SDL_GPUTransferBuffer* create_transfer_buffer(
+		TransferBufferConfig buffer_config
+	) const;
 
 	void copy(
 		const Mesh* mesh,

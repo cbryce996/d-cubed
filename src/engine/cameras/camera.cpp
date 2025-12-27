@@ -41,8 +41,10 @@ void CameraManager::update_camera_position(
 ) {
 	Camera* camera = get_active_camera();
 
-	const glm::vec3 forward = camera->transform.rotation * glm::vec3(0.0f, 0.0f, -1.0f);
-	const glm::vec3 right = camera->transform.rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+	const glm::vec3 forward =
+		camera->transform.rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+	const glm::vec3 right =
+		camera->transform.rotation * glm::vec3(1.0f, 0.0f, 0.0f);
 
 	constexpr float max_speed = 0.5f;
 	constexpr float min_speed = 0.0f;
@@ -67,11 +69,15 @@ void CameraManager::update_camera_look(
 	if (!camera || !mouse_input)
 		return;
 
-	const float yaw_delta = glm::radians(-mouse_input->dx * camera->look_sensitivity);
-	const float pitch_delta = glm::radians(-mouse_input->dy * camera->look_sensitivity);
+	const float yaw_delta =
+		glm::radians(-mouse_input->dx * camera->look_sensitivity);
+	const float pitch_delta =
+		glm::radians(-mouse_input->dy * camera->look_sensitivity);
 
-	const glm::quat yaw_rotation = glm::angleAxis(yaw_delta, glm::vec3(0, 1, 0));
-	const glm::quat pitch_rotation = glm::angleAxis(pitch_delta, glm::vec3(1, 0, 0));
+	const glm::quat yaw_rotation =
+		glm::angleAxis(yaw_delta, glm::vec3(0, 1, 0));
+	const glm::quat pitch_rotation =
+		glm::angleAxis(pitch_delta, glm::vec3(1, 0, 0));
 
 	camera->transform.rotation = yaw_rotation * camera->transform.rotation;
 	camera->transform.rotation = camera->transform.rotation * pitch_rotation;
@@ -88,12 +94,17 @@ ModelViewProjection CameraManager::compute_model_view_projection(
 
 	data.view = glm::lookAt(
 		camera.transform.position,
-		camera.transform.position + camera.transform.rotation * glm::vec3(0.0f, 0.0f, -1.0f),
+		camera.transform.position +
+			camera.transform.rotation * glm::vec3(0.0f, 0.0f, -1.0f),
 		camera.transform.rotation * glm::vec3(0.0f, 1.0f, 0.0f)
 	);
 
-	data.proj =
-		glm::perspective(glm::radians(camera.lens.fov), aspect_ratio, camera.lens.near_clip, camera.lens.far_clip);
+	data.proj = glm::perspective(
+		glm::radians(camera.lens.fov),
+		aspect_ratio,
+		camera.lens.near_clip,
+		camera.lens.far_clip
+	);
 
 	data.mvp = data.proj * data.view * data.model;
 	return data;

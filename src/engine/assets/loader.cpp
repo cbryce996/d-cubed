@@ -14,8 +14,20 @@ bool TinyObjMeshLoader::load(
 	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str())) {
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load %s", path.c_str(), err.c_str());
+	if (!tinyobj::LoadObj(
+			&attrib,
+			&shapes,
+			&materials,
+			&warn,
+			&err,
+			path.c_str()
+		)) {
+		SDL_LogError(
+			SDL_LOG_CATEGORY_APPLICATION,
+			"Failed to load %s",
+			path.c_str(),
+			err.c_str()
+		);
 		return false;
 	}
 
