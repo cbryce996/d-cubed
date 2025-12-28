@@ -20,7 +20,7 @@ class CameraTest : public ::testing::Test {
 };
 
 TEST_F (CameraTest, RetrieveCamera) {
-	CameraManager* camera_manager = new CameraManager ();
+	CameraManager* camera_manager = new CameraManager (*camera);
 	camera_manager->add_camera (*camera);
 	Camera* retrieved_camera = camera_manager->get_camera ("test_cam");
 	ASSERT_NE (retrieved_camera, nullptr) << "Expected camera to not be null";
@@ -29,15 +29,15 @@ TEST_F (CameraTest, RetrieveCamera) {
 }
 
 TEST_F (CameraTest, ReturnsNullForMissingCamera) {
-	CameraManager* camera_manager = new CameraManager ();
+	CameraManager* camera_manager = new CameraManager (*camera);
 	Camera* cam = camera_manager->get_camera ("null_cam");
 	ASSERT_EQ (cam, nullptr) << "Expected camera to be null";
 }
 
 TEST_F (CameraTest, GetActiveCamera) {
-	CameraManager* camera_manager = new CameraManager ();
+	CameraManager* camera_manager = new CameraManager (*camera);
 	camera_manager->add_camera (*camera);
-	camera_manager->set_active_camera (*camera);
+	camera_manager->set_active_camera (camera->name);
 	Camera* active_camera = camera_manager->get_active_camera ();
 	ASSERT_NE (active_camera, nullptr) << "Expected camera to not be null";
 	EXPECT_EQ (active_camera->name, "test_cam") << "Expected camera to have "
@@ -45,9 +45,9 @@ TEST_F (CameraTest, GetActiveCamera) {
 }
 
 TEST_F (CameraTest, UpdatePositionForward) {
-	CameraManager* camera_manager = new CameraManager ();
+	CameraManager* camera_manager = new CameraManager (*camera);
 	camera_manager->add_camera (*camera);
-	camera_manager->set_active_camera (*camera);
+	camera_manager->set_active_camera (camera->name);
 	Camera* active_camera = camera_manager->get_active_camera ();
 
 	glm::vec3 start_pos = active_camera->transform.position;
@@ -65,9 +65,9 @@ TEST_F (CameraTest, UpdatePositionForward) {
 }
 
 TEST_F (CameraTest, UpdatePositionBackward) {
-	CameraManager* camera_manager = new CameraManager ();
+	CameraManager* camera_manager = new CameraManager (*camera);
 	camera_manager->add_camera (*camera);
-	camera_manager->set_active_camera (*camera);
+	camera_manager->set_active_camera (camera->name);
 	Camera* active_camera = camera_manager->get_active_camera ();
 
 	glm::vec3 start_pos = active_camera->transform.position;
@@ -85,9 +85,9 @@ TEST_F (CameraTest, UpdatePositionBackward) {
 }
 
 TEST_F (CameraTest, UpdatePositionRight) {
-	CameraManager* camera_manager = new CameraManager ();
+	CameraManager* camera_manager = new CameraManager (*camera);
 	camera_manager->add_camera (*camera);
-	camera_manager->set_active_camera (*camera);
+	camera_manager->set_active_camera (camera->name);
 	Camera* active_camera = camera_manager->get_active_camera ();
 
 	glm::vec3 start_pos = active_camera->transform.position;
@@ -105,9 +105,9 @@ TEST_F (CameraTest, UpdatePositionRight) {
 }
 
 TEST_F (CameraTest, UpdatePositionLeft) {
-	CameraManager* camera_manager = new CameraManager ();
+	CameraManager* camera_manager = new CameraManager (*camera);
 	camera_manager->add_camera (*camera);
-	camera_manager->set_active_camera (*camera);
+	camera_manager->set_active_camera (camera->name);
 	Camera* active_camera = camera_manager->get_active_camera ();
 
 	glm::vec3 start_pos = active_camera->transform.position;
@@ -125,9 +125,9 @@ TEST_F (CameraTest, UpdatePositionLeft) {
 }
 
 TEST_F (CameraTest, UpdateLookChangesRotation) {
-	CameraManager* camera_manager = new CameraManager ();
+	CameraManager* camera_manager = new CameraManager (*camera);
 	camera_manager->add_camera (*camera);
-	camera_manager->set_active_camera (*camera);
+	camera_manager->set_active_camera (camera->name);
 	Camera* active_camera = camera_manager->get_active_camera ();
 
 	glm::quat before = active_camera->transform.rotation;

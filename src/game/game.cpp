@@ -1,5 +1,7 @@
 #include "game.h"
 
+#include "clock.h"
+
 #include <iostream>
 
 #include "../engine/tasks/schedule.h"
@@ -45,108 +47,60 @@ Game::Game (std::unique_ptr<Engine> engine) : engine (std::move (engine)) {
 Game::~Game () = default;
 
 void Game::run () {
-	using clock = std::chrono::high_resolution_clock;
-
 	running = true;
 
 	engine->simulation->task_scheduler.start ();
 
-	constexpr int TARGET_FPS = 60;
-	constexpr int FRAME_DELAY = 1000 / TARGET_FPS;
-
-	int frame_counter = 0;
-	float accumulated_frame_time_ms = 0.0f;
-	auto last_stat_time = clock::now ();
-	auto last_sim_time = clock::now ();
-
-	Camera camera{};
-	camera.name = "main";
-
-	camera.transform.position = glm::vec3 (0.0f, 0.0f, 3.0f);
-	camera.transform.rotation = glm::quat (
-		glm::vec3 (0.0f, glm::radians (180.0f), 0.0f)
-	);
-	camera.transform.scale = glm::vec3 (1.0f);
-
-	camera.lens.fov = 90.0f;
-	camera.lens.aspect = 16.0f / 9.0f;
-	camera.lens.near_clip = 0.1f;
-	camera.lens.far_clip = 100.0f;
-
-	camera.move_speed = 0.2f;
-	camera.look_sensitivity = 0.1f;
-
-	engine->render->camera_manager->add_camera (camera);
-	engine->render->camera_manager->set_active_camera (camera);
+	Clock clock (60);
 
 	while (running) {
-		auto frame_start = clock::now ();
+		// --- FRAME BEGIN ---
+		float dt = clock.begin_frame ();
 
+		// --- EVENTS ---
 		SDL_Event e;
-		while (SDL_PollEvent (&e))
+		while (SDL_PollEvent (&e)) {
 			if (e.type == SDL_EVENT_QUIT)
 				running = false;
-
-		auto current_time = clock::now ();
-		const float delta_time_ms = std::chrono::duration<float, std::milli> (
-										current_time - last_sim_time
-		)
-										.count ();
-		last_sim_time = current_time;
-		accumulated_frame_time_ms += delta_time_ms;
-
-		engine->input.poll ();
-		handle_input (engine->input);
-		const KeyboardInput* keyboard_input
-			= &engine->input.get_keyboard_input ();
-		const MouseInput* mouse_input = &engine->input.get_mouse_input ();
-
-		if (keyboard_input->keys[SDL_SCANCODE_ESCAPE])
-			running = false;
-
-		engine->simulation->update (delta_time_ms);
-		RenderState* render_state = new RenderState ();
-		write_game_state (accumulated_frame_time_ms, render_state);
-
-		engine->render->camera_manager->update_camera_position (
-			delta_time_ms, keyboard_input->keys
-		);
-		engine->render->camera_manager->update_camera_look (mouse_input);
-		engine->render->render (render_state);
-
-		auto frame_end = clock::now ();
-		float frame_time_ms = std::chrono::duration<float, std::milli> (
-								  frame_end - frame_start
-		)
-								  .count ();
-
-		if (frame_time_ms < FRAME_DELAY) {
-			SDL_Delay (static_cast<Uint32> (FRAME_DELAY - frame_time_ms));
-
-			auto delayed_end = clock::now ();
-			frame_time_ms = std::chrono::duration<float, std::milli> (
-								delayed_end - frame_start
-			)
-								.count ();
 		}
 
-		accumulated_frame_time_ms += frame_time_ms;
-		frame_counter++;
+		// --- INPUT ---
+		engine->input.poll ();
+		handle_input (engine->input);
 
-		if (std::chrono::duration_cast<std::chrono::seconds> (
-				frame_start - last_stat_time
-			)
-				.count ()
-			>= 1) {
-			float avg_frame_time = accumulated_frame_time_ms / frame_counter;
-			float avg_fps = 1000.0f / avg_frame_time;
+		const KeyboardInput& keyboard = engine->input.get_keyboard_input ();
+		const MouseInput& mouse = engine->input.get_mouse_input ();
 
-			std::cout << "[Perf] Avg Frame Time: " << avg_frame_time
-					  << " ms | Avg FPS: " << avg_fps << "\n";
+		if (keyboard.keys[SDL_SCANCODE_ESCAPE])
+			running = false;
 
-			accumulated_frame_time_ms = 0.0f;
-			frame_counter = 0;
-			last_stat_time = frame_start;
+		// --- FIXED SIMULATION ---
+		while (clock.should_step_simulation ()) {
+			engine->simulation->update (clock.fixed_dt_ms);
+			clock.consume_simulation_step ();
+		}
+
+		// --- RENDER ---
+		float alpha = clock.alpha ();
+
+		RenderState render_state{};
+		write_game_state (
+			engine->simulation->simulation_time_ms + alpha * clock.fixed_dt_ms,
+			&render_state
+		);
+
+		engine->render->camera_manager->update_camera_position (
+			dt, keyboard.keys
+		);
+		engine->render->camera_manager->update_camera_look (&mouse);
+
+		engine->render->render (&render_state);
+
+		// --- FRAME END ---
+		clock.end_frame ();
+
+		if (clock.should_log_stats ()) {
+			std::cout << "[Perf] FPS: " << clock.avg_fps << "\n";
 		}
 	}
 

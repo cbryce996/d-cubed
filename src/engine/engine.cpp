@@ -38,8 +38,23 @@ Engine::Engine () {
 		);
 	std::shared_ptr<BufferManager> buffer_manager
 		= std::make_shared<BufferManager> (gpu_device);
+
+	Camera camera{};
+	camera.name = "main";
+	camera.transform.position = glm::vec3 (0.0f, 0.0f, 3.0f);
+	camera.transform.rotation = glm::quat (
+		glm::vec3 (0.0f, glm::radians (180.0f), 0.0f)
+	);
+	camera.transform.scale = glm::vec3 (1.0f);
+	camera.lens.fov = 90.0f;
+	camera.lens.aspect = 16.0f / 9.0f;
+	camera.lens.near_clip = 0.1f;
+	camera.lens.far_clip = 100.0f;
+	camera.move_speed = 0.2f;
+	camera.look_sensitivity = 0.1f;
+
 	std::shared_ptr<CameraManager> camera_manager
-		= std::make_shared<CameraManager> ();
+		= std::make_shared<CameraManager> (camera);
 	std::shared_ptr<AssetManager> asset_manager
 		= std::make_shared<AssetManager> ();
 

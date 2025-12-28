@@ -7,6 +7,11 @@
 #include "SDL3/SDL_scancode.h"
 #include "utils.h"
 
+CameraManager::CameraManager (const Camera& active_camera) {
+	add_camera (active_camera);
+	set_active_camera (active_camera.name);
+}
+
 void CameraManager::add_camera (const Camera& camera) {
 	cameras.emplace (camera.name, camera);
 }
@@ -20,9 +25,11 @@ Camera* CameraManager::get_camera (const std::string& name) {
 	return camera;
 }
 
-void CameraManager::set_active_camera (const Camera& camera) {
-	if (cameras.contains (camera.name))
-		active_camera = &camera;
+void CameraManager::set_active_camera (const std::string& name) {
+	if (cameras.contains (name)) {
+		Camera* camera = get_camera (name);
+		active_camera = camera;
+	}
 }
 
 Camera* CameraManager::get_active_camera () {

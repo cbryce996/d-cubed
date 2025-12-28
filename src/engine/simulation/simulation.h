@@ -14,7 +14,7 @@ class Simulation {
 	TaskScheduler task_scheduler;
 
 	std::vector<Schedule> schedules;
-	float delta_time_ms = 0.0f;
+	float simulation_time_ms = 0.0f;
 	Player player;
 
   private:
