@@ -14,8 +14,10 @@ void TaskScheduler::start () {
 	running = true;
 	workers.reserve (thread_count);
 	for (size_t i = 0; i < thread_count; ++i) {
-		workers.emplace_back (&TaskScheduler::do_work, this);
-		pthread_set_qos_class_self_np (QOS_CLASS_USER_INTERACTIVE, 0);
+		workers.emplace_back ([this] () {
+			pthread_set_qos_class_self_np (QOS_CLASS_USER_INTERACTIVE, 0);
+			this->do_work ();
+		});
 	}
 }
 
