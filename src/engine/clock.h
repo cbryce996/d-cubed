@@ -44,8 +44,10 @@ class Clock {
 								  .count ();
 
 		if (frame_time_ms < frame_delay_ms) {
-			auto next_frame_time
-				= frame_start + std::chrono::milliseconds ((int)frame_delay_ms);
+			auto next_frame_time = frame_start
+								   + std::chrono::microseconds (
+									   (int)(frame_delay_ms * 1000)
+								   );
 			std::this_thread::sleep_until (next_frame_time);
 			frame_end = clock::now ();
 			frame_time_ms = std::chrono::duration<float, std::milli> (

@@ -26,13 +26,17 @@ class TaskScheduler {
 	size_t thread_count = 0;
 	std::atomic<bool> running = false;
 
+	std::atomic<int> busy_tasks{0};
+	std::condition_variable idle_condition_variable;
+	std::mutex idle_mutex;
+
   private:
 	void do_work ();
 
 	std::vector<std::thread> workers;
 	std::queue<std::function<void ()>> task_queue;
 	std::mutex queue_mutex;
-	std::condition_variable cv;
+	std::condition_variable condition_variable;
 };
 
 #endif // TASKS_H

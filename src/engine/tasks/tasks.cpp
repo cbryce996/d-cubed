@@ -24,7 +24,7 @@ void TaskScheduler::stop () {
 		return;
 
 	running = false;
-	cv.notify_all ();
+	condition_variable.notify_all ();
 
 	for (auto& t : workers)
 		if (t.joinable ())
@@ -36,11 +36,13 @@ void TaskScheduler::stop () {
 void TaskScheduler::submit (std::function<void ()> job) {
 	{
 		std::lock_guard lock (queue_mutex);
-		if (!running)
-			return;
 		task_queue.push (std::move (job));
+		if (running) {
+			++busy_tasks;
+		}
 	}
-	cv.notify_one ();
+	if (running)
+		condition_variable.notify_one ();
 }
 
 void TaskScheduler::do_work () {
@@ -48,7 +50,9 @@ void TaskScheduler::do_work () {
 		std::function<void ()> task;
 		{
 			std::unique_lock<std::mutex> lock (queue_mutex);
-			cv.wait (lock, [this] { return !running || !task_queue.empty (); });
+			condition_variable.wait (lock, [this] {
+				return !running || !task_queue.empty ();
+			});
 
 			if (!running && task_queue.empty ())
 				return;
@@ -59,6 +63,15 @@ void TaskScheduler::do_work () {
 
 		if (task) {
 			task ();
+			if (--busy_tasks == 0) {
+				std::lock_guard<std::mutex> lock (idle_mutex);
+				idle_condition_variable.notify_all ();
+			}
 		}
 	}
+}
+
+void TaskScheduler::wait_idle () {
+	std::unique_lock<std::mutex> lock (idle_mutex);
+	idle_condition_variable.wait (lock, [this] { return busy_tasks == 0; });
 }

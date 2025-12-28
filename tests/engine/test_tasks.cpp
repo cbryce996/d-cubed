@@ -16,7 +16,9 @@ class TasksTest : public ::testing::Test {
 
 TEST_F (TasksTest, SetsThreadCountOnInit) {
 	TaskScheduler* task_scheduler = new TaskScheduler ();
-	int hardware_threads = std::thread::hardware_concurrency ();
+	int hardware_threads = std::min<size_t> (
+		4, std::max<size_t> (1, std::thread::hardware_concurrency () - 1)
+	);
 	ASSERT_EQ (hardware_threads, task_scheduler->thread_count);
 }
 
