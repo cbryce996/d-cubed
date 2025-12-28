@@ -20,19 +20,19 @@ Pipeline* PipelineManager::get_pipeline (const std::string& name) {
 	return pipeline;
 }
 
-Pipeline* PipelineManager::get_or_create_pipeline (const Drawable* drawable) {
-	Pipeline* pipeline = pipelines.contains (drawable->mesh->name)
-							 ? &pipelines[drawable->mesh->name]
-							 : nullptr;
-	if (pipeline)
-		return pipeline;
+Pipeline* PipelineManager::get_or_create_pipeline (Material* material) {
+	const std::string& key = material->pipeline_config.name;
 
-	pipeline = new Pipeline{};
-	pipeline->pipeline = create_pipeline (drawable->material->pipeline_config);
-	pipeline->name = "lit";
+	auto it = pipelines.find (key);
+	if (it != pipelines.end ())
+		return &it->second;
 
-	add_pipeline (*pipeline);
-	return pipeline;
+	Pipeline pipeline{};
+	pipeline.name = key;
+	pipeline.pipeline = create_pipeline (material->pipeline_config);
+
+	auto [inserted_it, _] = pipelines.emplace (key, std::move (pipeline));
+	return &inserted_it->second;
 }
 
 void PipelineManager::add_pipeline (Pipeline& pipeline) {

@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "../src/engine/cameras/camera.h"
+#include "../../src/engine/cameras/camera.h"
 
 class CameraTest : public ::testing::Test {
   protected:

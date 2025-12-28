@@ -62,6 +62,9 @@ void Game::run () {
 		while (SDL_PollEvent (&e)) {
 			if (e.type == SDL_EVENT_QUIT)
 				running = false;
+			if (e.type == SDL_EVENT_WINDOW_RESIZED) {
+				engine->render->resize (e.window.data1, e.window.data2);
+			}
 		}
 
 		// --- INPUT ---
@@ -148,29 +151,19 @@ void Game::write_game_state (
 }
 
 void Game::calculate_item_decays (const float delta_time_ms) {
-	std::cout << "[Items] Calculating item decays\n";
-
 	const size_t count = item_decays.ages.size ();
 	for (size_t i = 0; i < count; ++i) {
-		// Update age in milliseconds
 		item_decays.ages[i] += delta_time_ms;
 
 		const float rate = item_type_decays.decay_rates[items.type_ids[i]];
 		const float age = item_decays.ages[i];
 
-		const float decay = fast_exp (
-			-rate * (age / 1000.0f)
-		); // Convert to seconds if needed
+		const float decay = fast_exp (-rate * (age / 1000.0f));
 		item_decays.decays[i] = 1.0f - decay;
-
-		std::cout << "[Items] Item " << i << " age: " << age
-				  << " | decay: " << item_decays.decays[i] << "\n";
 	}
 }
 
 void Game::calculate_item_crafting_progress (const float delta_time_ms) {
-	std::cout << "[Recipes] Updating crafting progress\n";
-
 	const size_t count = item_crafting.ids.size ();
 
 	for (size_t i = 0; i < count; ++i) {

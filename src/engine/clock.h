@@ -44,7 +44,14 @@ class Clock {
 								  .count ();
 
 		if (frame_time_ms < frame_delay_ms) {
-			SDL_Delay (static_cast<uint32_t> (frame_delay_ms - frame_time_ms));
+			auto next_frame_time
+				= frame_start + std::chrono::milliseconds ((int)frame_delay_ms);
+			std::this_thread::sleep_until (next_frame_time);
+			frame_end = clock::now ();
+			frame_time_ms = std::chrono::duration<float, std::milli> (
+								frame_end - frame_start
+			)
+								.count ();
 		}
 
 		accumulated_ms += frame_time_ms;

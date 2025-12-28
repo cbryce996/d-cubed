@@ -25,7 +25,6 @@ RenderPassNode* RenderGraph::get_render_pass (const std::string& name) {
 }
 
 void RenderGraph::execute_all (RenderContext& render_context) {
-	topological_sort ();
 	for (const std::string& name : sorted_pass_order) {
 		RenderPassNode& render_pass = render_passes[name];
 		render_pass.execute (render_context);

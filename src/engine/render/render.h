@@ -27,8 +27,8 @@ struct RenderContext {
 	std::vector<Drawable>* drawables = nullptr;
 	SDL_GPURenderPass* render_pass = nullptr;
 
-	uint32_t width = 0;
-	uint32_t height = 0;
+	int width = 0;
+	int height = 0;
 };
 
 class RenderManager {
@@ -42,9 +42,12 @@ class RenderManager {
 		std::shared_ptr<AssetManager> asset_manager
 	);
 	~RenderManager ();
+	void setup_render_graph ();
+	void resize (int new_width, int new_height);
+	void acquire_swap_chain ();
 
-	Uint32 width = 1280;
-	Uint32 height = 720;
+	int width = 1280;
+	int height = 720;
 
 	std::shared_ptr<ShaderManager> shader_manager;
 	std::shared_ptr<PipelineManager> pipeline_manager;
@@ -54,7 +57,6 @@ class RenderManager {
 
 	void render (RenderState* render_state);
 
-	void create_swap_chain_texture ();
 	void create_depth_texture () const;
 	void draw_mesh (
 		const Pipeline* pipeline, const Buffer* buffer, const Mesh* mesh,

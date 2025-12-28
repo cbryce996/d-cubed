@@ -24,6 +24,16 @@ RenderManager::RenderManager (
 	  camera_manager (std::move (camera_manager)),
 	  asset_manager (std::move (asset_manager)), device (device),
 	  window (window) {
+	SDL_GetWindowSize (window, &width, &height);
+
+	create_depth_texture ();
+
+	setup_render_graph ();
+}
+
+RenderManager::~RenderManager () = default;
+
+void RenderManager::setup_render_graph () {
 	RenderPassNode render_pass;
 	render_pass.name = "geometry_pass";
 	render_pass.execute = [this] (const RenderContext& render_context) {
@@ -43,8 +53,11 @@ RenderManager::RenderManager (
 					*active_camera, aspect_ratio, drawable
 				);
 
-			const Pipeline* pipeline = render_context.pipeline_manager
-										   ->get_or_create_pipeline (&drawable);
+			const Pipeline* pipeline
+				= render_context.pipeline_manager->get_or_create_pipeline (
+					drawable.material
+				);
+
 			const Buffer* buffer = render_context.buffer_manager
 									   ->get_or_create_buffer (&drawable);
 
@@ -64,19 +77,36 @@ RenderManager::RenderManager (
 	render_graph.add_pass (render_pass);
 }
 
-RenderManager::~RenderManager () = default;
+void RenderManager::resize (int new_width, int new_height) {
+	width = new_width;
+	height = new_height;
 
-void RenderManager::create_swap_chain_texture () {
+	SDL_WaitForGPUIdle (device);
+
+	if (buffer_manager->depth_texture) {
+		SDL_ReleaseGPUTexture (device, buffer_manager->depth_texture);
+		buffer_manager->depth_texture = nullptr;
+	}
+
+	create_depth_texture ();
+}
+
+void RenderManager::acquire_swap_chain () {
 	SDL_GPUTexture* swap_chain_texture = nullptr;
+	Uint32 w = static_cast<Uint32> (width);
+	Uint32 h = static_cast<Uint32> (height);
+
 	if (!SDL_WaitAndAcquireGPUSwapchainTexture (
-			buffer_manager->command_buffer, window, &swap_chain_texture, &width,
-			&height
+			buffer_manager->command_buffer, window, &swap_chain_texture, &w, &h
 		)) {
 		SDL_LogError (
 			SDL_LOG_CATEGORY_RENDER, "Failed to acquire swap chain texture."
 		);
 		return;
 	}
+
+	width = static_cast<int> (w);
+	height = static_cast<int> (h);
 	buffer_manager->swap_chain_texture = swap_chain_texture;
 }
 
@@ -186,9 +216,7 @@ void RenderManager::set_viewport (SDL_GPURenderPass* current_render_pass) {
 void RenderManager::render (RenderState* render_state) {
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
 
-	create_swap_chain_texture ();
-
-	create_depth_texture ();
+	acquire_swap_chain ();
 
 	RenderContext render_context{
 		.camera_manager = camera_manager.get (),

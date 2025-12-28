@@ -38,7 +38,7 @@ class PipelineManager {
 	~PipelineManager ();
 
 	Pipeline* get_pipeline (const std::string& name);
-	Pipeline* get_or_create_pipeline (const Drawable* drawable);
+	Pipeline* get_or_create_pipeline (Material* material);
 
 	void add_pipeline (Pipeline& pipeline);
 

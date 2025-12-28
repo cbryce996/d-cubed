@@ -61,10 +61,10 @@ enable_testing()
 include(CTest)
 
 add_executable(engine_tests
-    tests/test_main.cpp
-    tests/test_assets.cpp
-    tests/test_cameras.cpp
-    tests/test_tasks.cpp
+    tests/engine/test_main.cpp
+    tests/engine/test_assets.cpp
+    tests/engine/test_cameras.cpp
+    tests/engine/test_tasks.cpp
 )
 
 target_include_directories(engine_tests PRIVATE src ${GTEST_INCLUDE_DIR})

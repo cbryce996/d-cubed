@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../src/engine/tasks/tasks.h"
+#include "../../src/engine/tasks/tasks.h"
 
 class TasksTest : public ::testing::Test {
   protected:

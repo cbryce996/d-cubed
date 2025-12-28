@@ -5,7 +5,7 @@
 #include <string>
 #include <thread>
 
-#include "../src/engine/assets/asset.h"
+#include "../../src/engine/assets/asset.h"
 
 struct FakeLoader : IMeshLoader {
 	bool

@@ -13,8 +13,10 @@ void TaskScheduler::start () {
 
 	running = true;
 	workers.reserve (thread_count);
-	for (size_t i = 0; i < thread_count; ++i)
+	for (size_t i = 0; i < thread_count; ++i) {
 		workers.emplace_back (&TaskScheduler::do_work, this);
+		pthread_set_qos_class_self_np (QOS_CLASS_USER_INTERACTIVE, 0);
+	}
 }
 
 void TaskScheduler::stop () {
@@ -34,17 +36,19 @@ void TaskScheduler::stop () {
 void TaskScheduler::submit (std::function<void ()> job) {
 	{
 		std::lock_guard lock (queue_mutex);
+		if (!running)
+			return;
 		task_queue.push (std::move (job));
 	}
 	cv.notify_one ();
 }
 
 void TaskScheduler::do_work () {
-	while (running) {
+	while (true) {
 		std::function<void ()> task;
 		{
-			std::unique_lock lock (queue_mutex);
-			cv.wait (lock, [this] { return !task_queue.empty () || !running; });
+			std::unique_lock<std::mutex> lock (queue_mutex);
+			cv.wait (lock, [this] { return !running || !task_queue.empty (); });
 
 			if (!running && task_queue.empty ())
 				return;
@@ -53,8 +57,8 @@ void TaskScheduler::do_work () {
 			task_queue.pop ();
 		}
 
-		std::cout << "[Worker] Executing job on thread "
-				  << std::this_thread::get_id () << "\n";
-		task ();
+		if (task) {
+			task ();
+		}
 	}
 }
