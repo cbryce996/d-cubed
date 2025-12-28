@@ -1,7 +1,10 @@
 #include "engine/engine.h"
+#include "game/game.h"
 
-int main (int argc, char* argv[]) {
-	Engine engine;
-	engine.run ();
+int main () {
+	std::unique_ptr<Engine> engine = std::make_unique<Engine> ();
+	GameManager* game = new GameManager (std::move (engine));
+	game->run ();
+
 	return 0;
 }

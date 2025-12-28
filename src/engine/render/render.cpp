@@ -7,8 +7,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "../utils.h"
 #include "entity.h"
-#include "utils.h"
 
 RenderManager::RenderManager (
 	SDL_GPUDevice* device, SDL_Window* window,
@@ -183,7 +183,7 @@ void RenderManager::set_viewport (SDL_GPURenderPass* current_render_pass) {
 	SDL_SetGPUViewport (current_render_pass, &viewport);
 }
 
-void RenderManager::render (RenderState& render_state) {
+void RenderManager::render (RenderState* render_state) {
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
 
 	create_swap_chain_texture ();
@@ -195,7 +195,7 @@ void RenderManager::render (RenderState& render_state) {
 		.pipeline_manager = pipeline_manager.get (),
 		.buffer_manager = buffer_manager.get (),
 		.shader_manager = shader_manager.get (),
-		.drawables = &render_state.drawables,
+		.drawables = &render_state->drawables,
 		.width = width,
 		.height = height
 	};

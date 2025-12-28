@@ -13,15 +13,15 @@ set(SRC_FILES
     src/game/game.cpp
     src/game/player.cpp
     src/game/update.cpp
-    src/core/items/types.cpp
-    src/core/items/items.cpp
-    src/render/render.cpp
-    src/render/graph.cpp
-    src/render/mesh.cpp
-    src/render/pipeline.cpp
-    src/render/buffer.cpp
+        src/game/core/items/types.cpp
+        src/game/core/items/items.cpp
+        src/engine/render/render.cpp
+        src/engine/render/graph.cpp
+        src/engine/render/mesh.cpp
+        src/engine/render/pipeline.cpp
+        src/engine/render/buffer.cpp
     src/engine/cameras/camera.cpp
-    src/render/shader.cpp
+        src/engine/render/shader.cpp
     src/game/entity.cpp
     src/engine/assets/asset.cpp
     src/engine/assets/loader.cpp
@@ -31,12 +31,12 @@ add_library(game_lib STATIC ${SRC_FILES})
 
 target_include_directories(game_lib PUBLIC
     src
-    src/core/items
-    src/core/buildings
-    src/core/world
+        src/game/core/items
+        src/game/core/buildings
+        src/game/core/world
     src/engine
     src/game
-    src/render
+        src/engine/render
     external/tinyobjloader
 )
 

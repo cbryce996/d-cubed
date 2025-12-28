@@ -2,14 +2,14 @@
 
 #include <iostream>
 
-#include "crafting.h"
-#include "engine/engine.h"
-#include "items.h"
-#include "recipes.h"
+#include "engine/render/material.h"
+#include "engine/utils.h"
+#include "game/core/items/crafting.h"
+#include "game/core/items/items.h"
+#include "game/core/items/recipes.h"
+#include "game/core/items/types.h"
 #include "render/render.h"
-#include "types.h"
 #include "update.h"
-#include "utils.h"
 
 inline float fast_exp (const float x) {
 	// Approximate exp(x) using a 5th-degree
@@ -26,12 +26,8 @@ inline float fast_exp (const float x) {
 											   + x * (1.0f / 120.0f)))));
 }
 
-GameManager::GameManager (
-	std::shared_ptr<AssetManager> asset_manager,
-	std::shared_ptr<ShaderManager> shader_manager
-)
-	: asset_manager (std::move (asset_manager)),
-	  shader_manager (std::move (shader_manager)) {
+GameManager::GameManager (std::unique_ptr<Engine> engine)
+	: engine (std::move (engine)) {
 	update_managers.emplace_back (2500.0f, [this] (const float delta_time_ms) {
 		calculate_item_decays (delta_time_ms);
 	});
@@ -44,6 +40,118 @@ GameManager::GameManager (
 }
 
 GameManager::~GameManager () = default;
+
+void GameManager::run () {
+	using clock = std::chrono::high_resolution_clock;
+
+	static_assert (sizeof (glm::vec3) == 12, "vec3 isn't 12 bytes?");
+	static_assert (sizeof (Vertex) == 36, "Vertex struct is misaligned!");
+
+	running = true;
+
+	engine->task_scheduler.start ();
+
+	constexpr int TARGET_FPS = 60;
+	constexpr int FRAME_DELAY = 1000 / TARGET_FPS;
+
+	int frame_counter = 0;
+	float accumulated_frame_time_ms = 0.0f;
+	auto last_stat_time = clock::now ();
+	auto last_sim_time = clock::now ();
+
+	Camera camera{};
+	camera.name = "main";
+
+	camera.transform.position = glm::vec3 (0.0f, 0.0f, 3.0f);
+	camera.transform.rotation = glm::quat (
+		glm::vec3 (0.0f, glm::radians (180.0f), 0.0f)
+	);
+	camera.transform.scale = glm::vec3 (1.0f);
+
+	camera.lens.fov = 90.0f;
+	camera.lens.aspect = 16.0f / 9.0f;
+	camera.lens.near_clip = 0.1f;
+	camera.lens.far_clip = 100.0f;
+
+	camera.move_speed = 0.2f;
+	camera.look_sensitivity = 0.1f;
+
+	engine->render->camera_manager->add_camera (camera);
+	engine->render->camera_manager->set_active_camera (camera);
+
+	while (running) {
+		auto frame_start = clock::now ();
+
+		SDL_Event e;
+		while (SDL_PollEvent (&e))
+			if (e.type == SDL_EVENT_QUIT)
+				running = false;
+
+		auto current_time = clock::now ();
+		const float delta_time_ms = std::chrono::duration<float, std::milli> (
+										current_time - last_sim_time
+		)
+										.count ();
+		last_sim_time = current_time;
+		accumulated_frame_time_ms += delta_time_ms;
+
+		engine->input.poll ();
+		handle_input (engine->input);
+		const KeyboardInput* keyboard_input
+			= &engine->input.get_keyboard_input ();
+		const MouseInput* mouse_input = &engine->input.get_mouse_input ();
+
+		if (keyboard_input->keys[SDL_SCANCODE_ESCAPE])
+			running = false;
+
+		update (delta_time_ms, engine->task_scheduler, engine->input);
+		RenderState* render_state = new RenderState();
+		write_render_state (accumulated_frame_time_ms, render_state);
+
+		engine->render->camera_manager->update_camera_position (
+			delta_time_ms, keyboard_input->keys
+		);
+		engine->render->camera_manager->update_camera_look (mouse_input);
+		engine->render->render (render_state);
+
+		auto frame_end = clock::now ();
+		float frame_time_ms = std::chrono::duration<float, std::milli> (
+								  frame_end - frame_start
+		)
+								  .count ();
+
+		if (frame_time_ms < FRAME_DELAY) {
+			SDL_Delay (static_cast<Uint32> (FRAME_DELAY - frame_time_ms));
+
+			auto delayed_end = clock::now ();
+			frame_time_ms = std::chrono::duration<float, std::milli> (
+								delayed_end - frame_start
+			)
+								.count ();
+		}
+
+		accumulated_frame_time_ms += frame_time_ms;
+		frame_counter++;
+
+		if (std::chrono::duration_cast<std::chrono::seconds> (
+				frame_start - last_stat_time
+			)
+				.count ()
+			>= 1) {
+			float avg_frame_time = accumulated_frame_time_ms / frame_counter;
+			float avg_fps = 1000.0f / avg_frame_time;
+
+			std::cout << "[Perf] Avg Frame Time: " << avg_frame_time
+					  << " ms | Avg FPS: " << avg_fps << "\n";
+
+			accumulated_frame_time_ms = 0.0f;
+			frame_counter = 0;
+			last_stat_time = frame_start;
+		}
+	}
+
+	engine->task_scheduler.stop ();
+}
 
 void GameManager::update (
 	const float delta_time, TaskScheduler& scheduler, const InputManager& input
@@ -110,15 +218,17 @@ void GameManager::calculate_item_crafting_progress (const float delta_time_ms) {
 	}
 }
 
-void GameManager::write_render_state (const float elapsed_time) {
-	render_state.drawables.clear ();
+void GameManager::write_render_state (
+	const float elapsed_time, RenderState* render_state
+) const {
+	render_state->drawables.clear ();
 
 	static std::shared_ptr<Mesh> cube_mesh = create_cube_mesh ();
 
 	static Material material;
 	material.pipeline_config = {
 		.name = "cube_pipeline",
-		.shader = shader_manager->get_shader ("lit"),
+		.shader = engine->render->shader_manager->get_shader ("lit"),
 	};
 
 	for (int i = 0; i < 10; ++i) {
@@ -141,6 +251,6 @@ void GameManager::write_render_state (const float elapsed_time) {
 		drawable.material = cube.material;
 		drawable.model = compute_model_matrix (cube.transform);
 
-		render_state.drawables.push_back (drawable);
+		render_state->drawables.push_back (drawable);
 	}
 }

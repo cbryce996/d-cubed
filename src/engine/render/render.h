@@ -52,7 +52,7 @@ class RenderManager {
 	std::shared_ptr<CameraManager> camera_manager;
 	std::shared_ptr<AssetManager> asset_manager;
 
-	void render (RenderState& render_state);
+	void render (RenderState* render_state);
 
 	void create_swap_chain_texture ();
 	void create_depth_texture () const;

@@ -1,36 +1,35 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "../engine/inputs/input.h"
-#include "../engine/tasks/tasks.h"
-#include "player.h"
-#include "render/render.h"
-#include "update.h"
+#include "engine/engine.h"
+
+#include <player.h>
+#include <update.h>
+#include <vector>
 
 class GameManager {
   public:
 	float delta_time_ms = 0.0f;
 	std::vector<UpdateManager> update_managers;
-	RenderState render_state;
 	Player player;
 
 	std::mutex mutex;
 
-	explicit GameManager (
-		std::shared_ptr<AssetManager> asset_manager,
-		std::shared_ptr<ShaderManager> shader_manager
-	);
+	explicit GameManager (std::unique_ptr<Engine> engine);
 	~GameManager ();
 
+	void run ();
 	void update (
 		float delta_time, TaskScheduler& scheduler, const InputManager& input
 	);
 	static void handle_input (const InputManager& input);
-	void write_render_state (float elapsed_time);
+	void
+	write_render_state (float elapsed_time, RenderState* render_state) const;
 
   private:
-	std::shared_ptr<AssetManager> asset_manager;
-	std::shared_ptr<ShaderManager> shader_manager;
+	std::unique_ptr<Engine> engine;
+
+	bool running = false;
 
 	float decay_timer = 0.0f;
 	static constexpr float DECAY_INTERVAL_MS = 3000.0f;

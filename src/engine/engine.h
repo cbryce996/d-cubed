@@ -5,7 +5,6 @@
 
 #include "assets/asset.h"
 #include "cameras/camera.h"
-#include "game/game.h"
 #include "inputs/input.h"
 #include "render/render.h"
 #include "tasks/tasks.h"
@@ -27,19 +26,16 @@ class Engine {
 
 	void run ();
 
-  private:
-	bool running = false;
-
-	SDL_GPUDevice* gpu_device = nullptr;
-	SDL_Window* window = nullptr;
-
 	TaskScheduler task_scheduler;
 	InputManager input;
 
-	std::shared_ptr<GameManager> game;
 	std::unique_ptr<CameraManager> camera;
 	std::unique_ptr<RenderManager> render;
 	std::unique_ptr<AssetManager> asset;
+
+  private:
+	SDL_GPUDevice* gpu_device = nullptr;
+	SDL_Window* window = nullptr;
 };
 
 #endif // ENGINE_H
