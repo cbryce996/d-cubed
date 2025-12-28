@@ -43,7 +43,6 @@ void TaskScheduler::do_work () {
 	while (running) {
 		std::function<void ()> task;
 		{
-			;
 			std::unique_lock lock (queue_mutex);
 			cv.wait (lock, [this] { return !task_queue.empty () || !running; });
 

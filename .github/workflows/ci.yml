@@ -19,7 +19,7 @@ jobs:
           brew update
           brew install clang-format cppcheck
       - name: Check code format
-        run: ./scripts/check_format.sh
+        run: make check_format
 
   build:
     runs-on: macos-latest
@@ -38,7 +38,7 @@ jobs:
           brew update
           brew install cmake ninja glm sdl3 googletest
       - name: Build project
-        run: ./scripts/build.sh
+        run: make build
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -63,4 +63,4 @@ jobs:
           name: build-folder
           path: build
       - name: Run unit tests
-        run: ./scripts/test.sh
+        run: make test

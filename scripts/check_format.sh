@@ -1,9 +1,17 @@
 #!/bin/bash
 set -e
 
-echo "=== Checking format ==="
-FILES=$(find src tests -name '*.cpp' -o -name '*.h')
+FILES=$(find src tests \( -name '*.cpp' -o -name '*.h' \))
 
-for file in $FILES; do
-    clang-format --dry-run --Werror "$file"
-done
+if [ -z "$FILES" ]; then
+    echo "❌  No source files found"
+    exit 1
+fi
+
+# Run clang-format in check mode
+if ! clang-format --dry-run --Werror $FILES; then
+    echo "❌  Formatting check failed"
+    exit 1
+fi
+
+echo "✅  Formatting check passed"
