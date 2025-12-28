@@ -1,7 +1,6 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
-#include "../engine/cameras/camera.h"
 #include "material.h"
 #include "mesh.h"
 

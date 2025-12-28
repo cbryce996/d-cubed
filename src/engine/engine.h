@@ -7,7 +7,7 @@
 #include "cameras/camera.h"
 #include "inputs/input.h"
 #include "render/render.h"
-#include "tasks/tasks.h"
+#include "simulation/simulation.h"
 
 struct ItemInstance {
 	SDL_Rect rect;
@@ -24,11 +24,9 @@ class Engine {
 	Engine ();
 	~Engine ();
 
-	void run ();
-
-	TaskScheduler task_scheduler;
 	InputManager input;
 
+	std::unique_ptr<Simulation> simulation;
 	std::unique_ptr<CameraManager> camera;
 	std::unique_ptr<RenderManager> render;
 	std::unique_ptr<AssetManager> asset;

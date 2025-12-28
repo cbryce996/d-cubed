@@ -1,13 +1,9 @@
 #include "engine.h"
 
 #include <SDL3/SDL.h>
-#include <inputs/input.h>
 
 #include <chrono>
-#include <glm/glm.hpp>
 #include <iostream>
-
-#include "../game/game.h"
 
 Engine::Engine () {
 	if (!SDL_Init (SDL_INIT_VIDEO)) {
@@ -51,6 +47,8 @@ Engine::Engine () {
 		gpu_device, window, shader_manager, pipeline_manager, buffer_manager,
 		camera_manager, asset_manager
 	);
+
+	simulation = std::make_unique<Simulation> ();
 
 	SDL_SetWindowRelativeMouseMode (window, true);
 }

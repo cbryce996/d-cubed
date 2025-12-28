@@ -7,7 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "../engine/cameras/camera.h"
+#include "game/entity.h"
 
 struct ModelViewProjection {
 	glm::mat4 model;

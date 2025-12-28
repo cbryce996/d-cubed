@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "../engine/tasks/schedule.h"
 #include "engine/render/material.h"
 #include "engine/utils.h"
 #include "game/core/items/crafting.h"
@@ -9,7 +10,6 @@
 #include "game/core/items/recipes.h"
 #include "game/core/items/types.h"
 #include "render/render.h"
-#include "update.h"
 
 inline float fast_exp (const float x) {
 	// Approximate exp(x) using a 5th-degree
@@ -26,30 +26,30 @@ inline float fast_exp (const float x) {
 											   + x * (1.0f / 120.0f)))));
 }
 
-GameManager::GameManager (std::unique_ptr<Engine> engine)
-	: engine (std::move (engine)) {
-	update_managers.emplace_back (2500.0f, [this] (const float delta_time_ms) {
-		calculate_item_decays (delta_time_ms);
-	});
+Game::Game (std::unique_ptr<Engine> engine) : engine (std::move (engine)) {
+	this->engine->simulation->schedules.emplace_back (
+		2500.0f, [this] (const float delta_time_ms) {
+			calculate_item_decays (delta_time_ms);
+		}
+	);
 
-	update_managers.emplace_back (1000.0f, [this] (const float delta_time_ms) {
-		calculate_item_crafting_progress (delta_time_ms);
-	});
+	this->engine->simulation->schedules.emplace_back (
+		1000.0f, [this] (const float delta_time_ms) {
+			calculate_item_crafting_progress (delta_time_ms);
+		}
+	);
 
 	initialize_item_types ();
 }
 
-GameManager::~GameManager () = default;
+Game::~Game () = default;
 
-void GameManager::run () {
+void Game::run () {
 	using clock = std::chrono::high_resolution_clock;
-
-	static_assert (sizeof (glm::vec3) == 12, "vec3 isn't 12 bytes?");
-	static_assert (sizeof (Vertex) == 36, "Vertex struct is misaligned!");
 
 	running = true;
 
-	engine->task_scheduler.start ();
+	engine->simulation->task_scheduler.start ();
 
 	constexpr int TARGET_FPS = 60;
 	constexpr int FRAME_DELAY = 1000 / TARGET_FPS;
@@ -104,9 +104,9 @@ void GameManager::run () {
 		if (keyboard_input->keys[SDL_SCANCODE_ESCAPE])
 			running = false;
 
-		update (delta_time_ms, engine->task_scheduler, engine->input);
-		RenderState* render_state = new RenderState();
-		write_render_state (accumulated_frame_time_ms, render_state);
+		engine->simulation->update (delta_time_ms);
+		RenderState* render_state = new RenderState ();
+		write_game_state (accumulated_frame_time_ms, render_state);
 
 		engine->render->camera_manager->update_camera_position (
 			delta_time_ms, keyboard_input->keys
@@ -150,25 +150,50 @@ void GameManager::run () {
 		}
 	}
 
-	engine->task_scheduler.stop ();
+	engine->simulation->task_scheduler.stop ();
 }
 
-void GameManager::update (
-	const float delta_time, TaskScheduler& scheduler, const InputManager& input
-) {
-	delta_time_ms = delta_time;
-
-	for (auto& manager : update_managers)
-		manager.update (delta_time, scheduler);
-
-	player.update (input, delta_time);
-}
-
-void GameManager::handle_input (const InputManager& input) {
+void Game::handle_input (const InputManager& input) {
 	// TODO
 }
 
-void GameManager::calculate_item_decays (const float delta_time_ms) {
+void Game::write_game_state (
+	const float elapsed_time, RenderState* render_state
+) const {
+	render_state->drawables.clear ();
+
+	static std::shared_ptr<Mesh> cube_mesh = create_cube_mesh ();
+
+	static Material material;
+	material.pipeline_config = {
+		.name = "cube_pipeline",
+		.shader = engine->render->shader_manager->get_shader ("lit"),
+	};
+
+	for (int i = 0; i < 10; ++i) {
+		Entity cube;
+		cube.mesh = cube_mesh.get ();
+		cube.material = &material;
+
+		float slow_factor = 0.001f;
+		cube.transform.position = glm::vec3 (
+			i * 1.5f, std::sin (elapsed_time * 2.0f * slow_factor + i) * 0.5f,
+			std::cos (elapsed_time * 1.5f * slow_factor + i) * 0.5f
+		);
+		cube.transform.rotation = glm::angleAxis (
+			(elapsed_time + i) * slow_factor, glm::vec3 (0, 1, 0)
+		);
+
+		Drawable drawable{};
+		drawable.mesh = cube.mesh;
+		drawable.material = cube.material;
+		drawable.model = compute_model_matrix (cube.transform);
+
+		render_state->drawables.push_back (drawable);
+	}
+}
+
+void Game::calculate_item_decays (const float delta_time_ms) {
 	std::cout << "[Items] Calculating item decays\n";
 
 	const size_t count = item_decays.ages.size ();
@@ -189,7 +214,7 @@ void GameManager::calculate_item_decays (const float delta_time_ms) {
 	}
 }
 
-void GameManager::calculate_item_crafting_progress (const float delta_time_ms) {
+void Game::calculate_item_crafting_progress (const float delta_time_ms) {
 	std::cout << "[Recipes] Updating crafting progress\n";
 
 	const size_t count = item_crafting.ids.size ();
@@ -209,48 +234,7 @@ void GameManager::calculate_item_crafting_progress (const float delta_time_ms) {
 					  << " completed. Produced item type: " << output_type
 					  << " (x" << output_amount << ")\n";
 
-			// Reset or remove the recipe from crafting
 			item_crafting.progress[i] = 0.0f;
-
-			// Future: actually push to some item inventory or trigger
-			// event
 		}
-	}
-}
-
-void GameManager::write_render_state (
-	const float elapsed_time, RenderState* render_state
-) const {
-	render_state->drawables.clear ();
-
-	static std::shared_ptr<Mesh> cube_mesh = create_cube_mesh ();
-
-	static Material material;
-	material.pipeline_config = {
-		.name = "cube_pipeline",
-		.shader = engine->render->shader_manager->get_shader ("lit"),
-	};
-
-	for (int i = 0; i < 10; ++i) {
-		Entity cube;
-		cube.mesh = cube_mesh.get (); // safe, persists
-		cube.material = &material;
-
-		// Animate positions
-		float slow_factor = 0.001f; // 10x slower
-		cube.transform.position = glm::vec3 (
-			i * 1.5f, std::sin (elapsed_time * 2.0f * slow_factor + i) * 0.5f,
-			std::cos (elapsed_time * 1.5f * slow_factor + i) * 0.5f
-		);
-		cube.transform.rotation = glm::angleAxis (
-			(elapsed_time + i) * slow_factor, glm::vec3 (0, 1, 0)
-		);
-
-		Drawable drawable{};
-		drawable.mesh = cube.mesh;
-		drawable.material = cube.material;
-		drawable.model = compute_model_matrix (cube.transform);
-
-		render_state->drawables.push_back (drawable);
 	}
 }
