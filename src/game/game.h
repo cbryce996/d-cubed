@@ -1,8 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "../engine/simulation/simulation.h"
 #include "engine/engine.h"
+#include "engine/simulation/simulation.h"
 
 class Game {
   public:
@@ -13,7 +13,8 @@ class Game {
 
 	void run ();
 	static void handle_input (const InputManager& input);
-	void write_game_state (float elapsed_time, RenderState* render_state) const;
+	void setup_cubes ();
+	void write_game_state (RenderState* render_state);
 
   private:
 	std::unique_ptr<Engine> engine;

@@ -7,11 +7,10 @@
 
 #include "pipeline.h"
 
-struct Uniform {
-	glm::mat4 model;
+struct alignas (16) Uniform {
 	glm::mat4 mvp;
 	glm::vec3 light_pos;
-	float pad;
+	float time;
 };
 
 struct Vertex {

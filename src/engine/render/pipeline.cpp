@@ -53,12 +53,23 @@ PipelineManager::create_pipeline (PipelineConfig& config) const {
 	pipeline_target_info.has_depth_stencil_target = true;
 	pipeline_target_info.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
 
-	SDL_GPUVertexBufferDescription vertex_buffer_description{};
-	vertex_buffer_description.slot = 0;
-	vertex_buffer_description.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
-	vertex_buffer_description.pitch = sizeof (Vertex);
+	SDL_GPUVertexBufferDescription vertex_buffers[2]{};
 
-	SDL_GPUVertexAttribute vertex_attributes[3]{};
+	// Per-vertex buffer
+	vertex_buffers[0].slot = 0;
+	vertex_buffers[0].input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
+	vertex_buffers[0].pitch = sizeof (Vertex);
+	vertex_buffers[0].instance_step_rate = 0;
+
+	// Per-instance buffer
+	vertex_buffers[1].slot = 1;
+	vertex_buffers[1].input_rate = SDL_GPU_VERTEXINPUTRATE_INSTANCE;
+	vertex_buffers[1].pitch = sizeof (Instance);
+	vertex_buffers[1].instance_step_rate = 0;
+
+	SDL_GPUVertexAttribute vertex_attributes[7]{};
+
+	// Per-vertex data (slot 0)
 	vertex_attributes[0].location = 0;
 	vertex_attributes[0].buffer_slot = 0;
 	vertex_attributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
@@ -74,11 +85,36 @@ PipelineManager::create_pipeline (PipelineConfig& config) const {
 	vertex_attributes[2].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
 	vertex_attributes[2].offset = offsetof (Vertex, color);
 
+	// Per-instance mat4 (slot 1)
+	// basePos (vec3)
+	vertex_attributes[3].location = 3;
+	vertex_attributes[3].buffer_slot = 1;
+	vertex_attributes[3].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
+	vertex_attributes[3].offset = offsetof (Instance, basePos);
+
+	// rotAxis (vec3)
+	vertex_attributes[4].location = 4;
+	vertex_attributes[4].buffer_slot = 1;
+	vertex_attributes[4].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
+	vertex_attributes[4].offset = offsetof (Instance, rotAxis);
+
+	// phase (float)
+	vertex_attributes[5].location = 5;
+	vertex_attributes[5].buffer_slot = 1;
+	vertex_attributes[5].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT;
+	vertex_attributes[5].offset = offsetof (Instance, phase);
+
+	// scale (vec3)
+	vertex_attributes[6].location = 6;
+	vertex_attributes[6].buffer_slot = 1;
+	vertex_attributes[6].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
+	vertex_attributes[6].offset = offsetof (Instance, scale);
+
 	SDL_GPUVertexInputState vertex_input_state{};
-	vertex_input_state.vertex_buffer_descriptions = &vertex_buffer_description;
-	vertex_input_state.num_vertex_buffers = 1;
+	vertex_input_state.vertex_buffer_descriptions = vertex_buffers;
+	vertex_input_state.num_vertex_buffers = 2;
 	vertex_input_state.vertex_attributes = vertex_attributes;
-	vertex_input_state.num_vertex_attributes = 3;
+	vertex_input_state.num_vertex_attributes = 7;
 
 	SDL_GPUGraphicsPipelineCreateInfo gp_info{};
 	gp_info.vertex_input_state = vertex_input_state;

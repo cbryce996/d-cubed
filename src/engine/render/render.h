@@ -1,18 +1,15 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include "graph.h"
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 
 #include <vector>
 
-#include "../engine/assets/asset.h"
-#include "../engine/cameras/camera.h"
-#include "buffer.h"
-#include "drawable.h"
-#include "graph.h"
-#include "pipeline.h"
-#include "shader.h"
+#include "engine/assets/asset.h"
+#include "engine/cameras/camera.h"
 
 struct RenderState {
 	std::vector<Drawable> drawables;
@@ -29,6 +26,8 @@ struct RenderContext {
 
 	int width = 0;
 	int height = 0;
+
+	float time = 0.0f;
 };
 
 class RenderManager {
@@ -55,11 +54,12 @@ class RenderManager {
 	std::shared_ptr<CameraManager> camera_manager;
 	std::shared_ptr<AssetManager> asset_manager;
 
-	void render (RenderState* render_state);
+	void render (RenderState* render_state, float time);
 
 	void create_depth_texture () const;
-	void draw_mesh (
-		const Pipeline* pipeline, const Buffer* buffer, const Mesh* mesh,
+	void draw (
+		const Pipeline* pipeline, const Buffer* vertex_buffer,
+		const Buffer* instance_buffer, const Drawable* drawable,
 		const Uniform& uniform
 	);
 

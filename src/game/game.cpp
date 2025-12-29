@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "../engine/tasks/schedule.h"
+#include "core/cubes.h"
 #include "engine/render/material.h"
 #include "engine/utils.h"
 #include "game/core/items/crafting.h"
@@ -12,6 +12,8 @@
 #include "game/core/items/recipes.h"
 #include "game/core/items/types.h"
 #include "render/render.h"
+
+#include <random>
 
 inline float fast_exp (const float x) {
 	// Approximate exp(x) using a 5th-degree
@@ -48,6 +50,8 @@ Game::~Game () = default;
 
 void Game::run () {
 	running = true;
+
+	setup_cubes ();
 
 	engine->simulation->task_scheduler.start ();
 
@@ -87,17 +91,17 @@ void Game::run () {
 		float alpha = clock.alpha ();
 
 		RenderState render_state{};
-		write_game_state (
-			engine->simulation->simulation_time_ms + alpha * clock.fixed_dt_ms,
-			&render_state
-		);
+		write_game_state (&render_state);
 
 		engine->render->camera_manager->update_camera_position (
 			dt, keyboard.keys
 		);
 		engine->render->camera_manager->update_camera_look (&mouse);
 
-		engine->render->render (&render_state);
+		engine->render->render (
+			&render_state,
+			engine->simulation->simulation_time_ms + alpha * clock.fixed_dt_ms
+		);
 
 		// --- FRAME END ---
 		clock.end_frame ();
@@ -114,40 +118,79 @@ void Game::handle_input (const InputManager& input) {
 	// TODO
 }
 
-void Game::write_game_state (
-	const float elapsed_time, RenderState* render_state
-) const {
-	render_state->drawables.clear ();
+std::vector<glm::vec3> base_positions;
+std::vector<glm::vec3> random_rot_axes;
+static constexpr int NUM_CUBES = 1000000;
+std::vector<Instance> instances;
 
+// Call this once before the main loop
+void Game::setup_cubes () {
+	cubes.positions.resize (NUM_CUBES);
+	cubes.rotations.resize (NUM_CUBES);
+	cubes.scales.resize (NUM_CUBES, glm::vec3 (1.0f));
+
+	base_positions.resize (NUM_CUBES);
+	random_rot_axes.resize (NUM_CUBES);
+	std::vector<float> phases (NUM_CUBES);
+
+	// Random generators
+	std::mt19937 rng_pos (42);
+	std::uniform_real_distribution<float> pos_dist (-50.0f, 50.0f);
+
+	std::mt19937 rng_axis (123);
+	std::uniform_real_distribution<float> axis_dist (-1.0f, 1.0f);
+
+	std::mt19937 rng_phase (321);
+	std::uniform_real_distribution<float> phase_dist (0.0f, 2.0f * 3.14159265f);
+
+	instances.resize (NUM_CUBES);
+
+	for (int i = 0; i < NUM_CUBES; ++i) {
+		glm::vec3 pos (
+			pos_dist (rng_pos), pos_dist (rng_pos), pos_dist (rng_pos)
+		);
+
+		glm::vec3 axis = glm::normalize (
+			glm::vec3 (
+				axis_dist (rng_axis), axis_dist (rng_axis), axis_dist (rng_axis)
+			)
+		);
+
+		float phase = phase_dist (rng_phase);
+
+		// Fill instance
+		instances[i].basePos = pos;
+		instances[i].rotAxis = axis;
+		instances[i].phase = phase;
+		instances[i].scale = glm::vec3 (0.75f);
+
+		// Optional CPU-side for other logic
+		cubes.positions[i] = pos;
+	}
+}
+
+void Game::write_game_state (RenderState* render_state) {
 	static std::shared_ptr<Mesh> cube_mesh = create_cube_mesh ();
-
-	static Material material;
+	static Material material = {};
 	material.pipeline_config = {
 		.name = "cube_pipeline",
-		.shader = engine->render->shader_manager->get_shader ("lit"),
+		.shader = engine->render->shader_manager->get_shader ("lit")
 	};
 
-	for (int i = 0; i < 10; ++i) {
-		Entity cube;
-		cube.mesh = cube_mesh.get ();
-		cube.material = &material;
+	Drawable cube{};
+	cube.mesh = cube_mesh.get ();
+	cube.material = &material;
+	cube.instances.resize (NUM_CUBES);
+	cube.instances_count = NUM_CUBES;
+	cube.instances_size = sizeof (Instance) * NUM_CUBES;
 
-		float slow_factor = 0.001f;
-		cube.transform.position = glm::vec3 (
-			i * 1.5f, std::sin (elapsed_time * 2.0f * slow_factor + i) * 0.5f,
-			std::cos (elapsed_time * 1.5f * slow_factor + i) * 0.5f
-		);
-		cube.transform.rotation = glm::angleAxis (
-			(elapsed_time + i) * slow_factor, glm::vec3 (0, 1, 0)
-		);
+	// Copy our instance data directly; no per-frame computation
+	std::memcpy (
+		cube.instances.data (), instances.data (), sizeof (Instance) * NUM_CUBES
+	);
 
-		Drawable drawable{};
-		drawable.mesh = cube.mesh;
-		drawable.material = cube.material;
-		drawable.model = compute_model_matrix (cube.transform);
-
-		render_state->drawables.push_back (drawable);
-	}
+	render_state->drawables.clear ();
+	render_state->drawables.push_back (std::move (cube));
 }
 
 void Game::calculate_item_decays (const float delta_time_ms) {

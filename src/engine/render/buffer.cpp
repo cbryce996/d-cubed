@@ -4,6 +4,8 @@
 #include "SDL3/SDL_log.h"
 #include "mesh.h"
 
+#include <render.h>
+
 BufferManager::BufferManager (SDL_GPUDevice* device) : device (device) {}
 
 BufferManager::~BufferManager () = default;
@@ -17,7 +19,7 @@ Buffer* BufferManager::get_buffer (const std::string& name) {
 	return buffer;
 }
 
-Buffer* BufferManager::get_or_create_buffer (const Drawable* drawable) {
+Buffer* BufferManager::get_or_create_vertex_buffer (const Drawable* drawable) {
 	Buffer* buffer = buffers.contains (drawable->mesh->name)
 						 ? &buffers[drawable->mesh->name]
 						 : nullptr;
@@ -29,6 +31,28 @@ Buffer* BufferManager::get_or_create_buffer (const Drawable* drawable) {
 	buffer->size = drawable->mesh->vertex_size;
 	buffer->gpu_buffer.buffer = create_buffer (
 		{.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = buffer->size}
+	);
+	buffer->cpu_buffer.buffer = create_transfer_buffer (
+		{.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = buffer->size}
+	);
+
+	add_buffer (*buffer);
+	return buffer;
+}
+
+Buffer*
+BufferManager::get_or_create_instance_buffer (const Drawable* drawable) {
+	std::string key = drawable->mesh->name + "_instances";
+	Buffer* buffer = buffers.contains (key) ? &buffers[key] : nullptr;
+	if (buffer)
+		return buffer;
+
+	buffer = new Buffer{};
+	buffer->name = key;
+	buffer->size = drawable->instances_size;
+	buffer->gpu_buffer.buffer = create_buffer (
+		{.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+		 .size = buffer->size}
 	);
 	buffer->cpu_buffer.buffer = create_transfer_buffer (
 		{.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = buffer->size}
@@ -75,8 +99,10 @@ void BufferManager::upload (const Buffer* buffer) const {
 	SDL_EndGPUCopyPass (copy);
 }
 
-void BufferManager::copy (const Mesh* mesh, Buffer* buffer) const {
-	if (mesh->vertex_size > buffer->size) {
+void BufferManager::write (
+	const void* data, size_t size, Buffer* buffer
+) const {
+	if (size > buffer->size) {
 		SDL_LogError (
 			SDL_LOG_CATEGORY_RENDER, "Mesh too large to copy into buffer."
 		);
@@ -98,7 +124,7 @@ void BufferManager::copy (const Mesh* mesh, Buffer* buffer) const {
 	buffer->cpu_buffer.mapped = true;
 	buffer->cpu_buffer.mapped_buffer = mapped_buffer;
 
-	memcpy (mapped_buffer, mesh->vertex_data, mesh->vertex_size);
+	std::memcpy (mapped_buffer, data, size);
 
 	SDL_UnmapGPUTransferBuffer (device, buffer->cpu_buffer.buffer);
 }

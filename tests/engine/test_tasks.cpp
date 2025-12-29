@@ -27,11 +27,11 @@ TEST_F (TasksTest, JoinsThreadsOnStop) {
 
 	task_scheduler->submit (task);
 	task_scheduler->start ();
-
-	std::this_thread::sleep_for (std::chrono::milliseconds (10));
 	ASSERT_TRUE (task_scheduler->running);
+
+	task_scheduler->wait_idle ();
+	ASSERT_TRUE (task_ran);
 
 	task_scheduler->stop ();
 	ASSERT_FALSE (task_scheduler->running);
-	ASSERT_TRUE (task_ran);
 }

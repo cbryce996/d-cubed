@@ -7,8 +7,9 @@
 #include <string>
 #include <unordered_map>
 
-#include "drawable.h"
 #include "shader.h"
+
+struct Material;
 
 struct PipelineConfig {
 	std::string name;

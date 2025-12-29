@@ -7,8 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "../utils.h"
-#include "entity.h"
+#include "utils.h"
 
 RenderManager::RenderManager (
 	SDL_GPUDevice* device, SDL_Window* window,
@@ -43,30 +42,26 @@ void RenderManager::setup_render_graph () {
 								   / static_cast<float> (height);
 		const glm::vec3 light_pos_world = active_camera->transform.position;
 
-		prepare_drawables (*render_context.drawables);
 		current_render_pass = create_render_pass ();
 		set_viewport (current_render_pass);
 
 		for (const Drawable& drawable : *render_context.drawables) {
-			const ModelViewProjection model_view_projection
-				= CameraManager::compute_model_view_projection (
-					*active_camera, aspect_ratio, drawable
-				);
-
 			const Pipeline* pipeline
 				= render_context.pipeline_manager->get_or_create_pipeline (
 					drawable.material
 				);
-
-			const Buffer* buffer = render_context.buffer_manager
-									   ->get_or_create_buffer (&drawable);
+			const Buffer* vertex_buffer = drawable.vertex_buffer;
+			const Buffer* instance_buffer = drawable.instance_buffer;
 
 			Uniform uniform{};
-			uniform.mvp = model_view_projection.mvp;
-			uniform.model = model_view_projection.model;
+			uniform.mvp = CameraManager::compute_model_view_projection (
+							  *active_camera, aspect_ratio, drawable
+			)
+							  .mvp;
 			uniform.light_pos = light_pos_world;
+			uniform.time = render_context.time;
 
-			draw_mesh (pipeline, buffer, drawable.mesh, uniform);
+			draw (pipeline, vertex_buffer, instance_buffer, &drawable, uniform);
 		}
 
 		SDL_EndGPURenderPass (current_render_pass);
@@ -168,37 +163,67 @@ SDL_GPURenderPass* RenderManager::create_render_pass () const {
 	);
 }
 
-void RenderManager::draw_mesh (
-	const Pipeline* pipeline, const Buffer* buffer, const Mesh* mesh,
+void RenderManager::draw (
+	const Pipeline* pipeline, const Buffer* vertex_buffer,
+	const Buffer* instance_buffer, const Drawable* drawable,
 	const Uniform& uniform
 ) {
-	if (!pipeline || !buffer) {
-		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Missing pipeline or buffer.");
+	if (!pipeline || !vertex_buffer || !instance_buffer) {
+		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Missing pipeline or buffers.");
 		return;
 	}
 
 	SDL_GPURenderPass* pass = current_render_pass;
 
+	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
+
+	// Push Uniform Buffer
 	SDL_PushGPUVertexUniformData (
 		buffer_manager->command_buffer, 0, &uniform, sizeof (Uniform)
 	);
 	SDL_PushGPUFragmentUniformData (
-		buffer_manager->command_buffer, 0, &uniform,
-		sizeof (Uniform)
-	); // <-- THIS
+		buffer_manager->command_buffer, 0, &uniform, sizeof (Uniform)
+	);
 
-	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
-	SDL_GPUBufferBinding bindings[1] = {{buffer->gpu_buffer.buffer, 0}};
-	SDL_BindGPUVertexBuffers (pass, 0, bindings, 1);
+	// Vertex buffer with instance
+	SDL_GPUBufferBinding bindings[2] = {
+		{vertex_buffer->gpu_buffer.buffer, 0},
+		{instance_buffer->gpu_buffer.buffer, 0}
+	};
 
-	SDL_DrawGPUPrimitives (pass, mesh->vertex_count, 1, 0, 0);
+	SDL_BindGPUVertexBuffers (pass, 0, bindings, 2);
+
+	SDL_DrawGPUPrimitives (
+		pass, drawable->mesh->vertex_count,
+		static_cast<Uint32> (drawable->instances_count), 0, 0
+	);
 }
 
 void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 	for (Drawable& drawable : drawables) {
-		Buffer* buffer = buffer_manager->get_or_create_buffer (&drawable);
-		buffer_manager->copy (drawable.mesh, buffer);
-		buffer_manager->upload (buffer);
+		// Create and write instance buffer
+		Buffer* instance_buffer
+			= buffer_manager->get_or_create_instance_buffer (&drawable);
+		drawable.instance_buffer = instance_buffer;
+
+		buffer_manager->write (
+			drawable.instances.data (), drawable.instances_size, instance_buffer
+		);
+
+		buffer_manager->upload (instance_buffer);
+
+		// Create and write vertex buffer
+		Buffer* vertex_buffer = buffer_manager->get_or_create_vertex_buffer (
+			&drawable
+		);
+		drawable.vertex_buffer = vertex_buffer;
+
+		buffer_manager->write (
+			drawable.mesh->vertex_data, drawable.mesh->vertex_size,
+			vertex_buffer
+		);
+
+		buffer_manager->upload (vertex_buffer);
 	}
 }
 
@@ -213,10 +238,11 @@ void RenderManager::set_viewport (SDL_GPURenderPass* current_render_pass) {
 	SDL_SetGPUViewport (current_render_pass, &viewport);
 }
 
-void RenderManager::render (RenderState* render_state) {
+void RenderManager::render (RenderState* render_state, float delta_time) {
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
-
 	acquire_swap_chain ();
+
+	prepare_drawables (render_state->drawables);
 
 	RenderContext render_context{
 		.camera_manager = camera_manager.get (),
@@ -225,8 +251,8 @@ void RenderManager::render (RenderState* render_state) {
 		.shader_manager = shader_manager.get (),
 		.drawables = &render_state->drawables,
 		.width = width,
-		.height = height
+		.height = height,
+		.time = delta_time
 	};
-
 	render_graph.execute_all (render_context);
 }
