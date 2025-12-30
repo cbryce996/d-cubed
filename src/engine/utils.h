@@ -9,13 +9,6 @@
 
 #include "game/entity.h"
 
-struct ModelViewProjection {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
-	glm::mat4 mvp;
-};
-
 inline glm::vec3
 model_to_world (const glm::vec3& local_pos, const glm::mat4& model_matrix) {
 	return glm::vec3 (model_matrix * glm::vec4 (local_pos, 1.0f));

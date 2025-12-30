@@ -13,6 +13,8 @@ Engine::Engine () {
 
 	window = SDL_CreateWindow ("Game", 1280, 720, SDL_WINDOW_RESIZABLE);
 
+	SDL_SetWindowFullscreen (window, true);
+
 	gpu_device = SDL_CreateGPUDevice (
 		SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL
 			| SDL_GPU_SHADERFORMAT_MSL,
@@ -46,11 +48,11 @@ Engine::Engine () {
 		glm::vec3 (0.0f, glm::radians (180.0f), 0.0f)
 	);
 	camera.transform.scale = glm::vec3 (1.0f);
-	camera.lens.fov = 90.0f;
+	camera.lens.fov = 110.0f;
 	camera.lens.aspect = 16.0f / 9.0f;
 	camera.lens.near_clip = 0.1f;
-	camera.lens.far_clip = 100.0f;
-	camera.move_speed = 0.2f;
+	camera.lens.far_clip = 300.0f;
+	camera.move_speed = 0.1f;
 	camera.look_sensitivity = 0.1f;
 
 	std::shared_ptr<CameraManager> camera_manager

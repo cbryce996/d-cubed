@@ -1,5 +1,7 @@
 #include "render.h"
 
+#include "../memory.h"
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 
@@ -7,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "cameras/camera.h"
 #include "utils.h"
 
 RenderManager::RenderManager (
@@ -45,6 +48,34 @@ void RenderManager::setup_render_graph () {
 		current_render_pass = create_render_pass ();
 		set_viewport (current_render_pass);
 
+		// Create view uniform
+		glm::mat4 view_projection = CameraManager::compute_view_projection (
+			*active_camera, aspect_ratio
+		);
+		Collection view_uniform{};
+		Collection::push (&view_uniform, view_projection);
+
+		// Creat global uniform
+		Collection global_uniform{};
+		Collection::push (&global_uniform, glm::vec4 (light_pos_world, 1.0f));
+		Collection::push (&global_uniform, render_context.time);
+
+		std::vector<UniformBinding> uniform_bindings;
+
+		UniformBinding view_uniform_binding{};
+		view_uniform_binding.slot = 0;
+		view_uniform_binding.data = &view_uniform.blocks;
+		view_uniform_binding.size = sizeof (view_uniform.blocks);
+		view_uniform_binding.stage = ShaderStage::Both;
+		uniform_bindings.push_back (view_uniform_binding);
+
+		UniformBinding global_uniform_binding{};
+		global_uniform_binding.slot = 1;
+		global_uniform_binding.data = &global_uniform.blocks;
+		global_uniform_binding.size = sizeof (global_uniform.blocks);
+		global_uniform_binding.stage = ShaderStage::Both;
+		uniform_bindings.push_back (global_uniform_binding);
+
 		for (const Drawable& drawable : *render_context.drawables) {
 			const Pipeline* pipeline
 				= render_context.pipeline_manager->get_or_create_pipeline (
@@ -53,15 +84,10 @@ void RenderManager::setup_render_graph () {
 			const Buffer* vertex_buffer = drawable.vertex_buffer;
 			const Buffer* instance_buffer = drawable.instance_buffer;
 
-			Uniform uniform{};
-			uniform.mvp = CameraManager::compute_model_view_projection (
-							  *active_camera, aspect_ratio, drawable
-			)
-							  .mvp;
-			uniform.light_pos = light_pos_world;
-			uniform.time = render_context.time;
-
-			draw (pipeline, vertex_buffer, instance_buffer, &drawable, uniform);
+			draw (
+				pipeline, vertex_buffer, instance_buffer, &drawable,
+				&uniform_bindings
+			);
 		}
 
 		SDL_EndGPURenderPass (current_render_pass);
@@ -148,7 +174,7 @@ SDL_GPURenderPass* RenderManager::create_render_pass () const {
 	color_target_info.texture = buffer_manager->swap_chain_texture;
 	color_target_info.mip_level = 0;
 	color_target_info.layer_or_depth_plane = 0;
-	color_target_info.clear_color = {0.53f, 0.81f, 0.92f, 1.0f};
+	color_target_info.clear_color = {0.02f, 0.02f, 0.05f, 1.0f};
 	color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
 	color_target_info.store_op = SDL_GPU_STOREOP_STORE;
 	color_target_info.resolve_texture = nullptr;
@@ -166,24 +192,35 @@ SDL_GPURenderPass* RenderManager::create_render_pass () const {
 void RenderManager::draw (
 	const Pipeline* pipeline, const Buffer* vertex_buffer,
 	const Buffer* instance_buffer, const Drawable* drawable,
-	const Uniform& uniform
+	const std::vector<UniformBinding>* uniform_bindings
 ) {
 	if (!pipeline || !vertex_buffer || !instance_buffer) {
 		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Missing pipeline or buffers.");
 		return;
 	}
 
+	// Create render pass and bind to pipeline
 	SDL_GPURenderPass* pass = current_render_pass;
-
 	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
 
-	// Push Uniform Buffer
-	SDL_PushGPUVertexUniformData (
-		buffer_manager->command_buffer, 0, &uniform, sizeof (Uniform)
-	);
-	SDL_PushGPUFragmentUniformData (
-		buffer_manager->command_buffer, 0, &uniform, sizeof (Uniform)
-	);
+	// Push uniform bindings
+	for (const UniformBinding& uniform_binding : *uniform_bindings) {
+		if (uniform_binding.stage == ShaderStage::Vertex
+			|| uniform_binding.stage == ShaderStage::Both) {
+			SDL_PushGPUVertexUniformData (
+				buffer_manager->command_buffer, uniform_binding.slot,
+				uniform_binding.data, uniform_binding.size
+			);
+		}
+
+		if (uniform_binding.stage == ShaderStage::Fragment
+			|| uniform_binding.stage == ShaderStage::Both) {
+			SDL_PushGPUFragmentUniformData (
+				buffer_manager->command_buffer, uniform_binding.slot,
+				uniform_binding.data, uniform_binding.size
+			);
+		}
+	}
 
 	// Vertex buffer with instance
 	SDL_GPUBufferBinding bindings[2] = {

@@ -6,7 +6,8 @@
 #include <unordered_map>
 
 #include "loader.h"
-#include "render/mesh.h"
+
+struct Mesh;
 
 class AssetManager {
   public:

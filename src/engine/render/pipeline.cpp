@@ -1,5 +1,6 @@
 #include "pipeline.h"
 
+#include "material.h"
 #include "render.h"
 
 PipelineManager::PipelineManager (
@@ -72,18 +73,18 @@ PipelineManager::create_pipeline (PipelineConfig& config) const {
 	// Per-vertex data (slot 0)
 	vertex_attributes[0].location = 0;
 	vertex_attributes[0].buffer_slot = 0;
-	vertex_attributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-	vertex_attributes[0].offset = offsetof (Vertex, position);
+	vertex_attributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
+	vertex_attributes[0].offset = 0;
 
 	vertex_attributes[1].location = 1;
 	vertex_attributes[1].buffer_slot = 0;
-	vertex_attributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-	vertex_attributes[1].offset = offsetof (Vertex, normal);
+	vertex_attributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
+	vertex_attributes[1].offset = sizeof (Block);
 
 	vertex_attributes[2].location = 2;
 	vertex_attributes[2].buffer_slot = 0;
-	vertex_attributes[2].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-	vertex_attributes[2].offset = offsetof (Vertex, color);
+	vertex_attributes[2].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
+	vertex_attributes[2].offset = sizeof (Block) * 2;
 
 	// Per-instance mat4 (slot 1)
 	// basePos (vec3)

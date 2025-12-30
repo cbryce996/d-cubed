@@ -162,7 +162,7 @@ void Game::setup_cubes () {
 		instances[i].basePos = pos;
 		instances[i].rotAxis = axis;
 		instances[i].phase = phase;
-		instances[i].scale = glm::vec3 (0.75f);
+		instances[i].scale = glm::vec3 (0.3f);
 
 		// Optional CPU-side for other logic
 		cubes.positions[i] = pos;

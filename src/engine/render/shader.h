@@ -10,7 +10,7 @@ struct ShaderConfig {
 	Uint32 num_samplers = 0;
 	Uint32 num_storage_textures = 0;
 	Uint32 num_storage_buffers = 0;
-	Uint32 num_uniform_buffers = 1;
+	Uint32 num_uniform_buffers = 2;
 	Uint32 props = 0;
 	SDL_GPUShaderFormat format;
 	SDL_GPUShaderStage stage;

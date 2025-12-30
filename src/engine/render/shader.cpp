@@ -9,14 +9,14 @@ ShaderManager::ShaderManager (SDL_GPUDevice* device) : device (device) {
 			.entrypoint = "vert_main",
 			.format = SDL_GPU_SHADERFORMAT_MSL,
 			.stage = SDL_GPU_SHADERSTAGE_VERTEX,
-			.num_uniform_buffers = 1
+			.num_uniform_buffers = 2
 		},
 		ShaderConfig{
 			.path = "../shaders/msl/cube_metal_uniform_lighting.metal",
 			.entrypoint = "frag_main",
 			.format = SDL_GPU_SHADERFORMAT_MSL,
 			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-			.num_uniform_buffers = 1
+			.num_uniform_buffers = 2
 		},
 		"lit"
 	);

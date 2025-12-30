@@ -1,7 +1,9 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
-#include "material.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 #include "mesh.h"
 
 struct Transform {

@@ -8,7 +8,6 @@
 
 #include "../inputs/input.h"
 #include "entity.h"
-#include "utils.h"
 
 struct Lens {
 	float fov;
@@ -37,9 +36,8 @@ class CameraManager {
 
 	void update_camera_position (float delta_time, const bool* keys);
 	void update_camera_look (const MouseInput* mouse_input);
-	static ModelViewProjection compute_model_view_projection (
-		const Camera& camera, float aspect_ratio, const Drawable& drawable
-	);
+	static glm::mat4
+	compute_view_projection (const Camera& camera, float aspect_ratio);
 
   private:
 	std::unordered_map<std::string, Camera> cameras;

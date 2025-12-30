@@ -1,6 +1,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "loader.h"
+#include <SDL3/SDL.h>
 
+#include "loader.h"
 #include "tiny_obj_loader.h"
 
 bool TinyObjMeshLoader::load (
@@ -25,32 +26,7 @@ bool TinyObjMeshLoader::load (
 
 	for (const auto& shape : shapes) {
 		for (const auto& index : shape.mesh.indices) {
-			Vertex v{};
-			v.position = {
-				attrib.vertices[3 * index.vertex_index + 0],
-				attrib.vertices[3 * index.vertex_index + 1],
-				attrib.vertices[3 * index.vertex_index + 2]
-			};
-			if (!attrib.normals.empty ()) {
-				v.normal = {
-					attrib.normals[3 * index.normal_index + 0],
-					attrib.normals[3 * index.normal_index + 1],
-					attrib.normals[3 * index.normal_index + 2]
-				};
-			}
-			if (!attrib.colors.empty ()) {
-				v.color = {
-					attrib.colors[3 * index.vertex_index + 0],
-					attrib.colors[3 * index.vertex_index + 1],
-					attrib.colors[3 * index.vertex_index + 2]
-				};
-			} else {
-				v.color = {1.0f, 1.0f, 1.0f};
-			}
-
-			// Optional: assign UVs or other attributes if your Vertex
-			// has them
-			out_vertices.push_back (v);
+			// TODO: Implment
 		}
 	}
 

@@ -1,3 +1,5 @@
+#include "mesh.h"
+
 #include <gtest/gtest.h>
 
 #include <chrono>

@@ -2,6 +2,7 @@
 #define CUBES_H
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <vector>
 
 struct Cubes {

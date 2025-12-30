@@ -1,5 +1,7 @@
 #include "engine/assets/asset.h"
 
+#include "mesh.h"
+
 #include <SDL3/SDL_log.h>
 
 #include <thread>

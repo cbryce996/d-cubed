@@ -2,11 +2,17 @@
 using namespace metal;
 
 // Uniform buffer (aligned to 16 bytes)
-struct Uniform {
-    float4x4 viewProj;
-    packed_float3  light_pos;
-    float    time;
+struct ViewUniform {
+    float4x4 view_projection;
 };
+
+struct GlobalUniform {
+    float4 light_pos;
+    float4 time;
+    float4 pad1;
+    float4 pad2;
+};
+
 
 // Per-vertex + per-instance input
 struct VertexIn {
@@ -32,65 +38,107 @@ struct VertexOut {
 // Vertex shader (renamed to vert_main)
 vertex VertexOut vert_main(
     VertexIn in [[stage_in]],
-    constant Uniform& ubo [[buffer(0)]],
-    uint instanceID [[instance_id]] // Added instance_id
+    constant ViewUniform& view_uniform [[buffer(0)]],
+    constant GlobalUniform& global_uniform [[buffer(1)]],
+    uint instanceID [[instance_id]]
 ) {
-    // 1. Calculations that are the same for all vertices in this cube
-    // These are constant for the instance, but the compiler can optimize
-    // internal register usage better when grouped like this.
-    float t = ubo.time * 0.001 + in.phase;
-    float3 offset = float3(sin(t) * 2.0, cos(t) * 2.0, sin(t) * 2.0);
+    // 1. Density Logic
+    float3 p = in.basePos * 0.2;
+    float n1 = sin(p.x + global_uniform.time.y * 0.0005) * cos(p.y + global_uniform.time.y * 0.0007) * sin(p.z);
+    float rawDensity = saturate(n1 * 1.5 + 0.3);
 
+    // 2. SPHERICAL CONSTRAINT
+    // Forms the overall shape into a large sphere
+    float distFromCenter = length(in.basePos);
+    float sphereRadius = 40.0;
+    float falloff = 15.0;
+    float sphericalMask = 1.0 - smoothstep(sphereRadius - falloff, sphereRadius, distFromCenter);
+
+    // 3. CLIPPING (Gaps between clusters)
+    // Values below 0.4 density now hit exactly 0 scale
+    float threshold = 0.6;
+    float clipped = saturate(rawDensity - threshold) / (1.0 - threshold);
+
+    // 4. ANTI-ALIASING SCALE
+    float4 clipPos = view_uniform.view_projection * float4(in.basePos, 1.0);
+    float farThinning = saturate(1.0 - (clipPos.w * clipPos.w * 0.00002));
+
+    float densityScale = mix(0.0, 3, pow(clipped, 2.5)) * sphericalMask * farThinning;
+    float3 finalScale = in.scale * densityScale;
+
+    // 5. INCREASED ORBIT RADIUS`
+    // Changed 2.0 to 10.0 for a much wider "swirling" motion
+    float t = global_uniform.time.x * 0.0005 + in.phase;
+    float orbitRadius = 1.5;
+    float3 offset = float3(sin(t) * orbitRadius, cos(t) * orbitRadius, sin(t) * orbitRadius);
+
+    // 6. Transformation
     float angle = t * 0.5;
     float3 axis = normalize(in.rotAxis);
-    float c = cos(angle);
-    float s = sin(angle);
-    float mc = 1.0 - c;
+    float c = cos(angle), s = sin(angle), mc = 1.0 - c;
+    float3x3 rot = float3x3(
+        float3(c + axis.x*axis.x*mc, axis.x*axis.y*mc - axis.z*s, axis.x*axis.z*mc + axis.y*s),
+        float3(axis.y*axis.x*mc + axis.z*s, c + axis.y*axis.y*mc, axis.y*axis.z*mc - axis.x*s),
+        float3(axis.z*axis.x*mc - axis.y*s, axis.z*axis.y*mc + axis.x*s, c + axis.z*axis.z*mc)
+    );
 
-    // Optimized matrix construction (pre-calculating reused terms)
-    float3 row0 = float3(c + axis.x*axis.x*mc,           axis.x*axis.y*mc - axis.z*s,    axis.x*axis.z*mc + axis.y*s);
-    float3 row1 = float3(axis.y*axis.x*mc + axis.z*s,    c + axis.y*axis.y*mc,           axis.y*axis.z*mc - axis.x*s);
-    float3 row2 = float3(axis.z*axis.x*mc - axis.y*s,    axis.z*axis.y*mc + axis.x*s,    c + axis.z*axis.z*mc);
-    float3x3 rot = float3x3(row0, row1, row2);
-
-    // 2. Per-vertex transformations
     VertexOut out;
-
-    // Scale -> Rotate -> Translate
-    float3 scaledPos = in.position * in.scale;
-    float3 rotatedPos = rot * scaledPos;
-    float3 finalPos = rotatedPos + in.basePos + offset;
-
-    float4 world_pos = float4(finalPos, 1.0);
-
-    // 3. Output
-    out.position = ubo.viewProj * world_pos;
-    out.frag_pos = world_pos.xyz;
+    float3 finalPos = rot * (in.position * finalScale) + in.basePos + offset;
+    out.position = view_uniform.view_projection * float4(finalPos, 1.0);
+    out.frag_pos = finalPos;
     out.color = in.color;
 
-    // Use the same rotation matrix for the normal
-    out.normal = rot * in.normal;
+    // Soft Volumetric Normals
+    float3 cubeNormal = rot * in.normal;
+    float3 clumpNormal = normalize(finalPos - in.basePos);
+    out.normal = normalize(mix(cubeNormal, clumpNormal, 0.7));
 
     return out;
 }
 
-// Fragment shader (renamed to frag_main)
 fragment float4 frag_main(
     VertexOut in [[stage_in]],
-    constant Uniform& ubo [[buffer(0)]]
+    constant GlobalUniform& global_uniform [[buffer(1)]]
 ) {
-    float3 light = float3(ubo.light_pos);
+    // --- TWEAK THESE "KNOBS" ---
+    float densitySharpness = 0.6;  // Values < 1.0 "bloat" the noise, filling empty space
+    float colorSpread      = 0.8;  // Lower spread creates a more monochromatic, misty feel
+    float globalGlow       = 1.0;  // Subtle glow to make the fog feel self-illuminated
+    float shadowLift       = 0.6;  // High lift ensures the fog doesn't have harsh black shadows
+    float fresnelStrength  = 0.3;
+    // ---------------------------
+
+    // 1. Noise logic
+    float3 p = in.frag_pos * 0.2;
+    float3 p2 = in.frag_pos * 2.0;
+    float noise1 = sin(p.x + global_uniform.time.y * 0.0005) * cos(p.y + global_uniform.time.y * 0.0007) * sin(p.z);
+    float noise2 = sin(p2.x - global_uniform.time.y * 0.001) * cos(p2.y) * sin(p2.z + global_uniform.time.y * 0.001);
+
+    float rawDensity = saturate((noise1 * 0.7 + noise2 * 0.3) * 1.2 + 0.3);
+
+    // TWEAK: Apply Sharpness
+    float density = pow(rawDensity, densitySharpness);
+
+    // 2. Color Setup
+    float3 minColor = float3(0.05, 0.02, 0.1); // Deep Space
+    float3 midColor = float3(0.2, 0.5, 0.8);   // Electric Blue
+    float3 maxColor = float3(0.7, 1.0, 1.0);   // Hot Cyan
+
+    // TWEAK: Apply Spread
+    float3 baseColor = mix(minColor, midColor, saturate(density * colorSpread));
+    baseColor = mix(baseColor, maxColor, saturate((density - 0.6) * 2.0));
+
+    // 3. Lighting
     float3 N = normalize(in.normal);
-    float3 L = normalize(light - in.frag_pos);
-    float diff = max(dot(N, L), 0.2);
+    float3 L = normalize(float3(global_uniform.light_pos) - in.frag_pos);
+    float3 V = normalize(-in.frag_pos);
 
-    float distance = length(light - in.frag_pos);
-    float d = distance / 5.0;
-    float attenuation = 0.8 / (1.0 + d * d);
+    float diff = max(dot(N, L), shadowLift);
+    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.0);
 
-    float3 ambient = 0.1 * in.color;
-    float3 diffuse = in.color * diff * attenuation;
+    // 4. Final Composition
+    // TWEAK: Apply Global Glow
+    float3 finalColor = baseColor * (diff + fresnel * fresnelStrength) * globalGlow;
 
-    float3 lit_color = clamp(ambient + diffuse, 0.0, 0.8);
-    return float4(lit_color, 1.0);
+    return float4(saturate(finalColor), 1.0);
 }

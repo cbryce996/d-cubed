@@ -1,76 +1,77 @@
 #ifndef MESH_H
 #define MESH_H
 
+#include "memory.h"
+
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "pipeline.h"
-
-struct alignas (16) Uniform {
-	glm::mat4 mvp;
-	glm::vec3 light_pos;
-	float time;
-};
-
-struct Vertex {
-	glm::vec3 position;
-	glm::vec3 normal;
-	glm::vec3 color;
-};
+#include "render.h"
 
 constexpr Vertex triangle_vertices[] = {
 	{{0.0f, 0.5f, 0.0f}}, {{0.5f, -0.5f, 0.0f}}, {{-0.5f, -0.5f, 0.0f}}
 };
 
-constexpr Vertex cube_vertices[] = {
+inline Vertex make_vertex (
+	const glm::vec3& pos, const glm::vec3& normal, const glm::vec3& color
+) {
+	Vertex vertex{};
+	Collection::push (&vertex, glm::vec4 (pos, 0.0f));	  // Block 0: position
+	Collection::push (&vertex, glm::vec4 (normal, 0.0f)); // Block 1: normal
+	Collection::push (&vertex, glm::vec4 (color, 0.0f));  // Block 2: color
+	Collection::push (&vertex, glm::vec4 (0.0f));		  // Block 3: padding
+	return vertex;
+}
+
+// Full cube vertices (36 vertices, 6 faces x 2 triangles x 3 vertices)
+static Vertex cube_vertices[] = {
 	// Front face (Z+) - Red
-	{{-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}},
-	{{0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}},
-	{{0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}},
-	{{0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}},
-	{{-0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}},
-	{{-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}},
+	make_vertex ({-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
+	make_vertex ({0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
+	make_vertex ({0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
+	make_vertex ({0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
+	make_vertex ({-0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
+	make_vertex ({-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
 
 	// Back face (Z-) - Green
-	{{-0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}},
-	{{-0.5f, 0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}},
-	{{0.5f, 0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}},
-	{{0.5f, 0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}},
-	{{0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}},
-	{{-0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}},
+	make_vertex ({-0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}),
+	make_vertex ({0.5f, 0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}),
+	make_vertex ({0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}),
+	make_vertex ({0.5f, 0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}),
+	make_vertex ({-0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}),
+	make_vertex ({-0.5f, 0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}),
 
 	// Left face (X-) - Blue
-	{{-0.5f, -0.5f, -0.5f}, {-1, 0, 0}, {0, 0, 1}},
-	{{-0.5f, -0.5f, 0.5f}, {-1, 0, 0}, {0, 0, 1}},
-	{{-0.5f, 0.5f, 0.5f}, {-1, 0, 0}, {0, 0, 1}},
-	{{-0.5f, 0.5f, 0.5f}, {-1, 0, 0}, {0, 0, 1}},
-	{{-0.5f, 0.5f, -0.5f}, {-1, 0, 0}, {0, 0, 1}},
-	{{-0.5f, -0.5f, -0.5f}, {-1, 0, 0}, {0, 0, 1}},
+	make_vertex ({-0.5f, -0.5f, -0.5f}, {-1, 0, 0}, {0, 0, 1}),
+	make_vertex ({-0.5f, -0.5f, 0.5f}, {-1, 0, 0}, {0, 0, 1}),
+	make_vertex ({-0.5f, 0.5f, 0.5f}, {-1, 0, 0}, {0, 0, 1}),
+	make_vertex ({-0.5f, 0.5f, 0.5f}, {-1, 0, 0}, {0, 0, 1}),
+	make_vertex ({-0.5f, 0.5f, -0.5f}, {-1, 0, 0}, {0, 0, 1}),
+	make_vertex ({-0.5f, -0.5f, -0.5f}, {-1, 0, 0}, {0, 0, 1}),
 
 	// Right face (X+) - Yellow
-	{{0.5f, -0.5f, -0.5f}, {1, 0, 0}, {1, 1, 0}},
-	{{0.5f, 0.5f, -0.5f}, {1, 0, 0}, {1, 1, 0}},
-	{{0.5f, 0.5f, 0.5f}, {1, 0, 0}, {1, 1, 0}},
-	{{0.5f, 0.5f, 0.5f}, {1, 0, 0}, {1, 1, 0}},
-	{{0.5f, -0.5f, 0.5f}, {1, 0, 0}, {1, 1, 0}},
-	{{0.5f, -0.5f, -0.5f}, {1, 0, 0}, {1, 1, 0}},
+	make_vertex ({0.5f, -0.5f, -0.5f}, {1, 0, 0}, {1, 1, 0}),
+	make_vertex ({0.5f, 0.5f, 0.5f}, {1, 0, 0}, {1, 1, 0}),
+	make_vertex ({0.5f, -0.5f, 0.5f}, {1, 0, 0}, {1, 1, 0}),
+	make_vertex ({0.5f, 0.5f, 0.5f}, {1, 0, 0}, {1, 1, 0}),
+	make_vertex ({0.5f, -0.5f, -0.5f}, {1, 0, 0}, {1, 1, 0}),
+	make_vertex ({0.5f, 0.5f, -0.5f}, {1, 0, 0}, {1, 1, 0}),
 
 	// Top face (Y+) - Magenta
-	{{-0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0, 1}},
-	{{-0.5f, 0.5f, 0.5f}, {0, 1, 0}, {1, 0, 1}},
-	{{0.5f, 0.5f, 0.5f}, {0, 1, 0}, {1, 0, 1}},
-	{{0.5f, 0.5f, 0.5f}, {0, 1, 0}, {1, 0, 1}},
-	{{0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0, 1}},
-	{{-0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0, 1}},
+	make_vertex ({-0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0, 1}),
+	make_vertex ({0.5f, 0.5f, 0.5f}, {0, 1, 0}, {1, 0, 1}),
+	make_vertex ({-0.5f, 0.5f, 0.5f}, {0, 1, 0}, {1, 0, 1}),
+	make_vertex ({0.5f, 0.5f, 0.5f}, {0, 1, 0}, {1, 0, 1}),
+	make_vertex ({-0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0, 1}),
+	make_vertex ({0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0, 1}),
 
 	// Bottom face (Y-) - Cyan
-	{{-0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}},
-	{{0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}},
-	{{0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 1, 1}},
-	{{0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 1, 1}},
-	{{-0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 1, 1}},
-	{{-0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}},
+	make_vertex ({-0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}),
+	make_vertex ({-0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 1, 1}),
+	make_vertex ({0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 1, 1}),
+	make_vertex ({0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 1, 1}),
+	make_vertex ({0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}),
+	make_vertex ({-0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}),
 };
 
 constexpr size_t cube_vertex_count = sizeof (cube_vertices) / sizeof (Vertex);

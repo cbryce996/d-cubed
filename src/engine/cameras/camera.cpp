@@ -1,7 +1,5 @@
 #include "camera.h"
 
-#include "drawable.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -96,21 +94,20 @@ void CameraManager::update_camera_look (const MouseInput* mouse_input) {
 	camera->transform.rotation = glm::normalize (camera->transform.rotation);
 }
 
-ModelViewProjection CameraManager::compute_model_view_projection (
-	const Camera& camera, float aspect_ratio, const Drawable& drawable
+glm::mat4 CameraManager::compute_view_projection (
+	const Camera& camera, float aspect_ratio
 ) {
-	ModelViewProjection mvp{};
-	mvp.view = glm::lookAt (
+	glm::mat4 view = glm::lookAt (
 		camera.transform.position,
 		camera.transform.position
 			+ camera.transform.rotation * glm::vec3 (0.0f, 0.0f, -1.0f),
 		camera.transform.rotation * glm::vec3 (0.0f, 1.0f, 0.0f)
 	);
 
-	mvp.proj = glm::perspective (
+	glm::mat4 projection = glm::perspective (
 		glm::radians (camera.lens.fov), aspect_ratio, camera.lens.near_clip,
 		camera.lens.far_clip
 	);
-	mvp.mvp = mvp.proj * mvp.view;
-	return mvp;
+	glm::mat4 view_projection = projection * view;
+	return view_projection;
 }

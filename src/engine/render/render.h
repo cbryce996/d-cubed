@@ -1,15 +1,32 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include "assets/asset.h"
+#include "drawable.h"
 #include "graph.h"
+#include "memory.h"
+#include "pipeline.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 
 #include <vector>
 
-#include "engine/assets/asset.h"
-#include "engine/cameras/camera.h"
+class CameraManager;
+enum class ShaderStage : uint8_t {
+	Vertex = 1 << 0,
+	Fragment = 1 << 1,
+	Both = Vertex | Fragment
+};
+
+struct UniformBinding {
+	uint32_t slot;
+	const void* data;
+	uint32_t size;
+	ShaderStage stage;
+};
+
+struct Uniform : Collection {};
 
 struct RenderState {
 	std::vector<Drawable> drawables;
@@ -45,8 +62,8 @@ class RenderManager {
 	void resize (int new_width, int new_height);
 	void acquire_swap_chain ();
 
-	int width = 1280;
-	int height = 720;
+	int width = 1920;
+	int height = 1080;
 
 	std::shared_ptr<ShaderManager> shader_manager;
 	std::shared_ptr<PipelineManager> pipeline_manager;
@@ -60,7 +77,7 @@ class RenderManager {
 	void draw (
 		const Pipeline* pipeline, const Buffer* vertex_buffer,
 		const Buffer* instance_buffer, const Drawable* drawable,
-		const Uniform& uniform
+		const std::vector<UniformBinding>* uniform_bindings
 	);
 
 	void prepare_drawables (std::vector<Drawable>& drawables) const;

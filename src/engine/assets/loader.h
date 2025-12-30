@@ -1,8 +1,9 @@
 #ifndef LOADER_H
 #define LOADER_H
-#include <string>
 
-#include "mesh.h"
+#include "memory.h"
+
+#include <string>
 
 struct IMeshLoader {
 	virtual ~IMeshLoader () = default;
