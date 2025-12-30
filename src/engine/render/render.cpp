@@ -63,14 +63,12 @@ void RenderManager::setup_render_graph () {
 		std::vector<UniformBinding> uniform_bindings;
 
 		UniformBinding view_uniform_binding{};
-		view_uniform_binding.slot = 0;
 		view_uniform_binding.data = &view_uniform.blocks;
 		view_uniform_binding.size = sizeof (view_uniform.blocks);
 		view_uniform_binding.stage = ShaderStage::Both;
 		uniform_bindings.push_back (view_uniform_binding);
 
 		UniformBinding global_uniform_binding{};
-		global_uniform_binding.slot = 1;
 		global_uniform_binding.data = &global_uniform.blocks;
 		global_uniform_binding.size = sizeof (global_uniform.blocks);
 		global_uniform_binding.stage = ShaderStage::Both;
@@ -204,20 +202,22 @@ void RenderManager::draw (
 	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
 
 	// Push uniform bindings
-	for (const UniformBinding& uniform_binding : *uniform_bindings) {
+	for (size_t i = 0; i < uniform_bindings->size (); ++i) {
+		const auto& uniform_binding = (*uniform_bindings)[i];
+
 		if (uniform_binding.stage == ShaderStage::Vertex
 			|| uniform_binding.stage == ShaderStage::Both) {
 			SDL_PushGPUVertexUniformData (
-				buffer_manager->command_buffer, uniform_binding.slot,
-				uniform_binding.data, uniform_binding.size
+				buffer_manager->command_buffer, i, uniform_binding.data,
+				uniform_binding.size
 			);
 		}
 
 		if (uniform_binding.stage == ShaderStage::Fragment
 			|| uniform_binding.stage == ShaderStage::Both) {
 			SDL_PushGPUFragmentUniformData (
-				buffer_manager->command_buffer, uniform_binding.slot,
-				uniform_binding.data, uniform_binding.size
+				buffer_manager->command_buffer, i, uniform_binding.data,
+				uniform_binding.size
 			);
 		}
 	}
