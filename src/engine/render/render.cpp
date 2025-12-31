@@ -1,6 +1,7 @@
 #include "render.h"
 
 #include "../memory.h"
+#include "material.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
@@ -28,12 +29,51 @@ RenderManager::RenderManager (
 	  window (window) {
 	SDL_GetWindowSize (window, &width, &height);
 
+	load_shaders ();
+	load_pipelines ();
 	create_depth_texture ();
-
 	setup_render_graph ();
 }
 
 RenderManager::~RenderManager () = default;
+
+void RenderManager::load_pipelines () const {
+	pipeline_manager->load_pipeline (
+		new PipelineConfig{
+			.shader = shader_manager->get_shader ("anomaly"),
+			.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+			.cull_mode = SDL_GPU_CULLMODE_BACK,
+			.depth_compare = SDL_GPU_COMPAREOP_LESS,
+			.depth_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
+			.compare_op = SDL_GPU_COMPAREOP_LESS,
+			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
+			.enable_depth_test = true,
+			.enable_depth_write = true,
+			.has_depth_stencil_target = true,
+		},
+		"lit_opaque_backcull"
+	);
+}
+
+void RenderManager::load_shaders () const {
+	shader_manager->load_shader (
+		ShaderConfig{
+			.path = "../shaders/msl/anomaly.metal",
+			.entrypoint = "vert_main",
+			.format = SDL_GPU_SHADERFORMAT_MSL,
+			.stage = SDL_GPU_SHADERSTAGE_VERTEX,
+			.num_uniform_buffers = 2
+		},
+		ShaderConfig{
+			.path = "../shaders/msl/anomaly.metal",
+			.entrypoint = "frag_main",
+			.format = SDL_GPU_SHADERFORMAT_MSL,
+			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
+			.num_uniform_buffers = 2
+		},
+		"anomaly"
+	);
+}
 
 void RenderManager::setup_render_graph () {
 	RenderPassNode render_pass;
@@ -52,32 +92,32 @@ void RenderManager::setup_render_graph () {
 		glm::mat4 view_projection = CameraManager::compute_view_projection (
 			*active_camera, aspect_ratio
 		);
-		Collection view_uniform{};
-		Collection::push (&view_uniform, view_projection);
+		Collection view_uniform_builder{};
+		view_uniform_builder.push(view_projection);
 
-		// Creat global uniform
-		Collection global_uniform{};
-		Collection::push (&global_uniform, glm::vec4 (light_pos_world, 1.0f));
-		Collection::push (&global_uniform, render_context.time);
+		// Create global uniform
+		Collection global_uniform_builder{};
+		global_uniform_builder.push(glm::vec4(light_pos_world, 1.0f));
+		global_uniform_builder.push(render_context.time); // Assuming this is a vec4
 
 		std::vector<UniformBinding> uniform_bindings;
 
 		UniformBinding view_uniform_binding{};
-		view_uniform_binding.data = &view_uniform.blocks;
-		view_uniform_binding.size = sizeof (view_uniform.blocks);
+		view_uniform_binding.data = &view_uniform_builder.storage;
+		view_uniform_binding.size = sizeof(Block);
 		view_uniform_binding.stage = ShaderStage::Both;
-		uniform_bindings.push_back (view_uniform_binding);
+		uniform_bindings.push_back(view_uniform_binding);
 
 		UniformBinding global_uniform_binding{};
-		global_uniform_binding.data = &global_uniform.blocks;
-		global_uniform_binding.size = sizeof (global_uniform.blocks);
+		global_uniform_binding.data = &global_uniform_builder.storage;
+		global_uniform_binding.size = sizeof(Block);
 		global_uniform_binding.stage = ShaderStage::Both;
-		uniform_bindings.push_back (global_uniform_binding);
+		uniform_bindings.push_back(global_uniform_binding);
 
 		for (const Drawable& drawable : *render_context.drawables) {
 			const Pipeline* pipeline
-				= render_context.pipeline_manager->get_or_create_pipeline (
-					drawable.material
+				= render_context.pipeline_manager->get_pipeline (
+					drawable.material->pipeline_name
 				);
 			const Buffer* vertex_buffer = drawable.vertex_buffer;
 			const Buffer* instance_buffer = drawable.instance_buffer;

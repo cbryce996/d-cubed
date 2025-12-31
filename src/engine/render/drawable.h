@@ -2,7 +2,7 @@
 #define DRAWABLE_H
 
 #include "buffer.h"
-#include "instance.h"
+#include "memory.h"
 
 struct Mesh;
 struct Material;
@@ -11,7 +11,7 @@ struct Drawable {
 	Mesh* mesh = nullptr;
 	Material* material = nullptr;
 
-	std::vector<Instance> instances;
+	std::vector<Block> instances;
 	size_t instances_count;
 	size_t instances_size;
 

@@ -1,6 +1,9 @@
 #ifndef PIPELINE_H
 #define PIPELINE_H
 
+#include "drawable.h"
+#include "memory.h"
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 
@@ -9,20 +12,32 @@
 
 #include "shader.h"
 
-struct Material;
+constexpr SDL_GPUVertexElementFormat get_format () {
+#if BASE_COLLECTION_SIZE == 4
+	return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
+#else
+	return SDL_GPU_VERTEXELEMENTFORMAT_INVALID;
+#endif
+}
 
 struct PipelineConfig {
-	std::string name;
-	Shader* shader = nullptr;
-	SDL_GPUVertexInputState vertex_input;
-	SDL_GPUPrimitiveType primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
-	SDL_GPUCullMode cull_mode = SDL_GPU_CULLMODE_BACK;
-	SDL_GPUCompareOp depth_compare = SDL_GPU_COMPAREOP_LESS;
-	SDL_GPUTextureFormat depth_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
-	SDL_GPUCompareOp compare_op = SDL_GPU_COMPAREOP_LESS;
-	bool enable_depth_test = true;
-	bool enable_depth_write = true;
-	bool has_depth = true;
+	const Shader* shader;
+
+	const SDL_GPUPrimitiveType primitive_type;
+	const SDL_GPUCullMode cull_mode;
+	const SDL_GPUCompareOp depth_compare;
+	const SDL_GPUTextureFormat depth_format;
+	const SDL_GPUCompareOp compare_op;
+	const SDL_GPUTextureFormat depth_stencil_format;
+
+	const bool enable_depth_test;
+	const bool enable_depth_write;
+	const bool has_depth_stencil_target;
+
+	std::string key () const {
+		return shader->name + "_" + std::to_string (primitive_type) + "_"
+			   + std::to_string (enable_depth_test);
+	}
 };
 
 struct Pipeline {
@@ -37,13 +52,16 @@ class PipelineManager {
 		const std::shared_ptr<ShaderManager>& shader_manager
 	);
 	~PipelineManager ();
+	void load_pipeline (
+		const PipelineConfig* pipeline_config, const std::string& name
+	);
 
 	Pipeline* get_pipeline (const std::string& name);
-	Pipeline* get_or_create_pipeline (Material* material);
 
 	void add_pipeline (Pipeline& pipeline);
 
-	SDL_GPUGraphicsPipeline* create_pipeline (PipelineConfig& config) const;
+	SDL_GPUGraphicsPipeline*
+	create_pipeline (const PipelineConfig& pipeline_config) const;
 
   private:
 	SDL_GPUDevice* device = nullptr;

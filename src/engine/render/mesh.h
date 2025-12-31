@@ -8,23 +8,23 @@
 #include "pipeline.h"
 #include "render.h"
 
-constexpr Vertex triangle_vertices[] = {
+constexpr Collection triangle_vertices[] = {
 	{{0.0f, 0.5f, 0.0f}}, {{0.5f, -0.5f, 0.0f}}, {{-0.5f, -0.5f, 0.0f}}
 };
 
-inline Vertex make_vertex (
+inline Collection make_vertex (
 	const glm::vec3& pos, const glm::vec3& normal, const glm::vec3& color
 ) {
-	Vertex vertex{};
-	Vertex::push (&vertex, glm::vec4 (pos, 0.0f));	  // Block 0: position
-	Vertex::push (&vertex, glm::vec4 (normal, 0.0f)); // Block 1: normal
-	Vertex::push (&vertex, glm::vec4 (color, 0.0f));  // Block 2: color
-	Vertex::push (&vertex, glm::vec4 (0.0f));		  // Block 3: padding
+	Collection vertex{};
+	vertex.push (glm::vec4 (pos, 0.0f));	// Block 0: position
+	vertex.push (glm::vec4 (normal, 0.0f)); // Block 1: normal
+	vertex.push (glm::vec4 (color, 0.0f));	// Block 2: color
+	vertex.push (glm::vec4 (0.0f));			// Block 3: padding
 	return vertex;
 }
 
 // Full cube vertices (36 vertices, 6 faces x 2 triangles x 3 vertices)
-static Vertex cube_vertices[] = {
+static Collection cube_vertices[] = {
 	// Front face (Z+) - Red
 	make_vertex ({-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
 	make_vertex ({0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
@@ -80,27 +80,35 @@ static Vertex cube_vertices[] = {
 	make_vertex ({0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}),
 };
 
-constexpr size_t cube_vertex_count = sizeof (cube_vertices) / sizeof (Vertex);
+constexpr size_t cube_vertex_count = sizeof (cube_vertices)
+									 / sizeof (Collection);
 
 struct Mesh {
 	std::string name;
-	const Vertex* vertex_data;
+	const Block* vertex_data;
 	size_t vertex_size;
 	size_t vertex_count;
-	std::shared_ptr<std::vector<Vertex>> vertex_storage;
+	std::shared_ptr<std::vector<Block>> vertex_storage;
 };
 
-inline std::shared_ptr<Mesh> create_cube_mesh () {
-	auto mesh = std::make_shared<Mesh> ();
+inline std::shared_ptr<Mesh> create_cube_mesh() {
+	auto mesh = std::make_shared<Mesh>();
 	mesh->name = "cube";
 
-	mesh->vertex_storage = std::make_shared<std::vector<Vertex>> (
-		std::begin (cube_vertices), std::end (cube_vertices)
-	);
+	// Create a storage vector for pure 64-byte Data objects
+	mesh->vertex_storage = std::make_shared<std::vector<Block>>();
+	mesh->vertex_storage->reserve(cube_vertex_count);
 
-	mesh->vertex_data = mesh->vertex_storage->data ();
-	mesh->vertex_count = mesh->vertex_storage->size ();
-	mesh->vertex_size = mesh->vertex_storage->size () * sizeof (Vertex);
+	for (size_t i = 0; i < cube_vertex_count; ++i) {
+		// Extract the .storage member (the 64-byte part) from the Collection builder
+		mesh->vertex_storage->push_back(cube_vertices[i].storage);
+	}
+
+	mesh->vertex_data = mesh->vertex_storage->data();
+	mesh->vertex_count = mesh->vertex_storage->size();
+
+	// vertex_size is now exactly vertex_count * 64
+	mesh->vertex_size = mesh->vertex_storage->size() * sizeof(Block);
 
 	return mesh;
 }

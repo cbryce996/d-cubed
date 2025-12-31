@@ -5,7 +5,6 @@
 #include "drawable.h"
 #include "graph.h"
 #include "memory.h"
-#include "pipeline.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
@@ -13,6 +12,10 @@
 #include <vector>
 
 class CameraManager;
+class PipelineManager;
+class ShaderManager;
+struct Pipeline;
+
 enum class ShaderStage : uint8_t {
 	Vertex = 1 << 0,
 	Fragment = 1 << 1,
@@ -58,9 +61,11 @@ class RenderManager {
 		std::shared_ptr<AssetManager> asset_manager
 	);
 	~RenderManager ();
+	void load_pipelines () const;
 	void setup_render_graph ();
 	void resize (int new_width, int new_height);
 	void acquire_swap_chain ();
+	void load_shaders () const;
 
 	int width = 1920;
 	int height = 1080;

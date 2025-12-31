@@ -10,8 +10,9 @@
 #include "../../src/engine/assets/asset.h"
 
 struct FakeLoader : IMeshLoader {
-	bool
-	load (const std::string& path, std::vector<Vertex>& out_vertices) override {
+	bool load (
+		const std::string& path, std::vector<Collection>& out_vertices
+	) override {
 		out_vertices = {{{0, 0, 0}, {0, 1, 0}, {1, 1, 1}}}; // dummy vertex
 		return true;
 	}

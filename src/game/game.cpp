@@ -121,60 +121,48 @@ void Game::handle_input (const InputManager& input) {
 std::vector<glm::vec3> base_positions;
 std::vector<glm::vec3> random_rot_axes;
 static constexpr int NUM_CUBES = 1000000;
-std::vector<Instance> instances;
+std::vector<Block> instances;
 
-// Call this once before the main loop
 void Game::setup_cubes () {
-	cubes.positions.resize (NUM_CUBES);
-	cubes.rotations.resize (NUM_CUBES);
-	cubes.scales.resize (NUM_CUBES, glm::vec3 (1.0f));
-
-	base_positions.resize (NUM_CUBES);
-	random_rot_axes.resize (NUM_CUBES);
-	std::vector<float> phases (NUM_CUBES);
-
-	// Random generators
-	std::mt19937 rng_pos (42);
-	std::uniform_real_distribution<float> pos_dist (-50.0f, 50.0f);
-
-	std::mt19937 rng_axis (123);
-	std::uniform_real_distribution<float> axis_dist (-1.0f, 1.0f);
-
-	std::mt19937 rng_phase (321);
-	std::uniform_real_distribution<float> phase_dist (0.0f, 2.0f * 3.14159265f);
-
 	instances.resize (NUM_CUBES);
 
+	// Random generators
+	std::mt19937 rng (42);
+	std::uniform_real_distribution<float> pos_dist (-50.0f, 50.0f);
+	std::uniform_real_distribution<float> scale_dist (0.5f, 2.0f);
+	std::uniform_real_distribution<float> rot_dist (-1.0f, 1.0f);
+	std::uniform_real_distribution<float> phase_dist (0.0f, 6.28f);
+
 	for (int i = 0; i < NUM_CUBES; ++i) {
-		glm::vec3 pos (
-			pos_dist (rng_pos), pos_dist (rng_pos), pos_dist (rng_pos)
+		Collection builder;
+
+		// 1. Generate random transform data for this specific instance
+		glm::vec3 random_pos = glm::vec3 (
+			pos_dist (rng), pos_dist (rng), pos_dist (rng)
 		);
-
-		glm::vec3 axis = glm::normalize (
-			glm::vec3 (
-				axis_dist (rng_axis), axis_dist (rng_axis), axis_dist (rng_axis)
-			)
+		glm::vec3 random_axis = glm::normalize (
+			glm::vec3 (rot_dist (rng), rot_dist (rng), rot_dist (rng))
 		);
+		float random_scale = scale_dist (rng);
+		float random_phase = phase_dist (rng);
 
-		float phase = phase_dist (rng_phase);
+		builder.push(glm::vec4(random_pos, random_phase)); // Block 0
+		builder.push(glm::vec4(random_axis, 0.0f));       // Block 1
+		builder.push(glm::vec4(glm::vec3(random_scale), 1.0f)); // Block 2
+		builder.push(glm::vec4(0.0f));                    // Block 3
 
-		// Fill instance
-		instances[i].basePos = pos;
-		instances[i].rotAxis = axis;
-		instances[i].phase = phase;
-		instances[i].scale = glm::vec3 (0.3f);
-
-		// Optional CPU-side for other logic
-		cubes.positions[i] = pos;
+		// Store ONLY the 64-byte data into the vector
+		instances[i] = builder.storage;
 	}
 }
 
 void Game::write_game_state (RenderState* render_state) {
 	static std::shared_ptr<Mesh> cube_mesh = create_cube_mesh ();
-	static Material material = {};
-	material.pipeline_config = {
-		.name = "cube_pipeline",
-		.shader = engine->render->shader_manager->get_shader ("lit")
+
+	static Material material = {
+		.name = "test_material",
+		.pipeline_name = "lit_opaque_backcull",
+		.shader_name = "anomaly"
 	};
 
 	Drawable cube{};
@@ -182,15 +170,17 @@ void Game::write_game_state (RenderState* render_state) {
 	cube.material = &material;
 	cube.instances.resize (NUM_CUBES);
 	cube.instances_count = NUM_CUBES;
-	cube.instances_size = sizeof (Instance) * NUM_CUBES;
+	cube.instances_size = sizeof (Block) * NUM_CUBES;
 
-	// Copy our instance data directly; no per-frame computation
-	std::memcpy (
-		cube.instances.data (), instances.data (), sizeof (Instance) * NUM_CUBES
+	cube.instances.resize(NUM_CUBES);
+
+	std::memcpy(
+	   cube.instances.data(),
+	   instances.data(),
+	   cube.instances_size
 	);
 
-	render_state->drawables.clear ();
-	render_state->drawables.push_back (std::move (cube));
+	render_state->drawables.push_back(std::move(cube));
 }
 
 void Game::calculate_item_decays (const float delta_time_ms) {

@@ -1,9 +1,13 @@
 SCRIPT_DIR := scripts
 BUILD_DIR := build
 
-.PHONY: format build test clean
+.PHONY: shaders format build test clean
 
 check: check_format build test
+
+shaders:
+	@echo "=== Compiling Shaders ==="
+	@${SCRIPT_DIR}/shaders.sh
 
 check_format:
 	@echo "=== Check Format ==="

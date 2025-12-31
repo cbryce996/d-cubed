@@ -14,7 +14,7 @@ AssetManager::load_mesh_from_file (const std::string& path) {
 	auto mesh = std::make_shared<Mesh> ();
 	mesh->name = path;
 
-	std::vector<Vertex> vertices;
+	std::vector<Block> vertices;
 
 	if (!loader->load (path, vertices)) {
 		SDL_LogError (
@@ -23,12 +23,12 @@ AssetManager::load_mesh_from_file (const std::string& path) {
 		return nullptr;
 	}
 
-	mesh->vertex_storage = std::make_shared<std::vector<Vertex>> (
+	mesh->vertex_storage = std::make_shared<std::vector<Block>> (
 		std::move (vertices)
 	);
 	mesh->vertex_data = mesh->vertex_storage->data ();
 	mesh->vertex_count = mesh->vertex_storage->size ();
-	mesh->vertex_size = mesh->vertex_storage->size () * sizeof (Vertex);
+	mesh->vertex_size = mesh->vertex_storage->size () * sizeof (Block);
 	meshes[path] = mesh;
 
 	SDL_Log (
