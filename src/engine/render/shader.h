@@ -100,21 +100,24 @@ class ShaderManager {
   public:
 	explicit ShaderManager (SDL_GPUDevice* device);
 	~ShaderManager ();
-	static std::vector<VertexAttribute>
-	load_vertex_attributes (const std::string& json_path);
-	;
-	static std::unordered_map<std::string, UniformBlock>
-	load_uniform_blocks (const std::string& json_path);
-	void load_shader (
-		const ShaderConfig& vertex_shader, const ShaderConfig& fragment_shader,
+
+	bool load_shader (
+		const ShaderConfig& vertex_config, const ShaderConfig& fragment_config,
 		const std::string& name
 	);
-	void add_shader (Shader& shader);
+
 	Shader* get_shader (const std::string& name);
+
+	void add_shader (const Shader& shader);
+
+	static std::vector<VertexAttribute>
+	load_vertex_attributes (const std::string& json_path);
+	static std::unordered_map<std::string, UniformBlock>
+	load_uniform_blocks (const std::string& json_path);
 
   private:
 	[[nodiscard]] SDL_GPUShader*
-	compile_shader (const ShaderConfig& shader_config) const;
+	compile_shader (const ShaderConfig& config) const;
 
 	SDL_GPUDevice* device = nullptr;
 	std::unordered_map<std::string, Shader> shaders;

@@ -20,9 +20,9 @@ ShaderManager::load_vertex_attributes (const std::string& json_path) {
 		return {};
 	}
 
-	SDL_LogMessage (
-		SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO,
-		"Loading vertex attributes from: '%s'.", json_path.c_str ()
+	SDL_LogInfo (
+		SDL_LOG_CATEGORY_RENDER, "Loading vertex attributes from: '%s'.",
+		json_path.c_str ()
 	);
 
 	nlohmann::json data = nlohmann::json::parse (file);
@@ -35,8 +35,8 @@ ShaderManager::load_vertex_attributes (const std::string& json_path) {
 			auto it = SHADER_TYPE_LOOKUP.find (json_type);
 			if (it != SHADER_TYPE_LOOKUP.end ()) {
 				VertexAttribute info;
-				info.name = input.value ("name.", "unknown");
-				info.location = input.value ("location.", 0);
+				info.name = input.value ("name", "unknown");
+				info.location = input.value ("location", 0);
 				info.type = it->second;
 
 				attribute_info.push_back (info);
@@ -65,9 +65,9 @@ ShaderManager::load_uniform_blocks (const std::string& json_path) {
 		return {};
 	}
 
-	SDL_LogMessage (
-		SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO,
-		"Loading uniform blocks from: '%s'.", json_path.c_str ()
+	SDL_LogInfo (
+		SDL_LOG_CATEGORY_RENDER, "Loading uniform blocks from: '%s'.",
+		json_path.c_str ()
 	);
 
 	nlohmann::json data = nlohmann::json::parse (file);
@@ -102,8 +102,8 @@ ShaderManager::load_uniform_blocks (const std::string& json_path) {
 	return uniform_blocks;
 }
 
-void ShaderManager::load_shader (
-	const ShaderConfig& v_config, const ShaderConfig& f_config,
+bool ShaderManager::load_shader (
+	const ShaderConfig& vertex_config, const ShaderConfig& fragment_config,
 	const std::string& name
 ) {
 	if (get_shader (name)) {
@@ -111,21 +111,20 @@ void ShaderManager::load_shader (
 			SDL_LOG_CATEGORY_RENDER, "Shader '%s' already loaded. Skipping.",
 			name.c_str ()
 		);
-		return;
+		return false;
 	}
-
-	SDL_LogMessage (
-		SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO, "Loading shader: '%s'.",
-		name.c_str ()
-	);
 
 	Shader shader;
 	shader.name = name;
 
-	shader.vertex_shader = compile_shader (v_config);
-	shader.fragment_shader = compile_shader (f_config);
+	shader.vertex_shader = compile_shader (vertex_config);
+	shader.fragment_shader = compile_shader (fragment_config);
 
-	std::string json_path = v_config.path + ".json";
+	std::string json_path = vertex_config.path;
+	size_t last_dot = json_path.find_last_of ('.');
+	if (last_dot != std::string::npos) {
+		json_path = json_path.substr (0, last_dot) + ".json";
+	}
 
 	shader.uniform_blocks = load_uniform_blocks (json_path);
 	if (shader.uniform_blocks.empty ()) {
@@ -135,12 +134,20 @@ void ShaderManager::load_shader (
 			"metadata.",
 			name.c_str ()
 		);
-		return;
+		return false;
 	}
 
 	std::vector<VertexAttribute> vertex_attributes = load_vertex_attributes (
 		json_path
 	);
+
+	std::sort (
+		vertex_attributes.begin (), vertex_attributes.end (),
+		[] (const VertexAttribute& a, const VertexAttribute& b) {
+			return a.location < b.location;
+		}
+	);
+
 	if (vertex_attributes.empty ()) {
 		SDL_LogCritical (
 			SDL_LOG_CATEGORY_RENDER,
@@ -148,13 +155,16 @@ void ShaderManager::load_shader (
 			"metadata.",
 			name.c_str ()
 		);
-		return;
+		return false;
 	}
 
 	std::vector<SDL_GPUVertexAttribute> sdl_attributes;
 
 	for (const auto& attribute : vertex_attributes) {
-		uint32_t slot = (attribute.location == 0) ? 0 : 1;
+		// 1. Fix the Slot Assignment
+		// Locations 0-3 = Mesh Data (Slot 0)
+		// Locations 4-7 = Instance Data (Slot 1)
+		uint32_t slot = (attribute.location < 4) ? 0 : 1;
 
 		if (!shader.vertex_buffer_layouts.contains (slot)) {
 			shader.vertex_buffer_layouts[slot].input_rate
@@ -165,50 +175,49 @@ void ShaderManager::load_shader (
 		VertexBufferLayout& layout = shader.vertex_buffer_layouts[slot];
 		layout.attributes.push_back (attribute);
 
-		// TODO: Extract into map
-		uint32_t num_slots = (attribute.type == ShaderDataType::Mat4) ? 4 : 1;
-		uint32_t bytes_per_slot = (attribute.type == ShaderDataType::Mat4)
-									  ? 16
-									  : ShaderTypeUtils::get_size (
-											attribute.type
-										);
+		// 2. Simplify: Don't loop inside unless it's actually a Mat4.
+		// In your current shader, these are all float4s/vec4s.
+		SDL_GPUVertexAttribute sdl_attribute;
+		sdl_attribute.location = attribute.location;
+		sdl_attribute.buffer_slot = slot;
+		sdl_attribute.format = ShaderTypeUtils::get_sdl_format (attribute.type);
+		sdl_attribute.offset = layout.stride;
 
-		for (uint32_t i = 0; i < num_slots; ++i) {
-			SDL_GPUVertexAttribute sdl_attribute;
-			sdl_attribute.location = attribute.location + i;
-			sdl_attribute.buffer_slot = slot;
-			sdl_attribute.format = (attribute.type == ShaderDataType::Mat4)
-									   ? SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4
-									   : ShaderTypeUtils::get_sdl_format (
-											 attribute.type
-										 );
+		layout.sdl_attributes.push_back (sdl_attribute);
 
-			sdl_attribute.offset = layout.stride;
-			layout.sdl_attributes.push_back (sdl_attribute);
+		// 3. Increment stride by the actual size of the single attribute
+		layout.stride += ShaderTypeUtils::get_size (attribute.type);
+	}
 
-			layout.stride += bytes_per_slot;
-		}
+	for (auto const& [slot, layout] : shader.vertex_buffer_layouts) {
+		SDL_LogInfo (
+			SDL_LOG_CATEGORY_RENDER,
+			"Shader '%s' Slot %u: Stride %u bytes, %zu attributes mapped.",
+			name.c_str (), slot, layout.stride, layout.sdl_attributes.size ()
+		);
 	}
 
 	shaders[name] = shader;
+	return true;
 }
 
 Shader* ShaderManager::get_shader (const std::string& name) {
 	Shader* shader = shaders.contains (name) ? &shaders[name] : nullptr;
-	if (!shader)
-		SDL_LogError (
-			SDL_LOG_CATEGORY_RENDER, "Shader not found: '%s'.", name.c_str ()
-		);
 	return shader;
 }
 
-void ShaderManager::add_shader (Shader& shader) {
+void ShaderManager::add_shader (const Shader& shader) {
 	shaders.emplace (shader.name, shader);
 }
 
 SDL_GPUShader*
 ShaderManager::compile_shader (const ShaderConfig& shader_config) const {
-	SDL_IOStream* file = SDL_IOFromFile (shader_config.path.c_str (), "r");
+	SDL_LogMessage (
+		SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO,
+		"Compiling shader stage: %s", shader_config.path.c_str ()
+	);
+
+	SDL_IOStream* file = SDL_IOFromFile (shader_config.path.c_str (), "rb");
 	if (!file) {
 		SDL_LogError (
 			SDL_LOG_CATEGORY_RENDER, "Failed to open shader: '%s'.",
@@ -255,7 +264,19 @@ ShaderManager::compile_shader (const ShaderConfig& shader_config) const {
 	};
 
 	SDL_GPUShader* shader = SDL_CreateGPUShader (device, &info);
-	if (!shader)
-		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Shader compilation failed.");
+
+	if (!shader) {
+		SDL_LogError (
+			SDL_LOG_CATEGORY_RENDER, "Shader compilation failed for '%s': %s",
+			shader_config.path.c_str (), SDL_GetError ()
+		);
+	} else {
+		SDL_LogMessage (
+			SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO,
+			"Successfully compiled shader stage: %s",
+			shader_config.path.c_str ()
+		);
+	}
+
 	return shader;
 }

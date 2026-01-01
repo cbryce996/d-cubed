@@ -44,8 +44,7 @@ PipelineManager::create_pipeline (const PipelineConfig& pipeline_config) const {
 			.slot = slot,
 			.pitch = layout.stride,
 			.input_rate = layout.input_rate,
-			.instance_step_rate
-			= (layout.input_rate == SDL_GPU_VERTEXINPUTRATE_INSTANCE) ? 1u : 0u
+			.instance_step_rate = 0
 		};
 		buffer_descriptions.push_back (description);
 	}

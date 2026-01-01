@@ -4,8 +4,8 @@
 set -e
 
 # Configuration
-SOURCE_DIR="./shaders"
-OUTPUT_DIR="./assets/shaders"
+SOURCE_DIR="./assets/shaders"
+OUTPUT_DIR="./assets/shaders/bin"
 SDK="macosx"
 
 # Ensure output directory exists
@@ -53,8 +53,8 @@ compile() {
 }
 
 # --- Compile Shaders ---
-compile "simple" "vert"
-compile "simple" "frag"
+compile "anomaly" "vert"
+compile "anomaly" "frag"
 
 echo "---------------------------------------"
 echo "All shaders compiled successfully."

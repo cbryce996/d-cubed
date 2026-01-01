@@ -56,18 +56,24 @@ void RenderManager::load_pipelines () const {
 }
 
 void RenderManager::load_shaders () const {
+	const std::string shader_base = SHADERS_DIR;
+
+	SDL_LogInfo (
+		SDL_LOG_CATEGORY_RENDER, "Loading shaders.", shader_base.c_str ()
+	);
+
 	shader_manager->load_shader (
 		ShaderConfig{
-			.path = "../shaders/msl/anomaly.metal",
-			.entrypoint = "vert_main",
-			.format = SDL_GPU_SHADERFORMAT_MSL,
+			.path = shader_base + "bin/anomaly.vert.metallib",
+			.entrypoint = "main0",
+			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_VERTEX,
 			.num_uniform_buffers = 2
 		},
 		ShaderConfig{
-			.path = "../shaders/msl/anomaly.metal",
-			.entrypoint = "frag_main",
-			.format = SDL_GPU_SHADERFORMAT_MSL,
+			.path = shader_base + "bin/anomaly.frag.metallib",
+			.entrypoint = "main0",
+			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
 			.num_uniform_buffers = 2
 		},
@@ -106,12 +112,14 @@ void RenderManager::setup_render_graph () {
 
 		UniformBinding view_uniform_binding{};
 		view_uniform_binding.data = &view_uniform_builder.storage;
+		view_uniform_binding.slot = 0;
 		view_uniform_binding.size = sizeof (Block);
 		view_uniform_binding.stage = ShaderStage::Both;
 		uniform_bindings.push_back (view_uniform_binding);
 
 		UniformBinding global_uniform_binding{};
 		global_uniform_binding.data = &global_uniform_builder.storage;
+		view_uniform_binding.slot = 1;
 		global_uniform_binding.size = sizeof (Block);
 		global_uniform_binding.stage = ShaderStage::Both;
 		uniform_bindings.push_back (global_uniform_binding);
@@ -250,16 +258,16 @@ void RenderManager::draw (
 		if (uniform_binding.stage == ShaderStage::Vertex
 			|| uniform_binding.stage == ShaderStage::Both) {
 			SDL_PushGPUVertexUniformData (
-				buffer_manager->command_buffer, i, uniform_binding.data,
-				uniform_binding.size
+				buffer_manager->command_buffer, uniform_binding.slot,
+				uniform_binding.data, uniform_binding.size
 			);
 		}
 
 		if (uniform_binding.stage == ShaderStage::Fragment
 			|| uniform_binding.stage == ShaderStage::Both) {
 			SDL_PushGPUFragmentUniformData (
-				buffer_manager->command_buffer, i, uniform_binding.data,
-				uniform_binding.size
+				buffer_manager->command_buffer, uniform_binding.slot,
+				uniform_binding.data, uniform_binding.size
 			);
 		}
 	}

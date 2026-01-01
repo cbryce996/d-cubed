@@ -30,6 +30,8 @@ set(SRC_FILES
 
 add_library(game_lib STATIC ${SRC_FILES})
 
+add_definitions(-DSHADERS_DIR="${CMAKE_SOURCE_DIR}/assets/shaders/")
+
 target_include_directories(game_lib PUBLIC
     src
     src/game/core/items
