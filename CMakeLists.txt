@@ -43,10 +43,12 @@ target_include_directories(game_lib PUBLIC
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 target_link_libraries(game_lib PUBLIC
     SDL3::SDL3
     glm::glm
+    nlohmann_json::nlohmann_json
 )
 
 add_executable(game src/main.cpp)

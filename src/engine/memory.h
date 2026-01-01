@@ -16,26 +16,25 @@ struct Collection {
 
 	static constexpr uint8_t MAX_BLOCKS = 4;
 
-	void clear() {
+	void clear () {
 		count = 0;
-		std::memset(storage.blocks, 0, sizeof(Block));
+		std::memset (storage.blocks, 0, sizeof (Block));
 	}
 
-	void push(const glm::vec4& value) {
-		assert(count < MAX_BLOCKS && "Collection overflow");
+	void push (const glm::vec4& value) {
+		assert (count < MAX_BLOCKS && "Collection overflow");
 		// Each vec4 takes 4 float slots
-		std::memcpy(&storage.blocks[count * 4], &value, sizeof(glm::vec4));
+		std::memcpy (&storage.blocks[count * 4], &value, sizeof (glm::vec4));
 		count++;
 	}
 
-	void push(const glm::mat4& m) {
-		assert(count == 0 && "Collection must be empty for mat4");
-		for (int i = 0; i < 4; ++i) push(m[i]);
+	void push (const glm::mat4& m) {
+		assert (count == 0 && "Collection must be empty for mat4");
+		for (int i = 0; i < 4; ++i)
+			push (m[i]);
 	}
 
-	void push(const float value) {
-		push(glm::vec4(value));
-	}
+	void push (const float value) { push (glm::vec4 (value)); }
 };
 
 #endif // MEMORY_H

@@ -1,0 +1,96 @@
+{
+    "entryPoints" : [
+        {
+            "name" : "main",
+            "mode" : "vert"
+        }
+    ],
+    "types" : {
+        "_46" : {
+            "name" : "gl_PerVertex",
+            "members" : [
+                {
+                    "name" : "gl_Position",
+                    "type" : "vec4"
+                },
+                {
+                    "name" : "gl_PointSize",
+                    "type" : "float"
+                },
+                {
+                    "name" : "gl_ClipDistance",
+                    "type" : "float",
+                    "array" : [
+                        1
+                    ],
+                    "array_size_is_literal" : [
+                        true
+                    ]
+                },
+                {
+                    "name" : "gl_CullDistance",
+                    "type" : "float",
+                    "array" : [
+                        1
+                    ],
+                    "array_size_is_literal" : [
+                        true
+                    ]
+                }
+            ]
+        },
+        "_51" : {
+            "name" : "Matrices",
+            "members" : [
+                {
+                    "name" : "view",
+                    "type" : "mat4",
+                    "offset" : 0,
+                    "matrix_stride" : 16
+                },
+                {
+                    "name" : "projection",
+                    "type" : "mat4",
+                    "offset" : 64,
+                    "matrix_stride" : 16
+                }
+            ]
+        }
+    },
+    "inputs" : [
+        {
+            "type" : "vec4",
+            "name" : "i_col0",
+            "location" : 1
+        },
+        {
+            "type" : "vec4",
+            "name" : "i_col1",
+            "location" : 2
+        },
+        {
+            "type" : "vec4",
+            "name" : "i_col2",
+            "location" : 3
+        },
+        {
+            "type" : "vec4",
+            "name" : "i_col3",
+            "location" : 4
+        },
+        {
+            "type" : "vec3",
+            "name" : "a_position",
+            "location" : 0
+        }
+    ],
+    "ubos" : [
+        {
+            "type" : "_51",
+            "name" : "Matrices",
+            "block_size" : 128,
+            "set" : 0,
+            "binding" : 0
+        }
+    ]
+}

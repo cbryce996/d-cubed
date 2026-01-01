@@ -93,26 +93,28 @@ void RenderManager::setup_render_graph () {
 			*active_camera, aspect_ratio
 		);
 		Collection view_uniform_builder{};
-		view_uniform_builder.push(view_projection);
+		view_uniform_builder.push (view_projection);
 
 		// Create global uniform
 		Collection global_uniform_builder{};
-		global_uniform_builder.push(glm::vec4(light_pos_world, 1.0f));
-		global_uniform_builder.push(render_context.time); // Assuming this is a vec4
+		global_uniform_builder.push (glm::vec4 (light_pos_world, 1.0f));
+		global_uniform_builder.push (
+			render_context.time
+		); // Assuming this is a vec4
 
 		std::vector<UniformBinding> uniform_bindings;
 
 		UniformBinding view_uniform_binding{};
 		view_uniform_binding.data = &view_uniform_builder.storage;
-		view_uniform_binding.size = sizeof(Block);
+		view_uniform_binding.size = sizeof (Block);
 		view_uniform_binding.stage = ShaderStage::Both;
-		uniform_bindings.push_back(view_uniform_binding);
+		uniform_bindings.push_back (view_uniform_binding);
 
 		UniformBinding global_uniform_binding{};
 		global_uniform_binding.data = &global_uniform_builder.storage;
-		global_uniform_binding.size = sizeof(Block);
+		global_uniform_binding.size = sizeof (Block);
 		global_uniform_binding.stage = ShaderStage::Both;
-		uniform_bindings.push_back(global_uniform_binding);
+		uniform_bindings.push_back (global_uniform_binding);
 
 		for (const Drawable& drawable : *render_context.drawables) {
 			const Pipeline* pipeline

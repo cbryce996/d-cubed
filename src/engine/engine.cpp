@@ -11,6 +11,8 @@ Engine::Engine () {
 		return;
 	}
 
+	SDL_SetLogPriority (SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_TRACE);
+
 	window = SDL_CreateWindow ("Game", 1280, 720, SDL_WINDOW_RESIZABLE);
 
 	SDL_SetWindowFullscreen (window, true);

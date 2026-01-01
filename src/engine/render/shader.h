@@ -8,6 +8,58 @@
 
 #include "SDL3/SDL_gpu.h"
 
+#include <map>
+
+enum class ShaderDataType : uint32_t {
+	None = 0,
+	Float = 4,
+	Vec2 = 8,
+	Vec3 = 12,
+	Vec4 = 16,
+	Mat4 = 64,
+	Int = 4
+};
+
+static const std::unordered_map<std::string, ShaderDataType> SHADER_TYPE_LOOKUP
+	= {{"float", ShaderDataType::Float}, {"vec2", ShaderDataType::Vec2},
+	   {"vec3", ShaderDataType::Vec3},	 {"vec4", ShaderDataType::Vec4},
+	   {"mat4", ShaderDataType::Mat4},	 {"int", ShaderDataType::Int}};
+
+namespace ShaderTypeUtils {
+inline uint32_t get_size (ShaderDataType type) {
+	return static_cast<uint32_t> (type);
+}
+
+inline SDL_GPUVertexElementFormat get_sdl_format (ShaderDataType type) {
+	switch (type) {
+	case ShaderDataType::Float:
+		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT;
+	case ShaderDataType::Vec2:
+		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2;
+	case ShaderDataType::Vec3:
+		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
+	case ShaderDataType::Vec4:
+		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
+	default:
+		return SDL_GPU_VERTEXELEMENTFORMAT_INVALID;
+	}
+}
+}
+
+struct UniformMember {
+	std::string name;
+	uint32_t offset;
+	uint32_t size;
+	ShaderDataType type;
+};
+
+struct UniformBlock {
+	std::string name;
+	uint32_t binding;
+	uint32_t total_size;
+	std::unordered_map<std::string, UniformMember> members;
+};
+
 struct ShaderConfig {
 	Uint32 num_samplers = 0;
 	Uint32 num_storage_textures = 0;
@@ -21,24 +73,38 @@ struct ShaderConfig {
 	std::string path;
 };
 
+struct VertexAttribute {
+	std::string name;
+	uint32_t location;
+	ShaderDataType type;
+};
+
+struct VertexBufferLayout {
+	uint32_t stride = 0;
+	SDL_GPUVertexInputRate input_rate;
+
+	std::vector<VertexAttribute> attributes;
+	std::vector<SDL_GPUVertexAttribute> sdl_attributes;
+};
+
 struct Shader {
 	SDL_GPUShader* vertex_shader = nullptr;
 	SDL_GPUShader* fragment_shader = nullptr;
 	std::string name;
 
-	uint32_t required_vertex_attributes = 4;
-	uint32_t required_instance_attributes = 4;
-
-	uint32_t block_size = sizeof(Block);
-	uint32_t vertex_stride = required_vertex_attributes * block_size;
-	uint32_t instance_stride = required_instance_attributes * block_size;
+	std::unordered_map<uint32_t, VertexBufferLayout> vertex_buffer_layouts;
+	std::unordered_map<std::string, UniformBlock> uniform_blocks;
 };
 
 class ShaderManager {
   public:
 	explicit ShaderManager (SDL_GPUDevice* device);
 	~ShaderManager ();
-
+	static std::vector<VertexAttribute>
+	load_vertex_attributes (const std::string& json_path);
+	;
+	static std::unordered_map<std::string, UniformBlock>
+	load_uniform_blocks (const std::string& json_path);
 	void load_shader (
 		const ShaderConfig& vertex_shader, const ShaderConfig& fragment_shader,
 		const std::string& name

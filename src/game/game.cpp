@@ -146,10 +146,10 @@ void Game::setup_cubes () {
 		float random_scale = scale_dist (rng);
 		float random_phase = phase_dist (rng);
 
-		builder.push(glm::vec4(random_pos, random_phase)); // Block 0
-		builder.push(glm::vec4(random_axis, 0.0f));       // Block 1
-		builder.push(glm::vec4(glm::vec3(random_scale), 1.0f)); // Block 2
-		builder.push(glm::vec4(0.0f));                    // Block 3
+		builder.push (glm::vec4 (random_pos, random_phase));	   // Block 0
+		builder.push (glm::vec4 (random_axis, 0.0f));			   // Block 1
+		builder.push (glm::vec4 (glm::vec3 (random_scale), 1.0f)); // Block 2
+		builder.push (glm::vec4 (0.0f));						   // Block 3
 
 		// Store ONLY the 64-byte data into the vector
 		instances[i] = builder.storage;
@@ -172,15 +172,13 @@ void Game::write_game_state (RenderState* render_state) {
 	cube.instances_count = NUM_CUBES;
 	cube.instances_size = sizeof (Block) * NUM_CUBES;
 
-	cube.instances.resize(NUM_CUBES);
+	cube.instances.resize (NUM_CUBES);
 
-	std::memcpy(
-	   cube.instances.data(),
-	   instances.data(),
-	   cube.instances_size
+	std::memcpy (
+		cube.instances.data (), instances.data (), cube.instances_size
 	);
 
-	render_state->drawables.push_back(std::move(cube));
+	render_state->drawables.push_back (std::move (cube));
 }
 
 void Game::calculate_item_decays (const float delta_time_ms) {

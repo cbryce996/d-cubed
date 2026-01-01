@@ -13,9 +13,8 @@ struct IMeshLoader {
 };
 
 struct TinyObjMeshLoader : IMeshLoader {
-	bool load (
-		const std::string& path, std::vector<Block>& out_vertices
-	) override;
+	bool
+	load (const std::string& path, std::vector<Block>& out_vertices) override;
 };
 
 #endif // LOADER_H

@@ -91,24 +91,25 @@ struct Mesh {
 	std::shared_ptr<std::vector<Block>> vertex_storage;
 };
 
-inline std::shared_ptr<Mesh> create_cube_mesh() {
-	auto mesh = std::make_shared<Mesh>();
+inline std::shared_ptr<Mesh> create_cube_mesh () {
+	auto mesh = std::make_shared<Mesh> ();
 	mesh->name = "cube";
 
 	// Create a storage vector for pure 64-byte Data objects
-	mesh->vertex_storage = std::make_shared<std::vector<Block>>();
-	mesh->vertex_storage->reserve(cube_vertex_count);
+	mesh->vertex_storage = std::make_shared<std::vector<Block>> ();
+	mesh->vertex_storage->reserve (cube_vertex_count);
 
 	for (size_t i = 0; i < cube_vertex_count; ++i) {
-		// Extract the .storage member (the 64-byte part) from the Collection builder
-		mesh->vertex_storage->push_back(cube_vertices[i].storage);
+		// Extract the .storage member (the 64-byte part) from the Collection
+		// builder
+		mesh->vertex_storage->push_back (cube_vertices[i].storage);
 	}
 
-	mesh->vertex_data = mesh->vertex_storage->data();
-	mesh->vertex_count = mesh->vertex_storage->size();
+	mesh->vertex_data = mesh->vertex_storage->data ();
+	mesh->vertex_count = mesh->vertex_storage->size ();
 
 	// vertex_size is now exactly vertex_count * 64
-	mesh->vertex_size = mesh->vertex_storage->size() * sizeof(Block);
+	mesh->vertex_size = mesh->vertex_storage->size () * sizeof (Block);
 
 	return mesh;
 }
