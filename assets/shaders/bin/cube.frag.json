@@ -1,0 +1,73 @@
+{
+    "entryPoints" : [
+        {
+            "name" : "main",
+            "mode" : "frag"
+        }
+    ],
+    "types" : {
+        "_136" : {
+            "name" : "GlobalUniform",
+            "members" : [
+                {
+                    "name" : "light_pos",
+                    "type" : "vec4",
+                    "offset" : 0
+                },
+                {
+                    "name" : "time",
+                    "type" : "vec4",
+                    "offset" : 16
+                },
+                {
+                    "name" : "pad1",
+                    "type" : "vec4",
+                    "offset" : 32
+                },
+                {
+                    "name" : "pad2",
+                    "type" : "vec4",
+                    "offset" : 48
+                }
+            ]
+        }
+    },
+    "inputs" : [
+        {
+            "type" : "vec4",
+            "name" : "inFragPos",
+            "location" : 0
+        },
+        {
+            "type" : "vec4",
+            "name" : "inNormal",
+            "location" : 1
+        },
+        {
+            "type" : "vec4",
+            "name" : "inColor",
+            "location" : 2
+        },
+        {
+            "type" : "float",
+            "name" : "inRadius",
+            "location" : 3
+        }
+    ],
+    "outputs" : [
+        {
+            "type" : "vec4",
+            "name" : "outFragColor",
+            "location" : 0
+        }
+    ],
+    "ubos" : [
+        {
+            "type" : "_136",
+            "name" : "GlobalUniform",
+            "block_size" : 64,
+            "set" : 0,
+            "binding" : 1
+        }
+    ]
+}

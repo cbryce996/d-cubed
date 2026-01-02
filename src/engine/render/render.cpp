@@ -64,14 +64,14 @@ void RenderManager::load_shaders () const {
 
 	shader_manager->load_shader (
 		ShaderConfig{
-			.path = shader_base + "bin/anomaly.vert.metallib",
+			.path = shader_base + "bin/cube.vert.metallib",
 			.entrypoint = "main0",
 			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_VERTEX,
 			.num_uniform_buffers = 2
 		},
 		ShaderConfig{
-			.path = shader_base + "bin/anomaly.frag.metallib",
+			.path = shader_base + "bin/cube.frag.metallib",
 			.entrypoint = "main0",
 			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
@@ -252,22 +252,20 @@ void RenderManager::draw (
 	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
 
 	// Push uniform bindings
-	for (size_t i = 0; i < uniform_bindings->size (); ++i) {
-		const auto& uniform_binding = (*uniform_bindings)[i];
-
-		if (uniform_binding.stage == ShaderStage::Vertex
-			|| uniform_binding.stage == ShaderStage::Both) {
+	for (const auto & [slot, data, size, stage] : *uniform_bindings) {
+			if (stage == ShaderStage::Vertex
+			|| stage == ShaderStage::Both) {
 			SDL_PushGPUVertexUniformData (
-				buffer_manager->command_buffer, uniform_binding.slot,
-				uniform_binding.data, uniform_binding.size
+				buffer_manager->command_buffer, slot,
+				data, size
 			);
 		}
 
-		if (uniform_binding.stage == ShaderStage::Fragment
-			|| uniform_binding.stage == ShaderStage::Both) {
+		if (stage == ShaderStage::Fragment
+			|| stage == ShaderStage::Both) {
 			SDL_PushGPUFragmentUniformData (
-				buffer_manager->command_buffer, uniform_binding.slot,
-				uniform_binding.data, uniform_binding.size
+				buffer_manager->command_buffer, slot,
+				data, size
 			);
 		}
 	}

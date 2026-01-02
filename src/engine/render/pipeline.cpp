@@ -46,7 +46,7 @@ PipelineManager::create_pipeline (const PipelineConfig& pipeline_config) const {
 			.input_rate = layout.input_rate,
 			.instance_step_rate = 0
 		};
-		buffer_descriptions.push_back (description);
+ 		buffer_descriptions.push_back (description);
 	}
 
 	// --- 2. Vertex Attributes (What is inside the buffers?) ---

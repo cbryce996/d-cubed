@@ -6,7 +6,7 @@
         }
     ],
     "types" : {
-        "_32" : {
+        "_224" : {
             "name" : "GlobalUniform",
             "members" : [
                 {
@@ -31,7 +31,7 @@
                 }
             ]
         },
-        "_240" : {
+        "_360" : {
             "name" : "gl_PerVertex",
             "members" : [
                 {
@@ -64,7 +64,7 @@
                 }
             ]
         },
-        "_245" : {
+        "_365" : {
             "name" : "ViewUniform",
             "members" : [
                 {
@@ -79,13 +79,13 @@
     "inputs" : [
         {
             "type" : "vec4",
-            "name" : "inInstPos",
-            "location" : 4
+            "name" : "inInstRot",
+            "location" : 5
         },
         {
             "type" : "vec4",
-            "name" : "inInstRot",
-            "location" : 5
+            "name" : "inInstPos",
+            "location" : 4
         },
         {
             "type" : "vec4",
@@ -99,13 +99,13 @@
         },
         {
             "type" : "vec4",
-            "name" : "inMeshColor",
-            "location" : 2
+            "name" : "inMeshNormal",
+            "location" : 1
         },
         {
             "type" : "vec4",
-            "name" : "inMeshNormal",
-            "location" : 1
+            "name" : "inMeshColor",
+            "location" : 2
         },
         {
             "type" : "vec4",
@@ -126,25 +126,30 @@
         },
         {
             "type" : "vec4",
+            "name" : "outNormal",
+            "location" : 1
+        },
+        {
+            "type" : "vec4",
             "name" : "outColor",
             "location" : 2
         },
         {
-            "type" : "vec4",
-            "name" : "outNormal",
-            "location" : 1
+            "type" : "float",
+            "name" : "outRadius",
+            "location" : 3
         }
     ],
     "ubos" : [
         {
-            "type" : "_32",
+            "type" : "_224",
             "name" : "GlobalUniform",
             "block_size" : 64,
             "set" : 0,
             "binding" : 1
         },
         {
-            "type" : "_245",
+            "type" : "_365",
             "name" : "ViewUniform",
             "block_size" : 64,
             "set" : 0,

@@ -25,14 +25,14 @@ inline Collection make_vertex (
 
 // Full cube vertices (36 vertices, 6 faces x 2 triangles x 3 vertices)
 static Collection cube_vertices[] = {
-	// Front face (Z+) - Red
-	make_vertex ({-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
-	make_vertex ({0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
-	make_vertex ({0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
+	// Front face (Z+)
+	make_vertex({-0.5f, -0.5f, 0.5f}, {0,0,1}, {1,0,0}),
+	make_vertex({0.5f, -0.5f, 0.5f}, {0,0,1}, {1,0,0}),
+	make_vertex({0.5f, 0.5f, 0.5f}, {0,0,1}, {1,0,0}),
 
-	make_vertex ({0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
-	make_vertex ({-0.5f, 0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
-	make_vertex ({-0.5f, -0.5f, 0.5f}, {0, 0, 1}, {1, 0, 0}),
+	make_vertex({0.5f, 0.5f, 0.5f}, {0,0,1}, {1,0,0}),
+	make_vertex({-0.5f, 0.5f, 0.5f}, {0,0,1}, {1,0,0}),
+	make_vertex({-0.5f, -0.5f, 0.5f}, {0,0,1}, {1,0,0}),
 
 	// Back face (Z-) - Green
 	make_vertex ({-0.5f, -0.5f, -0.5f}, {0, 0, -1}, {0, 1, 0}),
@@ -71,13 +71,13 @@ static Collection cube_vertices[] = {
 	make_vertex ({-0.5f, 0.5f, -0.5f}, {0, 1, 0}, {1, 0, 1}),
 
 	// Bottom face (Y-) - Cyan
-	make_vertex ({-0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}),
-	make_vertex ({0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 1, 1}),
-	make_vertex ({-0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 1, 1}),
+	make_vertex({-0.5f, -0.5f, -0.5f}, {0,-1,0}, {0,1,1}),
+	make_vertex({0.5f, -0.5f, -0.5f}, {0,-1,0}, {0,1,1}),
+	make_vertex({0.5f, -0.5f, 0.5f}, {0,-1,0}, {0,1,1}),
 
-	make_vertex ({0.5f, -0.5f, 0.5f}, {0, -1, 0}, {0, 1, 1}),
-	make_vertex ({-0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}),
-	make_vertex ({0.5f, -0.5f, -0.5f}, {0, -1, 0}, {0, 1, 1}),
+	make_vertex({0.5f, -0.5f, 0.5f}, {0,-1,0}, {0,1,1}),
+	make_vertex({-0.5f, -0.5f, 0.5f}, {0,-1,0}, {0,1,1}),
+	make_vertex({-0.5f, -0.5f, -0.5f}, {0,-1,0}, {0,1,1}),
 };
 
 constexpr size_t cube_vertex_count = sizeof (cube_vertices)
