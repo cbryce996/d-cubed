@@ -50,7 +50,7 @@ Engine::Engine () {
 		glm::vec3 (0.0f, glm::radians (180.0f), 0.0f)
 	);
 	camera.transform.scale = glm::vec3 (1.0f);
-	camera.lens.fov = 110.0f;
+	camera.lens.fov = 100.0f;
 	camera.lens.aspect = 16.0f / 9.0f;
 	camera.lens.near_clip = 0.1f;
 	camera.lens.far_clip = 300.0f;

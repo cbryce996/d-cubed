@@ -6,7 +6,7 @@
         }
     ],
     "types" : {
-        "_136" : {
+        "_114" : {
             "name" : "GlobalUniform",
             "members" : [
                 {
@@ -20,7 +20,7 @@
                     "offset" : 16
                 },
                 {
-                    "name" : "pad1",
+                    "name" : "camera_pos",
                     "type" : "vec4",
                     "offset" : 32
                 },
@@ -44,6 +44,11 @@
             "location" : 1
         },
         {
+            "type" : "float",
+            "name" : "cubeSeed",
+            "location" : 4
+        },
+        {
             "type" : "vec4",
             "name" : "inColor",
             "location" : 2
@@ -63,7 +68,7 @@
     ],
     "ubos" : [
         {
-            "type" : "_136",
+            "type" : "_114",
             "name" : "GlobalUniform",
             "block_size" : 64,
             "set" : 0,

@@ -53,7 +53,7 @@ void CameraManager::update_camera_position (
 	const glm::vec3 right = camera->transform.rotation
 							* glm::vec3 (1.0f, 0.0f, 0.0f);
 
-	constexpr float max_speed = 0.5f;
+	constexpr float max_speed = 0.05f;
 	constexpr float min_speed = 0.0f;
 
 	const float unclamped_speed = camera->move_speed * delta_time;

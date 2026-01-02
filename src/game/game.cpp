@@ -116,7 +116,7 @@ void Game::handle_input (const InputManager& input) {
 
 std::vector<glm::vec3> base_positions;
 std::vector<glm::vec3> random_rot_axes;
-static constexpr int NUM_CUBES = 1000000;
+static constexpr int NUM_CUBES = 200000;
 std::vector<Block> instances;
 
 void Game::setup_cubes () {

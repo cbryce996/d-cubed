@@ -6,7 +6,7 @@
         }
     ],
     "types" : {
-        "_224" : {
+        "_391" : {
             "name" : "GlobalUniform",
             "members" : [
                 {
@@ -20,7 +20,7 @@
                     "offset" : 16
                 },
                 {
-                    "name" : "pad1",
+                    "name" : "camera_pos",
                     "type" : "vec4",
                     "offset" : 32
                 },
@@ -31,7 +31,7 @@
                 }
             ]
         },
-        "_360" : {
+        "_577" : {
             "name" : "gl_PerVertex",
             "members" : [
                 {
@@ -64,7 +64,7 @@
                 }
             ]
         },
-        "_365" : {
+        "_581" : {
             "name" : "ViewUniform",
             "members" : [
                 {
@@ -79,13 +79,13 @@
     "inputs" : [
         {
             "type" : "vec4",
-            "name" : "inInstRot",
-            "location" : 5
+            "name" : "inInstPos",
+            "location" : 4
         },
         {
             "type" : "vec4",
-            "name" : "inInstPos",
-            "location" : 4
+            "name" : "inInstRot",
+            "location" : 5
         },
         {
             "type" : "vec4",
@@ -138,18 +138,23 @@
             "type" : "float",
             "name" : "outRadius",
             "location" : 3
+        },
+        {
+            "type" : "float",
+            "name" : "cubeSeed",
+            "location" : 4
         }
     ],
     "ubos" : [
         {
-            "type" : "_224",
+            "type" : "_391",
             "name" : "GlobalUniform",
             "block_size" : 64,
             "set" : 0,
             "binding" : 1
         },
         {
-            "type" : "_365",
+            "type" : "_581",
             "name" : "ViewUniform",
             "block_size" : 64,
             "set" : 0,

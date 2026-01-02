@@ -106,7 +106,10 @@ void RenderManager::setup_render_graph () {
 		global_uniform_builder.push (glm::vec4 (light_pos_world, 1.0f));
 		global_uniform_builder.push (
 			render_context.time
-		); // Assuming this is a vec4
+		);
+		global_uniform_builder.push(
+			glm::vec4(render_context.camera_manager->get_active_camera ()->transform.position, 0.0f)
+		);
 
 		std::vector<UniformBinding> uniform_bindings;
 

@@ -3,7 +3,7 @@
 layout(set = 0, binding = 1) uniform GlobalUniform {
     vec4 light_pos;
     vec4 time;
-    vec4 pad1;
+    vec4 camera_pos;
     vec4 pad2;
 } global_u;
 
@@ -11,70 +11,50 @@ layout(location = 0) in vec4 inFragPos;
 layout(location = 1) in vec4 inNormal;
 layout(location = 2) in vec4 inColor;
 layout(location = 3) in float inRadius;
+layout(location = 4) in float cubeSeed;
 
 layout(location = 0) out vec4 outFragColor;
 
-// --- Generic Math Functions ---
-
-// Smoothstep interpolation (ease in/out)
-float smoothInterp(float t) {
-    return t * t * (3.0 - 2.0 * t);
+float hash11(float p) {
+    p = fract(p * 0.1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return fract(p);
 }
 
-// Inverse-square attenuation with linear and constant terms
-float inverseQuadratic(float distance, float constant, float linear, float quadratic) {
-    return 1.0 / (constant + linear * distance + quadratic * distance * distance);
+vec3 cosmicBlue(float seed) {
+    float variation = hash11(seed) * 0.5;
+    vec3 base = vec3(0.1, 0.2, 0.7);
+    return base + variation;
 }
 
-// Dot product clamped to [0,1] (projection magnitude)
-float projectClamp(vec3 a, vec3 b) {
-    return max(dot(a, b), 0.0);
-}
-
-// Fresnel-like edge factor (1 - cos angle)^power
-float edgeFactor(vec3 normal, vec3 viewDir, float power) {
-    return pow(1.0 - max(dot(normal, viewDir), 0.0), power);
-}
-
-// Multi-step gradient with smooth interpolation
-vec3 multiGradient(float t) {
-    float u = smoothInterp(t);
-
-    vec3 c0 = vec3(0.2, 0.0, 0.4);
-    vec3 c1 = vec3(0.2, 0.4, 0.8);
-    vec3 c2 = vec3(0.6, 0.8, 1.0);
-
-    float blend0 = clamp(1.0 - u * 2.0, 0.0, 1.0);
-    float blend2 = clamp(u * 2.0 - 1.0, 0.0, 1.0);
-    float blend1 = 1.0 - blend0 - blend2;
-
-    return c0 * blend0 + c1 * blend1 + c2 * blend2;
-}
-
-// --- Main Shader ---
-void main() {
-    vec3 fragPos = inFragPos.xyz;
-    vec3 normal = normalize(inNormal.xyz);
-    vec3 viewDir = normalize(-fragPos);
-
-    vec3 lightPos = global_u.light_pos.xyz;
+vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPos, vec3 lightPos) {
     vec3 L = lightPos - fragPos;
     float distance = length(L);
     vec3 lightDir = normalize(L);
 
-    float rawAtten = inverseQuadratic(distance, 1.0, 0.5, 1.0);
-    float lightStrength = 100.0f;
-    float attenuation = min(rawAtten * lightStrength, 0.6f); // clamp to max 1
+    float diff = max(dot(normal, lightDir), 0.0) * 10.0;
+    float atten = 1.0 / (distance * 0.8 + 10.0);
 
-    float diffuse = projectClamp(normal, lightDir) * attenuation;
-    float maxDiffuse = 0.7f;
-    diffuse = min(diffuse, maxDiffuse);
+    float ambient = 0.3;
+    return color * (ambient + diff * atten);
+}
 
-    float t = clamp(diffuse, 0.0, 1.0);
-    vec3 baseColor = multiGradient(t);
+void main() {
+    vec3 fragPos = inFragPos.xyz;
+    vec3 normal = normalize(inNormal.xyz);
+    vec3 baseColor = cosmicBlue(cubeSeed);
 
-    float rim = edgeFactor(normal, viewDir, 3.0);
-    vec3 finalColor = baseColor + rim * 0.01 * vec3(0.8, 0.6, 1.0);
+    vec3 litColor = applyCameraLight(baseColor, normal, fragPos, global_u.camera_pos.xyz);
 
-    outFragColor = vec4(finalColor, 1.0);
+    // ---------------------
+    // simple edge anti-aliasing (screen-space)
+    vec3 dFdxNormal = dFdx(normal);
+    vec3 dFdyNormal = dFdy(normal);
+    float edge = length(dFdxNormal) + length(dFdyNormal);
+    edge = clamp(edge * 10.0, 0.0, 1.0); // tweak multiplier for effect
+
+    litColor = mix(litColor, vec3(0.0), edge * 0.5); // darken edges slightly to smooth
+
+    outFragColor = vec4(litColor, 1.0);
 }

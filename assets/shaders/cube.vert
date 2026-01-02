@@ -7,7 +7,7 @@ layout(set = 0, binding = 0) uniform ViewUniform {
 layout(set = 0, binding = 1) uniform GlobalUniform {
     vec4 light_pos;
     vec4 time;
-    vec4 pad1;
+    vec4 camera_pos;
     vec4 pad2;
 } global_u;
 
@@ -25,6 +25,22 @@ layout(location = 0) out vec4 outFragPos;
 layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec4 outColor;
 layout(location = 3) out float outRadius;
+layout(location = 4) out float cubeSeed;
+
+float hash11(float p) {
+    p = fract(p * 0.1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return fract(p);
+}
+
+vec3 hash31(float p) {
+    return vec3(
+    hash11(p + 1.0),
+    hash11(p + 2.0),
+    hash11(p + 3.0)
+    );
+}
 
 mat3 rodriguesRotation(vec3 axis, float angle) {
     float c = cos(angle);
@@ -43,7 +59,7 @@ mat3 rodriguesRotation(vec3 axis, float angle) {
 mat3 quaternionRotation(vec3 axis, float angle) {
     axis = normalize(axis);
 
-    float a = angle * 0.5;
+    float a = angle * 0.2;
     float s = sin(a);
 
     vec4 q = vec4(axis * s, cos(a));
@@ -72,14 +88,14 @@ mat3 quaternionRotation(vec3 axis, float angle) {
 }
 
 float radialFallOff(
-    vec3 position,
-    vec3 center,
-    float radius,
-    float power
+vec3 position,
+vec3 center,
+float radius,
+float power
 ) {
-    float distance = length (position - center);
-    float normalized_distance = distance / 15.0f;
-    float inverted_distance = clamp(1.0 - normalized_distance, 0.0, 1.0);
+    float distance = length(position - center);
+    float normalized_distance = distance / radius; // use radius here!
+    float inverted_distance = clamp(1.0 - normalized_distance, 0.0, 1.0); // optionally cap at 1.0
     return pow(inverted_distance, power);
 }
 
@@ -105,37 +121,106 @@ vec3 sinWave(
     );
 }
 
+vec3 computeFieldCenter(float time) {
+    // Define pyramid vertices in local space
+    vec3 apex    = vec3(0.0, 10.0, 0.0);
+    vec3 base0   = vec3(-10.0, 0.0, -10.0);
+    vec3 base1   = vec3(10.0, 0.0, -10.0);
+    vec3 base2   = vec3(10.0, 0.0, 10.0);
+    vec3 base3   = vec3(-10.0, 0.0, 10.0);
+
+    // Cycle through the pyramid points
+    float cycleSpeed = 0.05; // controls how fast it moves
+    float t = fract(time * cycleSpeed); // [0,1] looping
+
+    // Map t to 5 segments (apex -> base0 -> base1 -> base2 -> base3 -> apex)
+    float segment = t * 5.0;
+    int segIndex = int(floor(segment));
+    float localT = segment - float(segIndex);
+
+    // smoothstep for ease-in/out
+    float smoothT = localT * localT * (3.0 - 2.0 * localT);
+
+    vec3 p0, p1;
+    if(segIndex == 0) { p0 = apex;  p1 = base0; }
+    else if(segIndex == 1) { p0 = base0; p1 = base1; }
+    else if(segIndex == 2) { p0 = base1; p1 = base2; }
+    else if(segIndex == 3) { p0 = base2; p1 = base3; }
+    else { p0 = base3; p1 = apex; }
+
+    return mix(p0, p1, smoothT);
+}
+
+
+vec3 computeFieldPath(
+    vec3 instancePos,
+    float time,
+    float field,
+    float seed
+) {
+    vec3 rand = hash31(seed) * 2.0 - 1.0;
+
+    float t = time + rand.x * 5.0;
+
+    vec3 path;
+    path.x = cos(t * (0.3 + rand.x)) * (2.5 + rand.y);
+    path.y = sin(t * (0.9 + rand.y)) * (1.0 + rand.z);
+    path.z = sin(t * (1.5 + rand.z)) * (1.0 + rand.x);
+
+    return path * field;
+}
+
+float computeField(vec3 position, vec3 center) {
+    float field = radialFallOff(position, center, 5.0, 0.8) ;
+    return clamp(field, 0.0, 0.2);
+}
+
+vec3 transformMesh(
+    vec3 position,
+    vec3 scale,
+    mat3 rotation
+) {
+    return rotation * (position * scale);
+}
+
 void main() {
-    float time = global_u.time.x * 0.001f;
+    float time = global_u.time.x * 0.001;
+
+    vec3 instancePos = inInstPos.xyz;
+    vec3 axis = inInstRot.xyz;
     float phase = inInstRot.w;
 
-    vec3 position = inInstPos.xyz;
-    vec3 axis = inInstRot.xyz;
+    // --- Field ---
+    vec3 fieldCenter = computeFieldCenter(time);
+    float field = computeField(instancePos, fieldCenter);
 
-    float frequency = 2.0f * 3.14159f * 0.2f;
-    float amplitude = 1.0f;
+    // --- Motion ---
+    float seed = dot(instancePos, vec3(12.9898, 78.233, 45.164));
 
-    mat3 rotationMatrix = quaternionRotation(axis, phase + time);
+    vec3 path = computeFieldPath(
+        instancePos,
+        time,
+        field,
+        seed
+    );
 
-    float bob = sinWave(time, 0.0f, frequency, amplitude);
-    vec3 center = vec3(0.0f) + vec3(0.0f, bob, 0.0f);
-    vec3 wobble = sinWave(time + phase, position, vec3(0.5f, 0.7f, 0.9f), vec3(0.4f, 0.6f, 0.2f));
+    // --- Transform ---
+    mat3 rotation = quaternionRotation(axis, phase + time);
+    vec3 scale = inInstScale.xyz * field;
 
-    float sphereBaseRadius = 15.0f;
-    float scaleAmount = 5.0f;
-    float sphereScale = 1.0f + bob * scaleAmount;
+    vec3 worldPos =
+    instancePos +
+    path +
+    transformMesh(inMeshPos.xyz, scale, rotation);
 
-    vec3 sphereCenter = vec3(0.0f, bob, 0.0f);
-    float sphereRadius = sphereBaseRadius * sphereScale;
+    vec3 worldNormal = normalize(rotation * inMeshNormal.xyz);
 
-    float instanceScale = inInstScale.x * radialFallOff(position, sphereCenter, sphereRadius, 0.3f);
-    vec3 worldPos = position + sphereCenter + wobble + rotationMatrix * (inMeshPos.xyz * instanceScale);
-    vec3 worldNormal = normalize(rotationMatrix * inMeshNormal.xyz);
-
-    outFragPos = vec4(worldPos, 1.0f);
-    outNormal = vec4(worldNormal, 0.0f);
-    outColor = inMeshColor;
-    outRadius = sphereRadius;
+    // --- GBuffer ---
+    outFragPos = vec4(worldPos, 1.0);
+    outNormal  = vec4(worldNormal, 0.0);
+    outColor   = inMeshColor;
+    outRadius  = 15.0;
+    cubeSeed   = seed;
 
     gl_Position = view_u.view_projection * vec4(worldPos, 1.0);
 }
