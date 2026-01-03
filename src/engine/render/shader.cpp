@@ -9,6 +9,27 @@ ShaderManager::ShaderManager (SDL_GPUDevice* device) : device (device) {}
 
 ShaderManager::~ShaderManager () = default;
 
+std::vector<ShaderSampler>
+ShaderManager::load_samplers (const std::string& json_path) {
+	std::ifstream file (json_path);
+	if (!file.is_open ())
+		return {};
+
+	nlohmann::json data = nlohmann::json::parse (file);
+	std::vector<ShaderSampler> samplers;
+
+	if (data.contains ("textures")) {
+		for (const auto& tex : data["textures"]) {
+			ShaderSampler s;
+			s.name = tex["name"];
+			s.set = tex["set"];
+			s.binding = tex["binding"];
+			samplers.push_back (s);
+		}
+	}
+	return samplers;
+}
+
 std::vector<VertexAttribute>
 ShaderManager::load_vertex_attributes (const std::string& json_path) {
 	std::ifstream file (json_path);
@@ -126,15 +147,16 @@ bool ShaderManager::load_shader (
 		json_path = json_path.substr (0, last_dot) + ".json";
 	}
 
+	shader.samplers = load_samplers (json_path);
+
 	shader.uniform_blocks = load_uniform_blocks (json_path);
 	if (shader.uniform_blocks.empty ()) {
-		SDL_LogCritical (
+		SDL_LogWarn (
 			SDL_LOG_CATEGORY_RENDER,
-			"Aborting load for shader '%s' due to missing/invalid uniform "
+			"Shader '%s' has missing/invalid uniform "
 			"metadata.",
 			name.c_str ()
 		);
-		return false;
 	}
 
 	std::vector<VertexAttribute> vertex_attributes = load_vertex_attributes (
@@ -149,13 +171,12 @@ bool ShaderManager::load_shader (
 	);
 
 	if (vertex_attributes.empty ()) {
-		SDL_LogCritical (
+		SDL_LogWarn (
 			SDL_LOG_CATEGORY_RENDER,
-			"Aborting load for shader '%s' due to missing/invalid vertex "
+			"Shader '%s' has missing/invalid vertex "
 			"metadata.",
 			name.c_str ()
 		);
-		return false;
 	}
 
 	std::vector<SDL_GPUVertexAttribute> sdl_attributes;

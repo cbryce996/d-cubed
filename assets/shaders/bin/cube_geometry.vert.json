@@ -31,7 +31,7 @@
                 }
             ]
         },
-        "_495" : {
+        "_497" : {
             "name" : "gl_PerVertex",
             "members" : [
                 {
@@ -64,7 +64,7 @@
                 }
             ]
         },
-        "_499" : {
+        "_501" : {
             "name" : "ViewUniform",
             "members" : [
                 {
@@ -154,7 +154,7 @@
             "binding" : 1
         },
         {
-            "type" : "_499",
+            "type" : "_501",
             "name" : "ViewUniform",
             "block_size" : 64,
             "set" : 0,

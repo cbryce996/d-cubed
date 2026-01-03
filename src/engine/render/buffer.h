@@ -57,10 +57,15 @@ class BufferManager {
 	explicit BufferManager (SDL_GPUDevice* device);
 	~BufferManager ();
 
-	// Refactor to FrameContext object
 	SDL_GPUCommandBuffer* command_buffer = nullptr;
 	SDL_GPUTexture* depth_texture = nullptr;
 	SDL_GPUTexture* swap_chain_texture = nullptr;
+
+	SDL_GPUTexture* g_position_texture = nullptr;
+	SDL_GPUTexture* g_normal_texture = nullptr;
+	SDL_GPUTexture* g_albedo_texture = nullptr;
+
+	SDL_GPUSampler* linear_sampler = nullptr;
 
 	Buffer* get_buffer (const std::string& name);
 	Buffer* get_or_create_vertex_buffer (const Drawable* drawable);

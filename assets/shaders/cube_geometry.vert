@@ -88,10 +88,10 @@ mat3 quaternionRotation(vec3 axis, float angle) {
 }
 
 float radialFallOff(
-vec3 position,
-vec3 center,
-float radius,
-float power
+    vec3 position,
+    vec3 center,
+    float radius,
+    float power
 ) {
     float distance = length(position - center);
     float normalized_distance = distance / radius; // use radius here!
@@ -206,7 +206,7 @@ void main() {
 
     // --- Transform ---
     mat3 rotation = quaternionRotation(axis, phase + time);
-    vec3 scale = inInstScale.xyz * field;
+    vec3 scale = inInstScale.xyz * (field + 0.1);
 
     vec3 worldPos =
     instancePos +

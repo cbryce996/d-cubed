@@ -35,6 +35,13 @@ struct RenderState {
 	std::vector<Drawable> drawables;
 };
 
+struct RenderPassConfig {
+	std::vector<SDL_GPUTexture*> color_targets;
+	SDL_GPUTexture* depth_target; // nullable
+	SDL_FColor clear_color;
+	bool clear_depth;
+};
+
 struct RenderContext {
 	CameraManager* camera_manager = nullptr;
 	PipelineManager* pipeline_manager = nullptr;
@@ -79,6 +86,9 @@ class RenderManager {
 	void render (RenderState* render_state, float time);
 
 	void create_depth_texture () const;
+	void create_gbuffer_textures (int width, int height);
+	void destroy_gbuffer_textures ();
+
 	void draw (
 		const Pipeline* pipeline, const Buffer* vertex_buffer,
 		const Buffer* instance_buffer, const Drawable* drawable,
@@ -89,7 +99,8 @@ class RenderManager {
 
 	void set_viewport (SDL_GPURenderPass* current_render_pass);
 
-	[[nodiscard]] SDL_GPURenderPass* create_render_pass () const;
+	[[nodiscard]] SDL_GPURenderPass*
+	create_render_pass (const RenderPassConfig& render_pass_config) const;
 
   private:
 	SDL_GPUDevice* device = nullptr;

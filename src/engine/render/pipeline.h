@@ -25,13 +25,16 @@ struct PipelineConfig {
 
 	const SDL_GPUPrimitiveType primitive_type;
 	const SDL_GPUCullMode cull_mode;
+	const SDL_GPUCompareOp compare_op;
+
 	const SDL_GPUCompareOp depth_compare;
 	const SDL_GPUTextureFormat depth_format;
-	const SDL_GPUCompareOp compare_op;
 	const SDL_GPUTextureFormat depth_stencil_format;
 
 	const bool enable_depth_test;
 	const bool enable_depth_write;
+
+	std::vector<SDL_GPUTextureFormat> color_formats;
 	const bool has_depth_stencil_target;
 
 	std::string key () const {

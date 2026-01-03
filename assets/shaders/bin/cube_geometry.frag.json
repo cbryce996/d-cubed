@@ -1,0 +1,52 @@
+{
+    "entryPoints" : [
+        {
+            "name" : "main",
+            "mode" : "frag"
+        }
+    ],
+    "inputs" : [
+        {
+            "type" : "vec4",
+            "name" : "inFragPos",
+            "location" : 0
+        },
+        {
+            "type" : "vec4",
+            "name" : "inNormal",
+            "location" : 1
+        },
+        {
+            "type" : "float",
+            "name" : "cubeSeed",
+            "location" : 4
+        },
+        {
+            "type" : "vec4",
+            "name" : "inColor",
+            "location" : 2
+        },
+        {
+            "type" : "float",
+            "name" : "inRadius",
+            "location" : 3
+        }
+    ],
+    "outputs" : [
+        {
+            "type" : "vec4",
+            "name" : "gPosition",
+            "location" : 0
+        },
+        {
+            "type" : "vec4",
+            "name" : "gNormal",
+            "location" : 1
+        },
+        {
+            "type" : "vec4",
+            "name" : "gAlbedo",
+            "location" : 2
+        }
+    ]
+}

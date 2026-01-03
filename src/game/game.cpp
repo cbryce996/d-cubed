@@ -137,25 +137,20 @@ void Game::setup_cubes () {
 			pos_dist (rng), pos_dist (rng), pos_dist (rng)
 		);
 
-		glm::vec3 random_axis(
-			rot_dist(rng),
-			rot_dist(rng),
-			rot_dist(rng)
-		);
+		glm::vec3 random_axis (rot_dist (rng), rot_dist (rng), rot_dist (rng));
 
-		float len = glm::length(random_axis);
+		float len = glm::length (random_axis);
 		if (len < 0.0001f) {
-			random_axis = glm::vec3(0.0f, 1.0f, 0.0f);
+			random_axis = glm::vec3 (0.0f, 1.0f, 0.0f);
 		} else {
 			random_axis /= len;
 		}
-
 
 		float random_scale = scale_dist (rng);
 		float random_phase = phase_dist (rng);
 
 		builder.push (glm::vec4 (random_pos, random_phase));	   // Block 0
-		builder.push (glm::vec4 (random_axis, random_phase));			   // Block 1
+		builder.push (glm::vec4 (random_axis, random_phase));	   // Block 1
 		builder.push (glm::vec4 (glm::vec3 (random_scale), 1.0f)); // Block 2
 		builder.push (glm::vec4 (0.0f));						   // Block 3
 

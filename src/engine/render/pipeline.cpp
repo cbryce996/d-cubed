@@ -46,7 +46,7 @@ PipelineManager::create_pipeline (const PipelineConfig& pipeline_config) const {
 			.input_rate = layout.input_rate,
 			.instance_step_rate = 0
 		};
- 		buffer_descriptions.push_back (description);
+		buffer_descriptions.push_back (description);
 	}
 
 	// --- 2. Vertex Attributes (What is inside the buffers?) ---
@@ -82,19 +82,24 @@ PipelineManager::create_pipeline (const PipelineConfig& pipeline_config) const {
 	};
 
 	// --- 4. Target Info (Where is it being drawn to?) ---
-	SDL_GPUColorTargetDescription color_target_desc = {
-		.format = SDL_GetGPUSwapchainTextureFormat (device, window),
-		.blend_state = {}
-	};
+	std::vector<SDL_GPUColorTargetDescription> color_targets;
+
+	for (auto format : pipeline_config.color_formats) {
+		SDL_GPUColorTargetDescription desc{};
+		desc.format = format;
+		desc.blend_state = {};
+		color_targets.push_back (desc);
+	}
 
 	SDL_GPUGraphicsPipelineTargetInfo target_info = {
-		.num_color_targets = 1,
-		.color_target_descriptions = &color_target_desc,
-		.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
-		.has_depth_stencil_target = true
+		.num_color_targets = static_cast<Uint32> (color_targets.size ()),
+		.color_target_descriptions = color_targets.data (),
+		.depth_stencil_format = pipeline_config.depth_format
+									? SDL_GPU_TEXTUREFORMAT_D32_FLOAT
+									: SDL_GPU_TEXTUREFORMAT_INVALID,
+		.has_depth_stencil_target = pipeline_config.has_depth_stencil_target
 	};
 
-	// --- 5. Final Assembly ---
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.vertex_shader = shader->vertex_shader,
 		.fragment_shader = shader->fragment_shader,

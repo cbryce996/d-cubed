@@ -6,8 +6,11 @@
 
 struct RenderContext;
 
+enum class RenderPassType { Geometry, Lighting, PostProcess };
+
 struct RenderPassNode {
 	std::string name;
+	RenderPassType type;
 	std::function<void (RenderContext&)> execute;
 	std::vector<std::string> dependencies;
 };

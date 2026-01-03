@@ -6,7 +6,7 @@
         }
     ],
     "types" : {
-        "_114" : {
+        "_81" : {
             "name" : "GlobalUniform",
             "members" : [
                 {
@@ -34,45 +34,45 @@
     },
     "inputs" : [
         {
-            "type" : "vec4",
-            "name" : "inFragPos",
+            "type" : "vec2",
+            "name" : "fragUV",
             "location" : 0
-        },
-        {
-            "type" : "vec4",
-            "name" : "inNormal",
-            "location" : 1
-        },
-        {
-            "type" : "float",
-            "name" : "cubeSeed",
-            "location" : 4
-        },
-        {
-            "type" : "vec4",
-            "name" : "inColor",
-            "location" : 2
-        },
-        {
-            "type" : "float",
-            "name" : "inRadius",
-            "location" : 3
         }
     ],
     "outputs" : [
         {
             "type" : "vec4",
-            "name" : "outFragColor",
+            "name" : "outColor",
             "location" : 0
+        }
+    ],
+    "textures" : [
+        {
+            "type" : "sampler2D",
+            "name" : "gPositionTex",
+            "set" : 0,
+            "binding" : 0
+        },
+        {
+            "type" : "sampler2D",
+            "name" : "gNormalTex",
+            "set" : 0,
+            "binding" : 1
+        },
+        {
+            "type" : "sampler2D",
+            "name" : "gAlbedoTex",
+            "set" : 0,
+            "binding" : 2
         }
     ],
     "ubos" : [
         {
-            "type" : "_114",
+            "type" : "_81",
             "name" : "GlobalUniform",
             "block_size" : 64,
             "set" : 0,
-            "binding" : 1
+            "binding" : 3
         }
     ]
 }

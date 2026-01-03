@@ -61,16 +61,22 @@ struct UniformBlock {
 };
 
 struct ShaderConfig {
-	Uint32 num_samplers = 0;
-	Uint32 num_storage_textures = 0;
-	Uint32 num_storage_buffers = 0;
-	Uint32 num_uniform_buffers = 2;
+	uint32_t num_samplers = 0;
+	uint32_t num_storage_textures = 0;
+	uint32_t num_storage_buffers = 0;
+	uint32_t num_uniform_buffers = 2;
 
-	Uint32 props = 0;
+	uint32_t props = 0;
 	SDL_GPUShaderFormat format;
 	SDL_GPUShaderStage stage;
 	std::string entrypoint;
 	std::string path;
+};
+
+struct ShaderSampler {
+	std::string name;
+	uint32_t set;
+	uint32_t binding;
 };
 
 struct VertexAttribute {
@@ -94,12 +100,15 @@ struct Shader {
 
 	std::unordered_map<uint32_t, VertexBufferLayout> vertex_buffer_layouts;
 	std::unordered_map<std::string, UniformBlock> uniform_blocks;
+
+	std::vector<ShaderSampler> samplers;
 };
 
 class ShaderManager {
   public:
 	explicit ShaderManager (SDL_GPUDevice* device);
 	~ShaderManager ();
+	std::vector<ShaderSampler> load_samplers (const std::string& json_path);
 
 	bool load_shader (
 		const ShaderConfig& vertex_config, const ShaderConfig& fragment_config,
