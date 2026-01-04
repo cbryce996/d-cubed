@@ -62,9 +62,6 @@ void main() {
     // --- Lighting ---
     vec3 litColor = applyCameraLight(baseColor, normal, position, global_u.camera_pos.xyz);
 
-    // --- Dithering / aliasing ---
-    float dither = screenDither(inUV, seed);
-
     // Combine everything
-    outColor = vec4(litColor * dither, 1.0);
+    outColor = vec4(litColor, 1.0);
 }

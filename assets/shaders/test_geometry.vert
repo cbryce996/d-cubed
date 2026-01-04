@@ -89,12 +89,18 @@ float radialFallOff(
     vec3 position,
     vec3 center,
     float radius,
-    float power
+    float power,
+    float seed,
+    float time
 ) {
+    // Oscillate the radius over time
+    float wobble = sin(time * 5.0 + seed * 15.0) * 20; // tweak speed & amplitude
+    float dynamicRadius = radius + wobble;
+
     float distance = length(position - center);
-    float normalized_distance = distance / radius; // use radius here!
-    float inverted_distance = clamp(1.0 - normalized_distance, 0.0, 1.0); // optionally cap at 1.0
-    return pow(inverted_distance, power);
+    float normalized_distance = distance / dynamicRadius;
+    float inverted_distance = clamp(1.0 - normalized_distance, 0.0, 1.0);
+    return clamp(pow(inverted_distance, power), 0.0, 0.2);
 }
 
 float sinWave(
@@ -128,7 +134,7 @@ vec3 computeFieldCenter(float time) {
     vec3 base3   = vec3(-10.0, 0.0, 10.0);
 
     // Cycle through the pyramid points
-    float cycleSpeed = 0.05; // controls how fast it moves
+    float cycleSpeed = 0.03; // controls how fast it moves
     float t = fract(time * cycleSpeed); // [0,1] looping
 
     // Map t to 5 segments (apex -> base0 -> base1 -> base2 -> base3 -> apex)
@@ -168,9 +174,21 @@ vec3 computeFieldPath(
     return path * field;
 }
 
-float computeField(vec3 position, vec3 center) {
-    float field = radialFallOff(position, center, 5.0, 0.8) ;
-    return clamp(field, 0.3, 1.0);
+float computeField(vec3 position, vec3 center, float time) {
+    float field = radialFallOff(position, center, 5.0, 2, 1420421.0, time) ;
+    return clamp(field, 0.0, 0.15);
+}
+
+vec3 wobbleField(vec3 instancePos, float seed, float time) {
+    // Randomized directions and frequencies per instance
+    vec3 offset;
+    offset.x = sin(time * 2.0 + seed * 10.0) * 0.2;
+    offset.y = cos(time * 1.5 + seed * 7.0) * 0.2;
+    offset.z = sin(time * 1.8 + seed * 13.0) * 0.2;
+
+    offset += sin(instancePos * 5.0 + time + seed) * 0.2;
+
+    return offset;
 }
 
 vec3 transformMesh(
@@ -192,7 +210,7 @@ void main() {
 
     // -- Field -- //
     vec3 fieldCenter = computeFieldCenter(time);
-    float field = computeField(position, fieldCenter);
+    float field = computeField(position, fieldCenter, time);
 
     // -- Paths -- //
     float seed = hash11(dot(position, vec3(12.9898, 78.233, 45.164)));
@@ -203,7 +221,8 @@ void main() {
     vec3 scale = inInstScale.xyz * field;
 
     // -- Model Projection -- //
-    vec3 modelPosition = position + path + transformMesh(inMeshPos.xyz, scale, rotation);
+    vec3 seedOffset = wobbleField(position, seed, time);
+    vec3 modelPosition = position + path + seedOffset + transformMesh(inMeshPos.xyz, scale, rotation);
     vec3 modelNormal = normalize(rotation * inMeshNormal.xyz);
 
     // --- GBuffer ---

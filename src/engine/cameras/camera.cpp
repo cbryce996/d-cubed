@@ -76,7 +76,7 @@ void CameraManager::update_camera_look (const MouseInput* mouse_input) {
 		return;
 
 	const float yaw_delta = glm::radians (
-		mouse_input->dx * camera->look_sensitivity
+		-mouse_input->dx * camera->look_sensitivity
 	);
 	const float pitch_delta = glm::radians (
 		mouse_input->dy * camera->look_sensitivity

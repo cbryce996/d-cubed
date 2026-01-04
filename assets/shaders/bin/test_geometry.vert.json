@@ -6,7 +6,7 @@
         }
     ],
     "types" : {
-        "_390" : {
+        "_495" : {
             "name" : "GlobalUniform",
             "members" : [
                 {
@@ -31,7 +31,7 @@
                 }
             ]
         },
-        "_498" : {
+        "_629" : {
             "name" : "gl_PerVertex",
             "members" : [
                 {
@@ -64,7 +64,7 @@
                 }
             ]
         },
-        "_502" : {
+        "_633" : {
             "name" : "ViewUniform",
             "members" : [
                 {
@@ -137,14 +137,14 @@
     ],
     "ubos" : [
         {
-            "type" : "_390",
+            "type" : "_495",
             "name" : "GlobalUniform",
             "block_size" : 64,
             "set" : 0,
             "binding" : 1
         },
         {
-            "type" : "_502",
+            "type" : "_633",
             "name" : "ViewUniform",
             "block_size" : 64,
             "set" : 0,
