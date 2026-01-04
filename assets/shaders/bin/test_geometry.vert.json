@@ -6,32 +6,7 @@
         }
     ],
     "types" : {
-        "_390" : {
-            "name" : "GlobalUniform",
-            "members" : [
-                {
-                    "name" : "light_pos",
-                    "type" : "vec4",
-                    "offset" : 0
-                },
-                {
-                    "name" : "time",
-                    "type" : "vec4",
-                    "offset" : 16
-                },
-                {
-                    "name" : "camera_pos",
-                    "type" : "vec4",
-                    "offset" : 32
-                },
-                {
-                    "name" : "pad2",
-                    "type" : "vec4",
-                    "offset" : 48
-                }
-            ]
-        },
-        "_497" : {
+        "_213" : {
             "name" : "gl_PerVertex",
             "members" : [
                 {
@@ -64,7 +39,7 @@
                 }
             ]
         },
-        "_501" : {
+        "_219" : {
             "name" : "ViewUniform",
             "members" : [
                 {
@@ -72,6 +47,31 @@
                     "type" : "mat4",
                     "offset" : 0,
                     "matrix_stride" : 16
+                }
+            ]
+        },
+        "_232" : {
+            "name" : "GlobalUniform",
+            "members" : [
+                {
+                    "name" : "light_pos",
+                    "type" : "vec4",
+                    "offset" : 0
+                },
+                {
+                    "name" : "time",
+                    "type" : "vec4",
+                    "offset" : 16
+                },
+                {
+                    "name" : "camera_pos",
+                    "type" : "vec4",
+                    "offset" : 32
+                },
+                {
+                    "name" : "pad2",
+                    "type" : "vec4",
+                    "offset" : 48
                 }
             ]
         }
@@ -121,7 +121,7 @@
     "outputs" : [
         {
             "type" : "vec4",
-            "name" : "outFragPos",
+            "name" : "outPosition",
             "location" : 0
         },
         {
@@ -133,32 +133,22 @@
             "type" : "vec4",
             "name" : "outColor",
             "location" : 2
-        },
-        {
-            "type" : "float",
-            "name" : "outRadius",
-            "location" : 3
-        },
-        {
-            "type" : "float",
-            "name" : "cubeSeed",
-            "location" : 4
         }
     ],
     "ubos" : [
         {
-            "type" : "_390",
-            "name" : "GlobalUniform",
-            "block_size" : 64,
-            "set" : 0,
-            "binding" : 1
-        },
-        {
-            "type" : "_501",
+            "type" : "_219",
             "name" : "ViewUniform",
             "block_size" : 64,
             "set" : 0,
             "binding" : 0
+        },
+        {
+            "type" : "_232",
+            "name" : "GlobalUniform",
+            "block_size" : 64,
+            "set" : 0,
+            "binding" : 1
         }
     ]
 }

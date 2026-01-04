@@ -1,8 +1,8 @@
 #version 450
 
-layout(set = 0, binding = 0) uniform sampler2D gPositionTex;
-layout(set = 0, binding = 1) uniform sampler2D gNormalTex;
-layout(set = 0, binding = 2) uniform sampler2D gAlbedoTex;
+layout(set = 0, binding = 0) uniform sampler2D inPosition;
+layout(set = 0, binding = 1) uniform sampler2D inNormal;
+layout(set = 0, binding = 2) uniform sampler2D inColor;
 
 layout(set = 0, binding = 3) uniform GlobalUniform {
     vec4 light_pos;
@@ -11,7 +11,6 @@ layout(set = 0, binding = 3) uniform GlobalUniform {
     vec4 pad2;
 } global_u;
 
-layout(location = 0) in vec2 fragUV;
 layout(location = 0) out vec4 outColor;
 
 vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPos, vec3 lightPos) {
@@ -27,15 +26,19 @@ vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPos, vec3 lightPos) {
 }
 
 void main() {
-    vec3 fragPos = texture(gPositionTex, fragUV).xyz;
-    vec3 normal  = texture(gNormalTex, fragUV).xyz;
-    vec3 albedo  = texture(gAlbedoTex, fragUV).rgb;
+    vec2 uv = gl_FragCoord.xy / vec2(textureSize(inPosition, 0));
+    vec3 position = texture(inPosition, uv).xyz;
+    vec3 normal  = texture(inNormal, uv).xyz;
+    vec3 color  = texture(inColor, uv).rgb;
+
+    normal = normal * 2.0 - 1.0;    // Unpack from [0,1] to [-1,1]
+    normal = normalize(normal);
 
     vec3 lit = applyCameraLight(
-    albedo,
-    normalize(normal),
-    fragPos,
-    global_u.camera_pos.xyz
+        color,
+        normal,
+        position,
+        global_u.camera_pos.xyz
     );
 
     outColor = vec4(lit, 1.0);

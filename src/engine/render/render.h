@@ -89,9 +89,14 @@ class RenderManager {
 	void create_gbuffer_textures (int width, int height);
 	void destroy_gbuffer_textures ();
 
-	void draw (
+	void draw_mesh (
 		const Pipeline* pipeline, const Buffer* vertex_buffer,
 		const Buffer* instance_buffer, const Drawable* drawable,
+		const std::vector<UniformBinding>* uniform_bindings
+	);
+
+	void draw_screen (
+		const Pipeline* pipeline,
 		const std::vector<UniformBinding>* uniform_bindings
 	);
 

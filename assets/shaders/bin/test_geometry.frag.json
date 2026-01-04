@@ -8,7 +8,7 @@
     "inputs" : [
         {
             "type" : "vec4",
-            "name" : "inFragPos",
+            "name" : "inPosition",
             "location" : 0
         },
         {
@@ -17,35 +17,25 @@
             "location" : 1
         },
         {
-            "type" : "float",
-            "name" : "cubeSeed",
-            "location" : 4
-        },
-        {
             "type" : "vec4",
             "name" : "inColor",
             "location" : 2
-        },
-        {
-            "type" : "float",
-            "name" : "inRadius",
-            "location" : 3
         }
     ],
     "outputs" : [
         {
             "type" : "vec4",
-            "name" : "gPosition",
+            "name" : "outPosition",
             "location" : 0
         },
         {
             "type" : "vec4",
-            "name" : "gNormal",
+            "name" : "outNormal",
             "location" : 1
         },
         {
             "type" : "vec4",
-            "name" : "gAlbedo",
+            "name" : "outColor",
             "location" : 2
         }
     ]

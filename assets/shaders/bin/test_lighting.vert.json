@@ -6,7 +6,7 @@
         }
     ],
     "types" : {
-        "_22" : {
+        "_29" : {
             "name" : "gl_PerVertex",
             "members" : [
                 {
@@ -39,12 +39,5 @@
                 }
             ]
         }
-    },
-    "outputs" : [
-        {
-            "type" : "vec2",
-            "name" : "fragUV",
-            "location" : 0
-        }
-    ]
+    }
 }

@@ -21,11 +21,9 @@ layout(location = 5) in vec4 inInstRot;
 layout(location = 6) in vec4 inInstScale;
 layout(location = 7) in vec4 inInstPad;
 
-layout(location = 0) out vec4 outFragPos;
+layout(location = 0) out vec4 outPosition;
 layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec4 outColor;
-layout(location = 3) out float outRadius;
-layout(location = 4) out float cubeSeed;
 
 float hash11(float p) {
     p = fract(p * 0.1031);
@@ -50,9 +48,9 @@ mat3 rodriguesRotation(vec3 axis, float angle) {
     axis = normalize(axis);
 
     return mat3(
-        t*axis.x*axis.x + c,        t*axis.x*axis.y - s*axis.z, t*axis.x*axis.z + s*axis.y,
-        t*axis.x*axis.y + s*axis.z, t*axis.y*axis.y + c,        t*axis.y*axis.z - s*axis.x,
-        t*axis.x*axis.z - s*axis.y, t*axis.y*axis.z + s*axis.x, t*axis.z*axis.z + c
+    t*axis.x*axis.x + c,        t*axis.x*axis.y - s*axis.z, t*axis.x*axis.z + s*axis.y,
+    t*axis.x*axis.y + s*axis.z, t*axis.y*axis.y + c,        t*axis.y*axis.z - s*axis.x,
+    t*axis.x*axis.z - s*axis.y, t*axis.y*axis.z + s*axis.x, t*axis.z*axis.z + c
     );
 }
 
@@ -81,9 +79,9 @@ mat3 quaternionRotation(vec3 axis, float angle) {
 
 
     return mat3(
-        1.0 - 2.0 * (yy + zz), 2.0 * (xy - wz),       2.0 * (xz + wy),
-        2.0 * (xy + wz),       1.0 - 2.0 * (xx + zz), 2.0 * (yz - wx),
-        2.0 * (xz - wy),       2.0 * (yz + wx),       1.0 - 2.0 * (xx + yy)
+    1.0 - 2.0 * (yy + zz), 2.0 * (xy - wz),       2.0 * (xz + wy),
+    2.0 * (xy + wz),       1.0 - 2.0 * (xx + zz), 2.0 * (yz - wx),
+    2.0 * (xz - wy),       2.0 * (yz + wx),       1.0 - 2.0 * (xx + yy)
     );
 }
 
@@ -115,9 +113,9 @@ vec3 sinWave(
     vec3 amplitude
 ) {
     return vec3(
-        sin(phase.x * frequency.x + time) * amplitude.x,
-        cos(phase.y * frequency.y + time) * amplitude.y,
-        sin(phase.z * frequency.z + time) * amplitude.z
+    sin(phase.x * frequency.x + time) * amplitude.x,
+    cos(phase.y * frequency.y + time) * amplitude.y,
+    sin(phase.z * frequency.z + time) * amplitude.z
     );
 }
 
@@ -184,43 +182,23 @@ vec3 transformMesh(
 }
 
 void main() {
-    float time = global_u.time.x * 0.001;
-
-    vec3 instancePos = inInstPos.xyz;
+    // -- Inputs -- //
+    vec3 position = inInstPos.xyz;
     vec3 axis = inInstRot.xyz;
     float phase = inInstRot.w;
 
-    // --- Field ---
-    vec3 fieldCenter = computeFieldCenter(time);
-    float field = computeField(instancePos, fieldCenter);
-
-    // --- Motion ---
-    float seed = dot(instancePos, vec3(12.9898, 78.233, 45.164));
-
-    vec3 path = computeFieldPath(
-        instancePos,
-        time,
-        field,
-        seed
-    );
-
     // --- Transform ---
-    mat3 rotation = quaternionRotation(axis, phase + time);
-    vec3 scale = inInstScale.xyz * (field + 0.1);
+    mat3 rotation = quaternionRotation(axis, phase);
+    vec3 scale = inInstScale.xyz * 0.1;
 
-    vec3 worldPos =
-    instancePos +
-    path +
-    transformMesh(inMeshPos.xyz, scale, rotation);
-
-    vec3 worldNormal = normalize(rotation * inMeshNormal.xyz);
+    // -- Model Projection -- //
+    vec3 modelPosition = position + transformMesh(inMeshPos.xyz, scale, rotation);
+    vec3 modelNormal = normalize(rotation * inMeshNormal.xyz);
 
     // --- GBuffer ---
-    outFragPos = vec4(worldPos, 1.0);
-    outNormal  = vec4(worldNormal, 0.0);
+    outPosition = vec4(modelPosition, 1.0);
+    outNormal  = vec4(modelNormal, 0.0);
     outColor   = inMeshColor;
-    outRadius  = 15.0;
-    cubeSeed   = seed;
 
-    gl_Position = view_u.view_projection * vec4(worldPos, 1.0);
+    gl_Position = view_u.view_projection * vec4(modelPosition, 1.0);
 }
