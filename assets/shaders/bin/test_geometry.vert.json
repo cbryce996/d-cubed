@@ -6,7 +6,32 @@
         }
     ],
     "types" : {
-        "_213" : {
+        "_390" : {
+            "name" : "GlobalUniform",
+            "members" : [
+                {
+                    "name" : "light_pos",
+                    "type" : "vec4",
+                    "offset" : 0
+                },
+                {
+                    "name" : "time",
+                    "type" : "vec4",
+                    "offset" : 16
+                },
+                {
+                    "name" : "camera_pos",
+                    "type" : "vec4",
+                    "offset" : 32
+                },
+                {
+                    "name" : "pad2",
+                    "type" : "vec4",
+                    "offset" : 48
+                }
+            ]
+        },
+        "_498" : {
             "name" : "gl_PerVertex",
             "members" : [
                 {
@@ -39,7 +64,7 @@
                 }
             ]
         },
-        "_219" : {
+        "_502" : {
             "name" : "ViewUniform",
             "members" : [
                 {
@@ -47,31 +72,6 @@
                     "type" : "mat4",
                     "offset" : 0,
                     "matrix_stride" : 16
-                }
-            ]
-        },
-        "_232" : {
-            "name" : "GlobalUniform",
-            "members" : [
-                {
-                    "name" : "light_pos",
-                    "type" : "vec4",
-                    "offset" : 0
-                },
-                {
-                    "name" : "time",
-                    "type" : "vec4",
-                    "offset" : 16
-                },
-                {
-                    "name" : "camera_pos",
-                    "type" : "vec4",
-                    "offset" : 32
-                },
-                {
-                    "name" : "pad2",
-                    "type" : "vec4",
-                    "offset" : 48
                 }
             ]
         }
@@ -137,18 +137,18 @@
     ],
     "ubos" : [
         {
-            "type" : "_219",
-            "name" : "ViewUniform",
-            "block_size" : 64,
-            "set" : 0,
-            "binding" : 0
-        },
-        {
-            "type" : "_232",
+            "type" : "_390",
             "name" : "GlobalUniform",
             "block_size" : 64,
             "set" : 0,
             "binding" : 1
+        },
+        {
+            "type" : "_502",
+            "name" : "ViewUniform",
+            "block_size" : 64,
+            "set" : 0,
+            "binding" : 0
         }
     ]
 }

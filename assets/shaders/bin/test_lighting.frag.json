@@ -6,7 +6,7 @@
         }
     ],
     "types" : {
-        "_98" : {
+        "_163" : {
             "name" : "GlobalUniform",
             "members" : [
                 {
@@ -32,6 +32,13 @@
             ]
         }
     },
+    "inputs" : [
+        {
+            "type" : "vec2",
+            "name" : "inUV",
+            "location" : 0
+        }
+    ],
     "outputs" : [
         {
             "type" : "vec4",
@@ -50,7 +57,7 @@
             "type" : "sampler2D",
             "name" : "inNormal",
             "set" : 0,
-            "binding" : 1
+            "binding" : 3
         },
         {
             "type" : "sampler2D",
@@ -61,11 +68,11 @@
     ],
     "ubos" : [
         {
-            "type" : "_98",
+            "type" : "_163",
             "name" : "GlobalUniform",
             "block_size" : 64,
             "set" : 0,
-            "binding" : 3
+            "binding" : 1
         }
     ]
 }

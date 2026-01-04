@@ -1,10 +1,10 @@
 #version 450
 
-layout(set = 0, binding = 0) uniform ViewUniform {
+layout(binding = 0) uniform ViewUniform {
     mat4 view_projection;
 } view_u;
 
-layout(set = 0, binding = 1) uniform GlobalUniform {
+layout(binding = 1) uniform GlobalUniform {
     vec4 light_pos;
     vec4 time;
     vec4 camera_pos;
@@ -170,7 +170,7 @@ vec3 computeFieldPath(
 
 float computeField(vec3 position, vec3 center) {
     float field = radialFallOff(position, center, 5.0, 0.8) ;
-    return clamp(field, 0.0, 0.2);
+    return clamp(field, 0.3, 1.0);
 }
 
 vec3 transformMesh(
@@ -182,23 +182,35 @@ vec3 transformMesh(
 }
 
 void main() {
+    // -- Delta Time -- //
+    float time = global_u.time.x * 0.001;
+
     // -- Inputs -- //
     vec3 position = inInstPos.xyz;
     vec3 axis = inInstRot.xyz;
     float phase = inInstRot.w;
 
+    // -- Field -- //
+    vec3 fieldCenter = computeFieldCenter(time);
+    float field = computeField(position, fieldCenter);
+
+    // -- Paths -- //
+    float seed = hash11(dot(position, vec3(12.9898, 78.233, 45.164)));
+    vec3 path = computeFieldPath(position, time, field, seed);
+
     // --- Transform ---
-    mat3 rotation = quaternionRotation(axis, phase);
-    vec3 scale = inInstScale.xyz * 0.1;
+    mat3 rotation = quaternionRotation(axis, phase + time);
+    vec3 scale = inInstScale.xyz * field;
 
     // -- Model Projection -- //
-    vec3 modelPosition = position + transformMesh(inMeshPos.xyz, scale, rotation);
+    vec3 modelPosition = position + path + transformMesh(inMeshPos.xyz, scale, rotation);
     vec3 modelNormal = normalize(rotation * inMeshNormal.xyz);
 
     // --- GBuffer ---
     outPosition = vec4(modelPosition, 1.0);
     outNormal  = vec4(modelNormal, 0.0);
-    outColor   = inMeshColor;
+    outColor   = vec4(inMeshColor.rgb, seed);
 
+    // -- Position -- //
     gl_Position = view_u.view_projection * vec4(modelPosition, 1.0);
 }

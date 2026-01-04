@@ -23,6 +23,7 @@ enum class ShaderStage : uint8_t {
 };
 
 struct UniformBinding {
+	std::string name;
 	uint32_t slot;
 	const void* data;
 	uint32_t size;
@@ -91,14 +92,15 @@ class RenderManager {
 
 	void draw_mesh (
 		const Pipeline* pipeline, const Buffer* vertex_buffer,
-		const Buffer* instance_buffer, const Drawable* drawable,
-		const std::vector<UniformBinding>* uniform_bindings
+		const Buffer* instance_buffer, const Drawable* drawable
 	);
 
 	void draw_screen (
-		const Pipeline* pipeline,
-		const std::vector<UniformBinding>* uniform_bindings
+		const Pipeline* pipeline
 	);
+	void push_uniform_bindings (
+		std::vector<UniformBinding>& uniform_bindings
+	) const;
 
 	void prepare_drawables (std::vector<Drawable>& drawables) const;
 

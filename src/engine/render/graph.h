@@ -6,7 +6,7 @@
 
 struct RenderContext;
 
-enum class RenderPassType { Geometry, Lighting, PostProcess };
+enum class RenderPassType { Setup, Geometry, Lighting, PostProcess };
 
 struct RenderPassNode {
 	std::string name;

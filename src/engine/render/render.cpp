@@ -97,7 +97,7 @@ void RenderManager::load_shaders () const {
 			.entrypoint = "main0",
 			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-			.num_uniform_buffers = 0
+			.num_uniform_buffers = 2
 		},
 		"cube_geometry"
 	);
@@ -108,14 +108,14 @@ void RenderManager::load_shaders () const {
 			.entrypoint = "main0",
 			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_VERTEX,
-			.num_uniform_buffers = 0
+			.num_uniform_buffers = 2
 		},
 		ShaderConfig{
 			.path = shader_base + "bin/test_lighting.frag.metallib",
 			.entrypoint = "main0",
 			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-			.num_uniform_buffers = 4,
+			.num_uniform_buffers = 2,
 			.num_samplers = 3
 		},
 		"cube_lighting"
@@ -131,7 +131,7 @@ void RenderManager::create_gbuffer_textures (int width, int height) {
 	info.num_levels = 1;
 	info.sample_count = SDL_GPU_SAMPLECOUNT_1;
 	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
-	info.usage = info.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
+	info.usage = info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
 
 	buffer_manager->g_position_texture = SDL_CreateGPUTexture (device, &info);
 	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
@@ -179,17 +179,58 @@ void RenderManager::destroy_gbuffer_textures () {
 }
 
 void RenderManager::setup_render_graph () {
+	RenderPassNode setup_uniforms_pass;
+	setup_uniforms_pass.name = "setup_uniforms_pass";
+	setup_uniforms_pass.type = RenderPassType::Setup;
+	setup_uniforms_pass.execute = [this] (const RenderContext& render_context) {
+		const Camera* active_camera
+				= render_context.camera_manager->get_active_camera ();
+		const float aspect_ratio = static_cast<float> (width)
+								   / static_cast<float> (height);
+		const glm::vec3 light_pos_world = active_camera->transform.position;
+
+		// Create view uniform
+		glm::mat4 view_projection = CameraManager::compute_view_projection (
+			*active_camera, aspect_ratio
+		);
+		Collection view_uniform_builder{};
+		view_uniform_builder.push (view_projection);
+
+		// Create global uniform
+		Collection global_uniform_builder{};
+		global_uniform_builder.push (glm::vec4 (light_pos_world, 1.0f));
+		global_uniform_builder.push (
+			render_context.time
+		);
+		global_uniform_builder.push(
+			glm::vec4(render_context.camera_manager->get_active_camera ()->transform.position, 0.0f)
+		);
+
+		std::vector<UniformBinding> uniform_bindings;
+
+		UniformBinding view_uniform_binding{};
+		view_uniform_binding.data = &view_uniform_builder.storage;
+		view_uniform_binding.slot = 1;
+		view_uniform_binding.size = sizeof (Block);
+		view_uniform_binding.stage = ShaderStage::Vertex;
+		uniform_bindings.push_back (view_uniform_binding);
+
+		UniformBinding global_uniform_binding{};
+		global_uniform_binding.data = &global_uniform_builder.storage;
+		global_uniform_binding.slot = 0;
+		global_uniform_binding.size = sizeof (Block);
+		global_uniform_binding.stage = ShaderStage::Both;
+		uniform_bindings.push_back (global_uniform_binding);
+
+		push_uniform_bindings(uniform_bindings);
+	};
+
 	RenderPassNode geometry_pass;
 	geometry_pass.name = "geometry_pass";
 	geometry_pass.type = RenderPassType::Geometry;
+	geometry_pass.dependencies = {"setup_uniforms_pass"};
 	geometry_pass.execute =
 		[this] (const RenderContext& render_context) {
-			const Camera* active_camera
-				= render_context.camera_manager->get_active_camera ();
-			const float aspect_ratio = static_cast<float> (width)
-									   / static_cast<float> (height);
-			const glm::vec3 light_pos_world = active_camera->transform.position;
-
 			// Create pass config
 			RenderPassConfig geometry_pass_config{};
 			geometry_pass_config.color_targets = {
@@ -198,45 +239,12 @@ void RenderManager::setup_render_graph () {
 				buffer_manager->g_albedo_texture
 			};
 			geometry_pass_config.depth_target = buffer_manager->depth_texture;
-			geometry_pass_config.clear_color = {0.05f, 0.05f, 0.10f, 1.0f};
+			geometry_pass_config.clear_color = {0.0f, 0.0f, 0.0f, 0.0f};
 			geometry_pass_config.clear_depth = true;
 
 			// Create render pass
 			current_render_pass = create_render_pass (geometry_pass_config);
 			set_viewport (current_render_pass);
-
-			// Create view uniform
-			glm::mat4 view_projection = CameraManager::compute_view_projection (
-				*active_camera, aspect_ratio
-			);
-			Collection view_uniform_builder{};
-			view_uniform_builder.push (view_projection);
-
-			// Create global uniform
-			Collection global_uniform_builder{};
-			global_uniform_builder.push(glm::mat4(
-				glm::vec4(light_pos_world, 1.0f),
-				glm::vec4(render_context.time, 0.0f, 0.0f, 0.0f),
-				glm::vec4(active_camera->transform.position, 1.0f),
-				glm::vec4(1.0f)
-			));
-
-			// Bind uniforms
-			std::vector<UniformBinding> uniform_bindings;
-
-			UniformBinding view_uniform_binding{};
-			view_uniform_binding.data = &view_uniform_builder.storage;
-			view_uniform_binding.slot = 0;
-			view_uniform_binding.size = sizeof (Block);
-			view_uniform_binding.stage = ShaderStage::Vertex;
-			uniform_bindings.push_back (view_uniform_binding);
-
-			UniformBinding global_uniform_binding{};
-			global_uniform_binding.data = &global_uniform_builder.storage;
-			global_uniform_binding.slot = 1;
-			global_uniform_binding.size = sizeof (Block);
-			global_uniform_binding.stage = ShaderStage::Vertex;
-			uniform_bindings.push_back (global_uniform_binding);
 
 			// Draw drawables
 			for (const Drawable& drawable : *render_context.drawables) {
@@ -246,8 +254,7 @@ void RenderManager::setup_render_graph () {
 				const Buffer* instance_buffer = drawable.instance_buffer;
 
 				draw_mesh (
-					pipeline, vertex_buffer, instance_buffer, &drawable,
-					&uniform_bindings
+					pipeline, vertex_buffer, instance_buffer, &drawable
 				);
 			}
 
@@ -259,10 +266,6 @@ void RenderManager::setup_render_graph () {
 	lighting_pass.type = RenderPassType::Lighting;
 	lighting_pass.dependencies = {"geometry_pass"};
 	lighting_pass.execute = [this] (const RenderContext& render_context) {
-		const Camera* active_camera
-						= render_context.camera_manager->get_active_camera ();
-		const glm::vec3 light_pos_world = active_camera->transform.position;
-
 		// Create pass config
 		RenderPassConfig lighting_pass_config{};
 		lighting_pass_config.color_targets = {
@@ -276,35 +279,18 @@ void RenderManager::setup_render_graph () {
 		current_render_pass = create_render_pass (lighting_pass_config);
 		set_viewport (current_render_pass);
 
-		// Build aligned uniform
-		Collection global_uniform_builder{};
-		global_uniform_builder.push(glm::mat4(
-			glm::vec4(light_pos_world, 1.0f),
-			glm::vec4(render_context.time, 0.0f, 0.0f, 0.0f),
-			glm::vec4(active_camera->transform.position, 1.0f),
-			glm::vec4(1.0f)
-		));
-
-		// Bind uniforms
-		std::vector<UniformBinding> uniform_bindings;
-		UniformBinding global_uniform_binding{};
-		global_uniform_binding.data = &global_uniform_builder.storage;
-		global_uniform_binding.slot = 1;
-		global_uniform_binding.size = sizeof (Block);
-		global_uniform_binding.stage = ShaderStage::Fragment;
-		uniform_bindings.push_back (global_uniform_binding);
-
 		const Pipeline* pipeline = render_context.pipeline_manager
 											   ->get_pipeline ("cube_lighting");
 
 		// Draw screen
 		draw_screen (
-			pipeline, &uniform_bindings
+			pipeline
 		);
 
 		SDL_EndGPURenderPass (current_render_pass);
 	};
 
+	render_graph.add_pass (setup_uniforms_pass);
 	render_graph.add_pass (geometry_pass);
 	render_graph.add_pass (lighting_pass);
 }
@@ -418,22 +404,10 @@ SDL_GPURenderPass* RenderManager::create_render_pass (
 	);
 }
 
-void RenderManager::draw_mesh (
-	const Pipeline* pipeline, const Buffer* vertex_buffer,
-	const Buffer* instance_buffer, const Drawable* drawable,
-	const std::vector<UniformBinding>* uniform_bindings
-) {
-	if (!pipeline || !vertex_buffer || !instance_buffer) {
-		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Missing pipeline or buffers.");
-		return;
-	}
-
-	// Create render pass and bind to pipeline
-	SDL_GPURenderPass* pass = current_render_pass;
-	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
-
-	// Push uniform data
-	for (const auto& [slot, data, size, stage] : *uniform_bindings) {
+void RenderManager::push_uniform_bindings(
+	std::vector<UniformBinding>& uniform_bindings
+) const {
+	for (const auto& [name, slot, data, size, stage] : uniform_bindings) {
 		if (stage == ShaderStage::Vertex || stage == ShaderStage::Both) {
 			SDL_PushGPUVertexUniformData (
 				buffer_manager->command_buffer, slot, data, size
@@ -446,6 +420,20 @@ void RenderManager::draw_mesh (
 			);
 		}
 	}
+}
+
+void RenderManager::draw_mesh (
+	const Pipeline* pipeline, const Buffer* vertex_buffer,
+	const Buffer* instance_buffer, const Drawable* drawable
+) {
+	if (!pipeline || !vertex_buffer || !instance_buffer) {
+		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Missing pipeline or buffers.");
+		return;
+	}
+
+	// Create render pass and bind to pipeline
+	SDL_GPURenderPass* pass = current_render_pass;
+	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
 
 	// Bing vertex buffer with instance
 	SDL_GPUBufferBinding bindings[2] = {
@@ -462,7 +450,7 @@ void RenderManager::draw_mesh (
 }
 
 void RenderManager::draw_screen(
-	const Pipeline* pipeline, const std::vector<UniformBinding>* uniform_bindings
+	const Pipeline* pipeline
 ) {
 	// Create render pass and bind to pipeline
 	SDL_GPURenderPass* pass = current_render_pass;
@@ -476,22 +464,7 @@ void RenderManager::draw_screen(
 	samplers[1].sampler = buffer_manager->linear_sampler;
 	samplers[2].texture = buffer_manager->g_albedo_texture;
 	samplers[2].sampler = buffer_manager->linear_sampler;
-	SDL_BindGPUFragmentSamplers (current_render_pass, 0, samplers, 3);
-
-	// Push uniform data
-	for (const auto& [slot, data, size, stage] : *uniform_bindings) {
-		if (stage == ShaderStage::Vertex || stage == ShaderStage::Both) {
-			SDL_PushGPUVertexUniformData (
-				buffer_manager->command_buffer, slot + 2, data, size
-			);
-		}
-
-		if (stage == ShaderStage::Fragment || stage == ShaderStage::Both) {
-			SDL_PushGPUFragmentUniformData (
-				buffer_manager->command_buffer, slot + 2, data, size
-			);
-		}
-	}
+	SDL_BindGPUFragmentSamplers (pass, 0, samplers, 3);
 
 	SDL_DrawGPUPrimitives (
 		pass, 3,
@@ -555,7 +528,6 @@ void RenderManager::render (RenderState* render_state, float delta_time) {
 		.time = delta_time
 	};
 	render_graph.execute_all (render_context);
-	SDL_SubmitGPUCommandBuffer (
-				render_context.buffer_manager->command_buffer
-			);
+	SDL_SubmitGPUCommandBuffer(buffer_manager->command_buffer);
+	buffer_manager->command_buffer = nullptr;
 }
