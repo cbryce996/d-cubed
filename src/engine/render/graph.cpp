@@ -28,6 +28,7 @@ void RenderGraph::execute_all (RenderContext& render_context) {
 	for (const std::string& name : sorted_pass_order) {
 		RenderPassNode& render_pass = render_passes[name];
 		render_pass.execute (render_context);
+		render_pass.completed = true;
 	}
 }
 

@@ -13,6 +13,7 @@ struct RenderPassNode {
 	RenderPassType type;
 	std::function<void (RenderContext&)> execute;
 	std::vector<std::string> dependencies;
+	bool completed = false;
 };
 
 class RenderGraph {

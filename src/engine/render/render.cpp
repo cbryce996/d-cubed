@@ -27,7 +27,17 @@ RenderManager::RenderManager (
 	  camera_manager (std::move (camera_manager)),
 	  asset_manager (std::move (asset_manager)), device (device),
 	  window (window) {
-	SDL_GetWindowSize (window, &width, &height);
+	assert(device && "GPU device must not be null");
+	assert(window && "Window must not be null");
+
+	assert(this->shader_manager && "Expected shader manager to be created");
+	assert(this->pipeline_manager && "Expected pipeline manager to be created");
+	assert(this->buffer_manager && "bExpected buffer manager to be created");
+	assert(this->camera_manager && "Expected camera manager to be created");
+	assert(this->asset_manager && "Expected asset manager to be created");
+
+	SDL_GetWindowSize(window, &width, &height);
+	assert(width > 0 && height > 0 && "Expected width and height to be a positive integer");
 
 	load_shaders ();
 	load_pipelines ();
@@ -75,6 +85,9 @@ void RenderManager::load_pipelines () const {
 		},
 		"cube_lighting"
 	);
+
+	assert(pipeline_manager->get_pipeline("cube_geometry") && "Expected cube geometry pipeline to be available");
+	assert(pipeline_manager->get_pipeline("cube_lighting") && "Expected cube lighting pipeline to be available");
 }
 
 void RenderManager::load_shaders () const {
@@ -120,6 +133,9 @@ void RenderManager::load_shaders () const {
 		},
 		"cube_lighting"
 	);
+
+	assert(shader_manager->get_shader("cube_geometry") && "Expected cube geometry shader to be available");
+	assert(shader_manager->get_shader("cube_lighting") && "Expected cube lighting shader to be available");
 }
 
 void RenderManager::create_gbuffer_textures (int width, int height) {
@@ -130,16 +146,18 @@ void RenderManager::create_gbuffer_textures (int width, int height) {
 	info.layer_count_or_depth = 1;
 	info.num_levels = 1;
 	info.sample_count = SDL_GPU_SAMPLECOUNT_1;
-	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
 	info.usage = info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
-
-	buffer_manager->g_position_texture = SDL_CreateGPUTexture (device, &info);
 	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
+	buffer_manager->g_position_texture = SDL_CreateGPUTexture (device, &info);
+	assert(buffer_manager->g_position_texture && "Failed to create position texture");
 
+	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
 	buffer_manager->g_normal_texture = SDL_CreateGPUTexture (device, &info);
-	info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+	assert(buffer_manager->g_position_texture && "Failed to create normal texture");
 
+	info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
 	buffer_manager->g_albedo_texture = SDL_CreateGPUTexture (device, &info);
+	assert(buffer_manager->g_position_texture && "Failed to create albedo texture");
 
 	if (!buffer_manager->linear_sampler) {
 		SDL_GPUSamplerCreateInfo sampler_info{};
@@ -153,6 +171,7 @@ void RenderManager::create_gbuffer_textures (int width, int height) {
 		buffer_manager->linear_sampler = SDL_CreateGPUSampler (
 			device, &sampler_info
 		);
+		assert(buffer_manager->g_position_texture && "Expected linear sampler to have been created");
 	}
 
 	SDL_LogInfo (
@@ -183,6 +202,8 @@ void RenderManager::setup_render_graph () {
 	setup_uniforms_pass.name = "setup_uniforms_pass";
 	setup_uniforms_pass.type = RenderPassType::Setup;
 	setup_uniforms_pass.execute = [this] (const RenderContext& render_context) {
+		assert(render_context.camera_manager->get_active_camera () && "Expected an active camera to be available");
+
 		const Camera* active_camera
 				= render_context.camera_manager->get_active_camera ();
 		const float aspect_ratio = static_cast<float> (width)
@@ -203,7 +224,7 @@ void RenderManager::setup_render_graph () {
 			render_context.time
 		);
 		global_uniform_builder.push(
-			glm::vec4(render_context.camera_manager->get_active_camera ()->transform.position, 0.0f)
+			glm::vec4(active_camera->transform.position, 0.0f)
 		);
 
 		std::vector<UniformBinding> uniform_bindings;
@@ -231,6 +252,11 @@ void RenderManager::setup_render_graph () {
 	geometry_pass.dependencies = {"setup_uniforms_pass"};
 	geometry_pass.execute =
 		[this] (const RenderContext& render_context) {
+			assert(buffer_manager->g_position_texture && "Expected position texture to have been created");
+			assert(buffer_manager->g_normal_texture && "Expected normal texture to have been created");
+			assert(buffer_manager->g_albedo_texture && "Expected albedo texture to have been created");
+			assert(buffer_manager->depth_texture && "Expected depth texture to have been created");
+
 			// Create pass config
 			RenderPassConfig geometry_pass_config{};
 			geometry_pass_config.color_targets = {
@@ -248,6 +274,7 @@ void RenderManager::setup_render_graph () {
 
 			// Draw drawables
 			for (const Drawable& drawable : *render_context.drawables) {
+				assert(render_context.pipeline_manager->get_pipeline ("cube_geometry") && "Expected pipeline to available");
 				const Pipeline* pipeline = render_context.pipeline_manager
 											   ->get_pipeline ("cube_geometry");
 				const Buffer* vertex_buffer = drawable.vertex_buffer;
@@ -266,6 +293,8 @@ void RenderManager::setup_render_graph () {
 	lighting_pass.type = RenderPassType::Lighting;
 	lighting_pass.dependencies = {"geometry_pass"};
 	lighting_pass.execute = [this] (const RenderContext& render_context) {
+		assert(buffer_manager->swap_chain_texture && "Expected swap chain texture to have been created");
+
 		// Create pass config
 		RenderPassConfig lighting_pass_config{};
 		lighting_pass_config.color_targets = {
@@ -279,6 +308,7 @@ void RenderManager::setup_render_graph () {
 		current_render_pass = create_render_pass (lighting_pass_config);
 		set_viewport (current_render_pass);
 
+		assert(render_context.pipeline_manager->get_pipeline ("cube_lighting") && "Expected pipeline to available");
 		const Pipeline* pipeline = render_context.pipeline_manager
 											   ->get_pipeline ("cube_lighting");
 
@@ -291,8 +321,13 @@ void RenderManager::setup_render_graph () {
 	};
 
 	render_graph.add_pass (setup_uniforms_pass);
+	assert(render_graph.get_render_pass("setup_uniforms_pass") && "Expected render pass to be available");
+
 	render_graph.add_pass (geometry_pass);
+	assert(render_graph.get_render_pass("geometry_pass") && "Expected render pass to be available");
+
 	render_graph.add_pass (lighting_pass);
+	assert(render_graph.get_render_pass("lighting_pass") && "Expected render pass to be available");
 }
 
 void RenderManager::resize (int new_width, int new_height) {
@@ -304,7 +339,9 @@ void RenderManager::resize (int new_width, int new_height) {
 	if (buffer_manager->depth_texture) {
 		SDL_ReleaseGPUTexture (device, buffer_manager->depth_texture);
 		buffer_manager->depth_texture = nullptr;
+		assert(buffer_manager && "Expected depth texture to be released");
 	}
+
 	destroy_gbuffer_textures ();
 	create_gbuffer_textures (width, height);
 	create_depth_texture ();
@@ -319,7 +356,7 @@ void RenderManager::acquire_swap_chain () {
 			buffer_manager->command_buffer, window, &swap_chain_texture, &w, &h
 		)) {
 		SDL_LogError (
-			SDL_LOG_CATEGORY_RENDER, "Failed to acquire swap chain texture."
+			SDL_LOG_CATEGORY_RENDER, "Failed to acquire swap chain texture (window may be minimized)"
 		);
 		return;
 	}
@@ -344,22 +381,18 @@ void RenderManager::create_depth_texture () const {
 	depth_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
 
 	buffer_manager->depth_texture = SDL_CreateGPUTexture (device, &depth_info);
+	assert(buffer_manager->depth_texture && "Expected depth texture to be craeted");
+
 }
 
 SDL_GPURenderPass* RenderManager::create_render_pass (
 	const RenderPassConfig& render_pass_config
 ) const {
-	if (!buffer_manager->depth_texture) {
-		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Depth texture not created.");
-		return nullptr;
-	}
+	assert(buffer_manager->command_buffer && "Expected command buffer to be acquired");
+	assert(buffer_manager->depth_texture && "Expected depth texture to be created");
+	assert(buffer_manager->swap_chain_texture && "Expected swap chain texture to be created");
 
-	if (!buffer_manager->swap_chain_texture) {
-		SDL_LogError (
-			SDL_LOG_CATEGORY_RENDER, "Swap chain texture not created."
-		);
-		return nullptr;
-	}
+	assert(!render_pass_config.color_targets.empty() && "Expected color targets not to be empty");
 
 	std::vector<SDL_GPUColorTargetInfo> color_target_infos;
 	color_target_infos.reserve (render_pass_config.color_targets.size ());
@@ -407,7 +440,13 @@ SDL_GPURenderPass* RenderManager::create_render_pass (
 void RenderManager::push_uniform_bindings(
 	std::vector<UniformBinding>& uniform_bindings
 ) const {
+	assert(!uniform_bindings.empty() && "Expected uniform bindings to not be empty");
+
 	for (const auto& [name, slot, data, size, stage] : uniform_bindings) {
+		assert(data && "Expected uniform binding to have data");
+		assert(size % UNIFORM_ALIGNMENT == 0 && "Expected uniform binding data to be a multiple of 16 bytes");
+		assert(size > 0 && "Expected uniform binding to have a size");
+
 		if (stage == ShaderStage::Vertex || stage == ShaderStage::Both) {
 			SDL_PushGPUVertexUniformData (
 				buffer_manager->command_buffer, slot, data, size
@@ -426,14 +465,13 @@ void RenderManager::draw_mesh (
 	const Pipeline* pipeline, const Buffer* vertex_buffer,
 	const Buffer* instance_buffer, const Drawable* drawable
 ) {
-	if (!pipeline || !vertex_buffer || !instance_buffer) {
-		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Missing pipeline or buffers.");
-		return;
-	}
+	assert(pipeline && "Expected pipeline to be created");
+	assert(vertex_buffer && "Expected vertex buffer to be created");
+	assert(instance_buffer && "Expected instance buffer to be created");
+	assert(drawable && "Expected drawables to be created");
 
 	// Create render pass and bind to pipeline
-	SDL_GPURenderPass* pass = current_render_pass;
-	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
+	SDL_BindGPUGraphicsPipeline (current_render_pass, pipeline->pipeline);
 
 	// Bing vertex buffer with instance
 	SDL_GPUBufferBinding bindings[2] = {
@@ -441,10 +479,10 @@ void RenderManager::draw_mesh (
 		{instance_buffer->gpu_buffer.buffer, 0}
 	};
 
-	SDL_BindGPUVertexBuffers (pass, 0, bindings, 2);
+	SDL_BindGPUVertexBuffers (current_render_pass, 0, bindings, 2);
 
 	SDL_DrawGPUPrimitives (
-		pass, drawable->mesh->vertex_count,
+		current_render_pass, drawable->mesh->vertex_count,
 		static_cast<Uint32> (drawable->instances_count), 0, 0
 	);
 }
@@ -452,9 +490,10 @@ void RenderManager::draw_mesh (
 void RenderManager::draw_screen(
 	const Pipeline* pipeline
 ) {
+	assert(pipeline && "Expected pipeline to be created");
+
 	// Create render pass and bind to pipeline
-	SDL_GPURenderPass* pass = current_render_pass;
-	SDL_BindGPUGraphicsPipeline (pass, pipeline->pipeline);
+	SDL_BindGPUGraphicsPipeline (current_render_pass, pipeline->pipeline);
 
 	// Bind GBuffer texture samplers
 	SDL_GPUTextureSamplerBinding samplers[3];
@@ -464,15 +503,17 @@ void RenderManager::draw_screen(
 	samplers[1].sampler = buffer_manager->linear_sampler;
 	samplers[2].texture = buffer_manager->g_albedo_texture;
 	samplers[2].sampler = buffer_manager->linear_sampler;
-	SDL_BindGPUFragmentSamplers (pass, 0, samplers, 3);
+	SDL_BindGPUFragmentSamplers (current_render_pass, 0, samplers, 3);
 
 	SDL_DrawGPUPrimitives (
-		pass, 3,
+		current_render_pass, 3,
 		1, 0, 0
 	);
 }
 
 void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
+	assert(!drawables.empty () && "Expected drawables to not be empty");
+
 	for (Drawable& drawable : drawables) {
 		// Create and write instance buffer
 		Buffer* instance_buffer
@@ -501,6 +542,8 @@ void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 }
 
 void RenderManager::set_viewport (SDL_GPURenderPass* current_render_pass) {
+	assert (current_render_pass && "Expceted current render pass to be crated");
+
 	SDL_GPUViewport viewport{};
 	viewport.x = 0;
 	viewport.y = 0;
@@ -512,8 +555,13 @@ void RenderManager::set_viewport (SDL_GPURenderPass* current_render_pass) {
 }
 
 void RenderManager::render (RenderState* render_state, float delta_time) {
+	assert(render_state && "Expected render state to have been created");
+
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
+	assert(buffer_manager->command_buffer && "Expected command buffer to have been acquired");
+
 	acquire_swap_chain ();
+	assert(buffer_manager->swap_chain_texture && "Expected swap chain texture to have been acquired");
 
 	prepare_drawables (render_state->drawables);
 
@@ -527,7 +575,10 @@ void RenderManager::render (RenderState* render_state, float delta_time) {
 		.height = height,
 		.time = delta_time
 	};
+
 	render_graph.execute_all (render_context);
+
 	SDL_SubmitGPUCommandBuffer(buffer_manager->command_buffer);
+
 	buffer_manager->command_buffer = nullptr;
 }

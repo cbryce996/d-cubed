@@ -3,10 +3,11 @@
 
 #define BASE_BLOCK_SIZE 4
 #define BASE_COLLECTION_SIZE 4
+#define UNIFORM_ALIGNMENT 16
 
 #include <GLM/glm.hpp>
 
-struct Block {
+struct alignas(UNIFORM_ALIGNMENT) Block {
 	float blocks[BASE_BLOCK_SIZE * BASE_COLLECTION_SIZE];
 };
 
