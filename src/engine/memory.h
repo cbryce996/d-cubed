@@ -7,35 +7,35 @@
 
 #include <GLM/glm.hpp>
 
-struct alignas(UNIFORM_ALIGNMENT) Block {
-	float blocks[BASE_BLOCK_SIZE * BASE_COLLECTION_SIZE];
-};
+struct alignas (UNIFORM_ALIGNMENT) Block {
+	float data[BASE_BLOCK_SIZE * BASE_COLLECTION_SIZE];
 
-struct Collection {
-	Block storage{};
-	uint8_t count = 0;
+	void clear () { std::memset (&data, 0, sizeof (data)); }
 
-	static constexpr uint8_t MAX_BLOCKS = 4;
-
-	void clear () {
-		count = 0;
-		std::memset (storage.blocks, 0, sizeof (Block));
+	void write (const size_t slot, const glm::vec4& v) {
+		assert (slot < BASE_COLLECTION_SIZE);
+		std::memcpy (&data[slot * 4], &v, sizeof (glm::vec4));
 	}
 
-	void push (const glm::vec4& value) {
-		assert (count < MAX_BLOCKS && "Collection overflow");
-		// Each vec4 takes 4 float slots
-		std::memcpy (&storage.blocks[count * 4], &value, sizeof (glm::vec4));
-		count++;
+	static Block from (const glm::vec4& v) {
+		Block b{};
+		b.clear ();
+		b.write (0, v);
+		return b;
 	}
 
-	void push (const glm::mat4& m) {
-		assert (count == 0 && "Collection must be empty for mat4");
-		for (int i = 0; i < 4; ++i)
-			push (m[i]);
-	}
+	static Block from (const glm::mat4& m) {
+		Block b{};
+		b.clear ();
 
-	void push (const float value) { push (glm::vec4 (value)); }
+		// Column-major: m[0]..m[3] are vec4 columns
+		b.write (0, m[0]);
+		b.write (1, m[1]);
+		b.write (2, m[2]);
+		b.write (3, m[3]);
+
+		return b;
+	}
 };
 
 #endif // MEMORY_H

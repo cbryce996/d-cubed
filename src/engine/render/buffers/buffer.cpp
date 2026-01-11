@@ -1,10 +1,8 @@
 #include "buffer.h"
 
+#include "../mesh.h"
 #include "SDL3/SDL_gpu.h"
 #include "SDL3/SDL_log.h"
-#include "mesh.h"
-
-#include <render.h>
 
 BufferManager::BufferManager (SDL_GPUDevice* device) : device (device) {}
 
@@ -20,15 +18,14 @@ Buffer* BufferManager::get_buffer (const std::string& name) {
 }
 
 Buffer* BufferManager::get_or_create_vertex_buffer (const Drawable* drawable) {
-	Buffer* buffer = buffers.contains (drawable->mesh->name)
-						 ? &buffers[drawable->mesh->name]
-						 : nullptr;
+	std::string key = drawable->mesh->name + "_vertex";
+	Buffer* buffer = buffers.contains (key) ? &buffers[key] : nullptr;
 	if (buffer)
 		return buffer;
 
 	buffer = new Buffer{};
 	buffer->name = drawable->mesh->name;
-	buffer->size = drawable->mesh->vertex_size;
+	buffer->size = drawable->mesh->vertices.size () * sizeof (Block);
 	buffer->gpu_buffer.buffer = create_buffer (
 		{.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = buffer->size}
 	);
@@ -40,16 +37,39 @@ Buffer* BufferManager::get_or_create_vertex_buffer (const Drawable* drawable) {
 	return buffer;
 }
 
-Buffer*
-BufferManager::get_or_create_instance_buffer (const Drawable* drawable) {
-	std::string key = drawable->mesh->name + "_instances";
+Buffer* BufferManager::get_or_create_index_buffer (const Drawable* drawable) {
+	assert (drawable);
+	assert (drawable->mesh);
+	assert (!drawable->mesh->gpu_indices.empty ());
+
+	std::string key = drawable->mesh->name + "_index";
 	Buffer* buffer = buffers.contains (key) ? &buffers[key] : nullptr;
 	if (buffer)
 		return buffer;
 
 	buffer = new Buffer{};
 	buffer->name = key;
-	buffer->size = drawable->instances_size;
+	buffer->size = drawable->mesh->gpu_indices.size () * sizeof (uint32_t);
+	buffer->gpu_buffer.buffer = create_buffer (
+		{.usage = SDL_GPU_BUFFERUSAGE_INDEX, .size = buffer->size}
+	);
+	buffer->cpu_buffer.buffer = create_transfer_buffer (
+		{.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = buffer->size}
+	);
+
+	return buffer;
+}
+
+Buffer*
+BufferManager::get_or_create_instance_buffer (const Drawable* drawable) {
+	std::string key = drawable->mesh->name + "_instance";
+	Buffer* buffer = buffers.contains (key) ? &buffers[key] : nullptr;
+	if (buffer)
+		return buffer;
+
+	buffer = new Buffer{};
+	buffer->name = key;
+	buffer->size = drawable->instance_batch->blocks.size () * sizeof (Block);
 	buffer->gpu_buffer.buffer = create_buffer (
 		{.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
 		 .size = buffer->size}

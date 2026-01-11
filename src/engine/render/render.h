@@ -2,19 +2,16 @@
 #define RENDERER_H
 
 #include "assets/asset.h"
+#include "cameras/camera.h"
 #include "drawable.h"
-#include "graph.h"
-#include "memory.h"
+#include "graph/graph.h"
+#include "pipelines/pipeline.h"
+#include "shaders/shader.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 
 #include <vector>
-
-class CameraManager;
-class PipelineManager;
-class ShaderManager;
-struct Pipeline;
 
 enum class ShaderStage : uint8_t {
 	Vertex = 1 << 0,
@@ -29,8 +26,6 @@ struct UniformBinding {
 	uint32_t size;
 	ShaderStage stage;
 };
-
-struct Uniform : Collection {};
 
 struct RenderState {
 	std::vector<Drawable> drawables;
@@ -92,15 +87,13 @@ class RenderManager {
 
 	void draw_mesh (
 		const Pipeline* pipeline, const Buffer* vertex_buffer,
-		const Buffer* instance_buffer, const Drawable* drawable
+		const Buffer* instance_buffer, const Buffer* index_buffer,
+		const Drawable* drawable
 	);
 
-	void draw_screen (
-		const Pipeline* pipeline
-	);
-	void push_uniform_bindings (
-		std::vector<UniformBinding>& uniform_bindings
-	) const;
+	void draw_screen (const Pipeline* pipeline);
+	void
+	push_uniform_bindings (std::vector<UniformBinding>& uniform_bindings) const;
 
 	void prepare_drawables (std::vector<Drawable>& drawables) const;
 

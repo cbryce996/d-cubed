@@ -69,6 +69,7 @@ class BufferManager {
 
 	Buffer* get_buffer (const std::string& name);
 	Buffer* get_or_create_vertex_buffer (const Drawable* drawable);
+	Buffer* get_or_create_index_buffer (const Drawable* drawable);
 	Buffer* get_or_create_instance_buffer (const Drawable* drawable);
 
 	void add_buffer (Buffer& buffer);

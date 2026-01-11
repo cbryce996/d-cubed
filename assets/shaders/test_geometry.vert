@@ -176,7 +176,7 @@ vec3 computeFieldPath(
 
 float computeField(vec3 position, vec3 center, float time) {
     float field = radialFallOff(position, center, 5.0, 2, 1420421.0, time) ;
-    return clamp(field, 0.0, 0.15);
+    return clamp(field, 0.08, 0.09);
 }
 
 vec3 wobbleField(vec3 instancePos, float seed, float time) {

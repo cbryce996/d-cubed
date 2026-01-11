@@ -6,7 +6,7 @@
         }
     ],
     "types" : {
-        "_135" : {
+        "_134" : {
             "name" : "GlobalUniform",
             "members" : [
                 {
@@ -68,7 +68,7 @@
     ],
     "ubos" : [
         {
-            "type" : "_135",
+            "type" : "_134",
             "name" : "GlobalUniform",
             "block_size" : 64,
             "set" : 0,

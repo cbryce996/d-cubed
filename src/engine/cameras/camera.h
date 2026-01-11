@@ -1,8 +1,6 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "drawable.h"
-
 #include <string>
 #include <unordered_map>
 

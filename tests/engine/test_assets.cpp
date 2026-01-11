@@ -1,5 +1,3 @@
-#include "mesh.h"
-
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -8,10 +6,12 @@
 #include <thread>
 
 #include "../../src/engine/assets/asset.h"
+#include "../../src/engine/render/mesh.h"
 
 struct FakeLoader : IMeshLoader {
-	bool
-	load (const std::string& path, std::vector<Block>& out_vertices) override {
+	bool load (
+		const std::string& path, std::vector<Vector3>& out_vertices
+	) override {
 		out_vertices = {{{0, 0, 0}, {0, 1, 0}, {1, 1, 1}}}; // dummy vertex
 		return true;
 	}
@@ -28,8 +28,8 @@ TEST_F (AssetManagerTest, LoadsMeshSuccessfully) {
 
 	std::shared_ptr<Mesh> mesh = asset_manager->load_mesh ("cube.obj");
 	ASSERT_NE (mesh, nullptr) << "Expected mesh to not be null";
-	EXPECT_GT (mesh->vertex_count, 0) << "Expected loaded mesh to have "
-										 "vertices";
+	EXPECT_GT (mesh->vertices.size (), 0) << "Expected loaded mesh to have "
+											 "vertices";
 	EXPECT_EQ (mesh->name, "cube.obj") << "Expected mesh to have name";
 }
 

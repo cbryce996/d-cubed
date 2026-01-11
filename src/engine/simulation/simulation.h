@@ -3,8 +3,6 @@
 
 #include "engine/tasks/schedule.h"
 #include "engine/tasks/tasks.h"
-#include "game/entity.h"
-#include "game/player.h"
 
 class Simulation {
   public:
@@ -15,10 +13,6 @@ class Simulation {
 
 	std::vector<Schedule> schedules;
 	float simulation_time_ms = 0.0f;
-	Player player;
-
-  private:
-	std::vector<Entity> entities;
 };
 
 #endif // SIMULATION_H

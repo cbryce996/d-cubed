@@ -11,19 +11,14 @@ set(SRC_FILES
     src/engine/tasks/tasks.cpp
     src/engine/inputs/input.cpp
     src/game/game.cpp
-    src/game/player.cpp
     src/engine/tasks/schedule.cpp
     src/engine/simulation/simulation.cpp
-    src/game/core/items/types.cpp
-    src/game/core/items/items.cpp
     src/engine/render/render.cpp
-    src/engine/render/graph.cpp
-    src/engine/render/mesh.cpp
-    src/engine/render/pipeline.cpp
-    src/engine/render/buffer.cpp
+    src/engine/render/graph/graph.cpp
+    src/engine/render/pipelines/pipeline.cpp
+    src/engine/render/buffers/buffer.cpp
     src/engine/cameras/camera.cpp
-    src/engine/render/shader.cpp
-    src/game/entity.cpp
+    src/engine/render/shaders/shader.cpp
     src/engine/assets/asset.cpp
     src/engine/assets/loader.cpp
 )
@@ -34,12 +29,8 @@ add_definitions(-DSHADERS_DIR="${CMAKE_SOURCE_DIR}/assets/shaders/")
 
 target_include_directories(game_lib PUBLIC
     src
-    src/game/core/items
-    src/game/core/buildings
-    src/game/core/world
     src/engine
     src/game
-    src/engine/render
     external/tinyobjloader
 )
 

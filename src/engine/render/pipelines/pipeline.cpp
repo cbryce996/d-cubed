@@ -1,6 +1,6 @@
 #include "pipeline.h"
 
-#include "mesh.h"
+#include "../mesh.h"
 
 PipelineManager::PipelineManager (
 	SDL_GPUDevice* device, SDL_Window* window,

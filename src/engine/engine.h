@@ -9,16 +9,6 @@
 #include "render/render.h"
 #include "simulation/simulation.h"
 
-struct ItemInstance {
-	SDL_Rect rect;
-};
-
-struct CraftingInstance {
-	SDL_Rect target_rect;
-	float progress_ms = 0.0f;
-	float duration_ms = 2000.0f;
-};
-
 class Engine {
   public:
 	Engine ();

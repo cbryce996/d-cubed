@@ -1,11 +1,12 @@
 #define TINYOBJLOADER_IMPLEMENTATION
+
 #include <SDL3/SDL.h>
 
 #include "loader.h"
 #include "tiny_obj_loader.h"
 
 bool TinyObjMeshLoader::load (
-	const std::string& path, std::vector<Block>& out_vertices
+	const std::string& path, std::vector<Vector3>& out_vertices
 ) {
 	out_vertices.clear ();
 

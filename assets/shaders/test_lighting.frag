@@ -36,7 +36,7 @@ vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPos, vec3 lightPos) {
     vec3 lightDir = normalize(L);
 
     float diff = max(dot(normal, lightDir), 0.0) * 10.0;
-    float atten = 1.0 / (distance * 0.8 + 10.0);
+    float atten = 1.0 / (distance * 1.0 + 10.0);
 
     float ambient = 0.3;
     return color * (ambient + diff * atten);

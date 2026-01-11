@@ -1,7 +1,7 @@
 #ifndef PIPELINE_H
 #define PIPELINE_H
 
-#include "drawable.h"
+#include "../drawable.h"
 #include "memory.h"
 
 #include <SDL3/SDL.h>
@@ -10,7 +10,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "shader.h"
+#include "../shaders/shader.h"
 
 constexpr SDL_GPUVertexElementFormat get_format () {
 #if BASE_COLLECTION_SIZE == 4

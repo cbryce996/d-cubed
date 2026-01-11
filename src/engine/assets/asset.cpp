@@ -1,6 +1,6 @@
 #include "engine/assets/asset.h"
 
-#include "mesh.h"
+#include "../render/mesh.h"
 
 #include <SDL3/SDL_log.h>
 
@@ -14,7 +14,7 @@ AssetManager::load_mesh_from_file (const std::string& path) {
 	auto mesh = std::make_shared<Mesh> ();
 	mesh->name = path;
 
-	std::vector<Block> vertices;
+	std::vector<Vector3> vertices;
 
 	if (!loader->load (path, vertices)) {
 		SDL_LogError (
@@ -23,17 +23,9 @@ AssetManager::load_mesh_from_file (const std::string& path) {
 		return nullptr;
 	}
 
-	mesh->vertex_storage = std::make_shared<std::vector<Block>> (
-		std::move (vertices)
-	);
-	mesh->vertex_data = mesh->vertex_storage->data ();
-	mesh->vertex_count = mesh->vertex_storage->size ();
-	mesh->vertex_size = mesh->vertex_storage->size () * sizeof (Block);
+	mesh->vertices = vertices;
 	meshes[path] = mesh;
 
-	SDL_Log (
-		"Loaded mesh: %s (%zu vertices)", path.c_str (), mesh->vertex_count
-	);
 	return mesh;
 }
 
