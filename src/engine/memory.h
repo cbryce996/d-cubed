@@ -28,7 +28,6 @@ struct alignas (UNIFORM_ALIGNMENT) Block {
 		Block b{};
 		b.clear ();
 
-		// Column-major: m[0]..m[3] are vec4 columns
 		b.write (0, m[0]);
 		b.write (1, m[1]);
 		b.write (2, m[2]);

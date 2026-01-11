@@ -1,7 +1,6 @@
 #ifndef CLOCK_H
 #define CLOCK_H
 
-#include <SDL3/SDL_timer.h>
 #include <algorithm>
 #include <chrono>
 
