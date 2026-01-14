@@ -28,18 +28,19 @@ TEST_F (TasksTest, JoinsThreadsOnStop) {
 	TaskScheduler task_scheduler;
 
 	std::promise<void> ran;
-	auto future = ran.get_future();
+	auto future = ran.get_future ();
 
 	task_scheduler.submit ([&] {
 		task_ran = true;
-		ran.set_value();
+		ran.set_value ();
 	});
 
 	task_scheduler.start ();
 	ASSERT_TRUE (task_scheduler.running);
 
-	ASSERT_EQ (future.wait_for (std::chrono::seconds (1)),
-			   std::future_status::ready);
+	ASSERT_EQ (
+		future.wait_for (std::chrono::seconds (1)), std::future_status::ready
+	);
 
 	ASSERT_TRUE (task_ran);
 
