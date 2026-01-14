@@ -8,10 +8,10 @@ set(CMAKE_OSX_ARCHITECTURES arm64)
 set(SRC_FILES
     src/main.cpp
     src/engine/engine.cpp
-    src/engine/tasks/tasks.cpp
+        src/engine/simulation/tasks/tasks.cpp
     src/engine/inputs/input.cpp
-    src/game/game.cpp
-    src/engine/tasks/schedule.cpp
+        src/simulation/game.cpp
+        src/engine/simulation/schedule/schedule.cpp
     src/engine/simulation/simulation.cpp
     src/engine/render/render.cpp
     src/engine/render/graph/graph.cpp
@@ -30,7 +30,7 @@ add_definitions(-DSHADERS_DIR="${CMAKE_SOURCE_DIR}/assets/shaders/")
 target_include_directories(game_lib PUBLIC
     src
     src/engine
-    src/game
+        src/simulation
     external/tinyobjloader
 )
 

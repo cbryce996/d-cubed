@@ -1,8 +1,8 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
-#include "engine/tasks/schedule.h"
-#include "engine/tasks/tasks.h"
+#include "schedule/schedule.h"
+#include "tasks/tasks.h"
 
 class Simulation {
   public:

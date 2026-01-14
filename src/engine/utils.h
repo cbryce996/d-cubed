@@ -7,7 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "game/entity.h"
+#include "simulation/entity.h"
 
 inline glm::vec3
 model_to_world (const glm::vec3& local_pos, const glm::mat4& model_matrix) {

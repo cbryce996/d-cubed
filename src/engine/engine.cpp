@@ -15,7 +15,7 @@ Engine::Engine () {
 
 	window = SDL_CreateWindow ("Game", 1280, 720, SDL_WINDOW_RESIZABLE);
 
-	SDL_SetWindowFullscreen (window, true);
+	//SDL_SetWindowFullscreen (window, true);
 
 	gpu_device = SDL_CreateGPUDevice (
 		SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL
