@@ -6,8 +6,7 @@ https://github.com/cbryce996/d-cubed/actions/workflows/ci.yml
 
 https://github.com/user-attachments/assets/62ead7ad-d64f-4199-aec5-69004e1431ea
 
-**D-Cubed (D³)** is an open-source simulation engine focused on exploring low-level interactions between the CPU and GPU.  
-It is built with as few dependencies as possible to encourage experimentation with mathematics, linear algebra, and first principles in real-time rendering.
+**D-Cubed (D³)** is an open-source simulation engine focused on exploring low-level interactions between the CPU and GPU. It is built with as few dependencies as possible to encourage experimentation with mathematics, linear algebra, and first principles in real-time rendering.
 
 ---
 
