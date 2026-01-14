@@ -24,6 +24,7 @@ https://github.com/user-attachments/assets/62ead7ad-d64f-4199-aec5-69004e1431ea
 
 D³ is organized into a small set of focused systems, with a clear separation between engine code and the sandbox simulation used to exercise it.
 
+
 ```
 .
 ├── src/
