@@ -17,11 +17,15 @@ Game::~Game () = default;
 
 std::vector<glm::vec3> base_positions;
 std::vector<glm::vec3> random_rot_axes;
-static constexpr int NUM_INSTANCES = 1000;
-std::vector<Block> instances;
 
-void setup_spheres () {
-	instances.resize (NUM_INSTANCES);
+static constexpr int NUM_SPHERES = 1000;
+static constexpr int NUM_CUBES   = 500;
+
+std::vector<Block> sphere_instances;
+std::vector<Block> cube_instances;
+
+void setup_instances (std::vector<Block>& out_instances, int count) {
+	out_instances.resize (count);
 
 	std::mt19937 rng (42);
 	std::uniform_real_distribution<float> pos_dist (-50.0f, 50.0f);
@@ -29,19 +33,20 @@ void setup_spheres () {
 	std::uniform_real_distribution<float> rot_dist (-1.0f, 1.0f);
 	std::uniform_real_distribution<float> phase_dist (0.0f, 6.28f);
 
-	for (int i = 0; i < NUM_INSTANCES; ++i) {
-		glm::vec3 random_pos = glm::vec3 (
+	for (int i = 0; i < count; ++i) {
+		glm::vec3 random_pos (
 			pos_dist (rng), pos_dist (rng), pos_dist (rng)
 		);
 
-		glm::vec3 random_axis (rot_dist (rng), rot_dist (rng), rot_dist (rng));
+		glm::vec3 random_axis (
+			rot_dist (rng), rot_dist (rng), rot_dist (rng)
+		);
 
 		float len = glm::length (random_axis);
-		if (len < 0.0001f) {
+		if (len < 0.0001f)
 			random_axis = glm::vec3 (0.0f, 1.0f, 0.0f);
-		} else {
+		else
 			random_axis /= len;
-		}
 
 		float random_scale = scale_dist (rng);
 		float random_phase = phase_dist (rng);
@@ -52,14 +57,15 @@ void setup_spheres () {
 		block.write (1, glm::vec4 (random_axis, random_phase));
 		block.write (2, glm::vec4 (glm::vec3 (random_scale), 1.0f));
 
-		instances[i] = block;
+		out_instances[i] = block;
 	}
 }
 
 void Game::run () {
 	running = true;
 
-	setup_spheres ();
+	setup_instances (sphere_instances, NUM_SPHERES);
+	setup_instances (cube_instances, NUM_CUBES);
 
 	engine->simulation->task_scheduler.start ();
 
@@ -120,26 +126,49 @@ void Game::write_game_state (RenderState* render_state) {
 	static std::shared_ptr<Mesh> sphere_mesh = std::make_shared<Mesh> (
 		Sphere::generate (15.0f, 20, 20)
 	);
-	sphere_mesh->to_gpu ();
+	static std::shared_ptr<Mesh> cube_mesh = std::make_shared<Mesh> (
+		Cube::generate (15.0f) // or however your engine provides it
+	);
 
-	static InstanceBatch sphere_instances;
+	sphere_mesh->to_gpu ();
+	cube_mesh->to_gpu ();
+
+	static InstanceBatch sphere_batch;
+	static InstanceBatch cube_batch;
+
 	static Material material = {
 		.name = "test_material",
 		.pipeline_name = "lit_opaque_backcull",
 		.shader_name = "anomaly"
 	};
 
-	Drawable sphere{};
-	sphere.mesh = sphere_mesh.get ();
-	sphere.material = &material;
-	sphere.instance_batch = &sphere_instances;
-
-	sphere.instance_batch->blocks.resize (NUM_INSTANCES);
-
+	// --- SPHERES ---
+	sphere_batch.blocks.resize (NUM_SPHERES);
 	std::memcpy (
-		sphere.instance_batch->blocks.data (), instances.data (),
-		sphere.instance_batch->blocks.size () * sizeof (Block)
+		sphere_batch.blocks.data (),
+		sphere_instances.data (),
+		NUM_SPHERES * sizeof (Block)
 	);
 
-	render_state->drawables.push_back (sphere);
+	Drawable spheres{};
+	spheres.mesh = sphere_mesh.get ();
+	spheres.material = &material;
+	spheres.instance_batch = &sphere_batch;
+
+	render_state->drawables.push_back (spheres);
+
+	// --- CUBES ---
+	cube_batch.blocks.resize (NUM_CUBES);
+	std::memcpy (
+		cube_batch.blocks.data (),
+		cube_instances.data (),
+		NUM_CUBES * sizeof (Block)
+	);
+
+	Drawable cubes{};
+	cubes.mesh = cube_mesh.get ();
+	cubes.material = &material;
+	cubes.instance_batch = &cube_batch;
+
+	render_state->drawables.push_back (cubes);
 }
