@@ -8,13 +8,14 @@
 
 #include <random>
 
-Game::Game (std::unique_ptr<Engine> engine) : engine (std::move (engine)) {
-	this->engine->simulation->schedules.emplace_back (
+Simulation::Simulation (std::unique_ptr<Engine> engine)
+	: engine (std::move (engine)) {
+	this->engine->runtime->schedules.emplace_back (
 		2500.0f, [this] (const float delta_time_ms) { return; }
 	);
 }
 
-Game::~Game () = default;
+Simulation::~Simulation () = default;
 
 std::vector<glm::vec3> base_positions;
 std::vector<glm::vec3> random_rot_axes;
@@ -60,13 +61,13 @@ void setup_instances (
 	}
 }
 
-void Game::run () {
+void Simulation::run () {
 	running = true;
 
 	setup_instances (sphere_instances, NUM_SPHERES, 42);
 	setup_instances (cube_instances, NUM_CUBES, 1337);
 
-	engine->simulation->task_scheduler.start ();
+	engine->runtime->task_scheduler.start ();
 
 	Clock clock (60);
 
@@ -94,7 +95,7 @@ void Game::run () {
 
 		// --- FIXED SIMULATION ---
 		while (clock.should_step_simulation ()) {
-			engine->simulation->update (clock.fixed_dt_ms);
+			engine->runtime->update (clock.fixed_dt_ms);
 			clock.consume_simulation_step ();
 		}
 
@@ -111,17 +112,17 @@ void Game::run () {
 
 		engine->render->render (
 			&render_state,
-			engine->simulation->simulation_time_ms + alpha * clock.fixed_dt_ms
+			engine->runtime->simulation_time_ms + alpha * clock.fixed_dt_ms
 		);
 
 		// --- FRAME END ---
 		clock.end_frame ();
 	}
 
-	engine->simulation->task_scheduler.stop ();
+	engine->runtime->task_scheduler.stop ();
 }
 
-void Game::write_game_state (RenderState* render_state) {
+void Simulation::write_game_state (RenderState* render_state) {
 	static std::shared_ptr<Mesh> sphere_mesh = std::make_shared<Mesh> (
 		Sphere::generate (15.0f, 20, 20)
 	);

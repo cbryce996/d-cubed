@@ -4,9 +4,9 @@
 #include "schedule/schedule.h"
 #include "tasks/tasks.h"
 
-class Simulation {
+class Runtime {
   public:
-	Simulation ();
+	Runtime ();
 	void update (float delta_time_ms);
 
 	TaskScheduler task_scheduler;

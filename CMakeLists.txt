@@ -8,11 +8,11 @@ set(CMAKE_OSX_ARCHITECTURES arm64)
 set(SRC_FILES
     src/main.cpp
     src/engine/engine.cpp
-        src/engine/simulation/tasks/tasks.cpp
+        src/engine/runtime/tasks/tasks.cpp
     src/engine/inputs/input.cpp
         src/simulation/simulation.cpp
-        src/engine/simulation/schedule/schedule.cpp
-    src/engine/simulation/simulation.cpp
+        src/engine/runtime/schedule/schedule.cpp
+        src/engine/runtime/Runtime.cpp
     src/engine/render/render.cpp
     src/engine/render/graph/graph.cpp
     src/engine/render/pipelines/pipeline.cpp
