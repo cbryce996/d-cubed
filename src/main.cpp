@@ -1,5 +1,5 @@
 #include "engine/engine.h"
-#include "simulation/game.h"
+#include "simulation/simulation.h"
 
 int main () {
 	std::unique_ptr<Engine> engine = std::make_unique<Engine> ();

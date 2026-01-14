@@ -10,7 +10,7 @@ set(SRC_FILES
     src/engine/engine.cpp
         src/engine/simulation/tasks/tasks.cpp
     src/engine/inputs/input.cpp
-        src/simulation/game.cpp
+        src/simulation/simulation.cpp
         src/engine/simulation/schedule/schedule.cpp
     src/engine/simulation/simulation.cpp
     src/engine/render/render.cpp

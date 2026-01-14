@@ -137,7 +137,6 @@ TEST_F (CameraTest, UpdateLookChangesRotation) {
 	camera_manager->update_camera_look (&mouse);
 	glm::quat after = active_camera->transform.rotation;
 
-	// The rotation should have changed
 	EXPECT_FALSE (glm::all (glm::equal (before, after))) << "Expected camera "
 															"rotation to "
 															"change";

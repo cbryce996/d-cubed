@@ -1,17 +1,13 @@
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status
 set -e
 
-# Configuration
 SOURCE_DIR="./assets/shaders"
 OUTPUT_DIR="./assets/shaders/bin"
 SDK="macosx"
 
-# Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 
-# Function to compile a shader stage
 compile() {
     local FULL_PATH=$1
     local FILENAME=$(basename -- "$FULL_PATH")
@@ -49,12 +45,9 @@ compile() {
     echo "Success: $NAME.$STAGE.metallib"
 }
 
-# --- Automatically find and compile all .vert and .frag files ---
 echo "Scanning $SOURCE_DIR for shaders..."
 
-# Loop through both extensions
 for shader_file in "$SOURCE_DIR"/*.vert "$SOURCE_DIR"/*.frag; do
-    # Check if the file exists (prevents errors if no files match)
     [ -e "$shader_file" ] || continue
     compile "$shader_file"
 done

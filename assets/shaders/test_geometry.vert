@@ -93,8 +93,7 @@ float radialFallOff(
     float seed,
     float time
 ) {
-    // Oscillate the radius over time
-    float wobble = sin(time * 5.0 + seed * 15.0) * 20; // tweak speed & amplitude
+    float wobble = sin(time * 5.0 + seed * 15.0) * 20;
     float dynamicRadius = radius + wobble;
 
     float distance = length(position - center);
@@ -126,7 +125,6 @@ vec3 sinWave(
 }
 
 vec3 computeFieldCenter(float time) {
-    // Define pyramid vertices in local space
     vec3 apex    = vec3(0.0, 10.0, 0.0);
     vec3 base0   = vec3(-10.0, 0.0, -10.0);
     vec3 base1   = vec3(10.0, 0.0, -10.0);

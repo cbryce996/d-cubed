@@ -26,14 +26,8 @@ inline void sample (float half_extent, std::vector<Vector3>& vertices) {
 	const Vector3 normals[6] = {{1, 0, 0},	{-1, 0, 0}, {0, 1, 0},
 								{0, -1, 0}, {0, 0, 1},	{0, 0, -1}};
 
-	const Vector3 tangents_u[6] = {
-		{0, 0, -1}, // +X
-		{0, 0, 1},	// -X
-		{1, 0, 0},	// +Y
-		{1, 0, 0},	// -Y
-		{1, 0, 0},	// +Z
-		{-1, 0, 0}	// -Z
-	};
+	const Vector3 tangents_u[6] = {{0, 0, -1}, {0, 0, 1}, {1, 0, 0},
+								   {1, 0, 0},  {1, 0, 0}, {-1, 0, 0}};
 
 	const float uv[4][2] = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
 
