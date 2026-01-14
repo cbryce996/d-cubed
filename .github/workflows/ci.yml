@@ -63,4 +63,4 @@ jobs:
           name: build-folder
           path: build
       - name: Run unit tests
-        run: make test
+        run: make tests
