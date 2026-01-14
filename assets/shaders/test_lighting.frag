@@ -15,7 +15,6 @@ layout(location = 0) in vec2 inUV;
 
 layout(location = 0) out vec4 outColor;
 
-// --- Hash functions ---
 float hash11(float p) {
     p = fract(p * 0.1031);
     p *= p + 33.33;
@@ -29,7 +28,6 @@ vec3 cosmicBlue(float seed) {
     return base + variation;
 }
 
-// --- Camera lighting ---
 vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPos, vec3 lightPos) {
     vec3 L = lightPos - fragPos;
     float distance = length(L);
@@ -42,10 +40,9 @@ vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPos, vec3 lightPos) {
     return color * (ambient + diff * atten);
 }
 
-// --- Screen-space dithering / aliasing ---
 float screenDither(vec2 uv, float seed) {
     float dither = fract(sin(dot(uv * 1234.56, vec2(12.9898, 78.233))) * 43758.5453);
-    return mix(0.95, 1.05, dither * hash11(seed)); // subtle brightness variation
+    return mix(0.95, 1.05, dither * hash11(seed));
 }
 
 void main() {
@@ -59,9 +56,7 @@ void main() {
 
     vec3 baseColor = cosmicBlue(seed);
 
-    // --- Lighting ---
     vec3 litColor = applyCameraLight(baseColor, normal, position, global_u.camera_pos.xyz);
 
-    // Combine everything
     outColor = vec4(litColor, 1.0);
 }

@@ -33,17 +33,13 @@ RenderManager::RenderManager (
 	assert (window);
 
 	assert (this->shader_manager);
-	assert (
-		this->pipeline_manager
-	);
+	assert (this->pipeline_manager);
 	assert (this->buffer_manager);
 	assert (this->camera_manager);
 	assert (this->asset_manager);
 
 	SDL_GetWindowSize (window, &width, &height);
-	assert (
-		width > 0 && height > 0
-	);
+	assert (width > 0 && height > 0);
 
 	load_shaders ();
 	load_pipelines ();
@@ -91,12 +87,8 @@ void RenderManager::load_pipelines () const {
 		"cube_lighting"
 	);
 
-	assert (
-		pipeline_manager->get_pipeline ("cube_geometry")
-	);
-	assert (
-		pipeline_manager->get_pipeline ("cube_lighting")
-	);
+	assert (pipeline_manager->get_pipeline ("cube_geometry"));
+	assert (pipeline_manager->get_pipeline ("cube_lighting"));
 }
 
 void RenderManager::load_shaders () const {
@@ -143,12 +135,8 @@ void RenderManager::load_shaders () const {
 		"cube_lighting"
 	);
 
-	assert (
-		shader_manager->get_shader ("cube_geometry")
-	);
-	assert (
-		shader_manager->get_shader ("cube_lighting")
-	);
+	assert (shader_manager->get_shader ("cube_geometry"));
+	assert (shader_manager->get_shader ("cube_lighting"));
 }
 
 void RenderManager::create_gbuffer_textures (
@@ -165,21 +153,15 @@ void RenderManager::create_gbuffer_textures (
 							  | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
 	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
 	buffer_manager->g_position_texture = SDL_CreateGPUTexture (device, &info);
-	assert (
-		buffer_manager->g_position_texture
-	);
+	assert (buffer_manager->g_position_texture);
 
 	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
 	buffer_manager->g_normal_texture = SDL_CreateGPUTexture (device, &info);
-	assert (
-		buffer_manager->g_position_texture
-	);
+	assert (buffer_manager->g_position_texture);
 
 	info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
 	buffer_manager->g_albedo_texture = SDL_CreateGPUTexture (device, &info);
-	assert (
-		buffer_manager->g_position_texture
-	);
+	assert (buffer_manager->g_position_texture);
 
 	if (!buffer_manager->linear_sampler) {
 		SDL_GPUSamplerCreateInfo sampler_info{};
@@ -193,9 +175,7 @@ void RenderManager::create_gbuffer_textures (
 		buffer_manager->linear_sampler = SDL_CreateGPUSampler (
 			device, &sampler_info
 		);
-		assert (
-			buffer_manager->g_position_texture
-		);
+		assert (buffer_manager->g_position_texture);
 	}
 
 	SDL_LogInfo (
@@ -226,9 +206,7 @@ void RenderManager::setup_render_graph () {
 	setup_uniforms_pass.name = "setup_uniforms_pass";
 	setup_uniforms_pass.type = RenderPassType::Setup;
 	setup_uniforms_pass.execute = [this] (const RenderContext& render_context) {
-		assert (
-			render_context.camera_manager->get_active_camera ()
-		);
+		assert (render_context.camera_manager->get_active_camera ());
 
 		const Camera* active_camera
 			= render_context.camera_manager->get_active_camera ();
@@ -278,18 +256,10 @@ void RenderManager::setup_render_graph () {
 	geometry_pass.type = RenderPassType::Geometry;
 	geometry_pass.dependencies = {"setup_uniforms_pass"};
 	geometry_pass.execute = [this] (const RenderContext& render_context) {
-		assert (
-			buffer_manager->g_position_texture
-		);
-		assert (
-			buffer_manager->g_normal_texture
-		);
-		assert (
-			buffer_manager->g_albedo_texture
-		);
-		assert (
-			buffer_manager->depth_texture
-		);
+		assert (buffer_manager->g_position_texture);
+		assert (buffer_manager->g_normal_texture);
+		assert (buffer_manager->g_albedo_texture);
+		assert (buffer_manager->depth_texture);
 
 		// Create pass config
 		RenderPassConfig geometry_pass_config{};
@@ -330,9 +300,7 @@ void RenderManager::setup_render_graph () {
 	lighting_pass.type = RenderPassType::Lighting;
 	lighting_pass.dependencies = {"geometry_pass"};
 	lighting_pass.execute = [this] (const RenderContext& render_context) {
-		assert (
-			buffer_manager->swap_chain_texture
-		);
+		assert (buffer_manager->swap_chain_texture);
 
 		// Create pass config
 		RenderPassConfig lighting_pass_config{};
@@ -360,19 +328,13 @@ void RenderManager::setup_render_graph () {
 	};
 
 	render_graph.add_pass (setup_uniforms_pass);
-	assert (
-		render_graph.get_render_pass ("setup_uniforms_pass")
-	);
+	assert (render_graph.get_render_pass ("setup_uniforms_pass"));
 
 	render_graph.add_pass (geometry_pass);
-	assert (
-		render_graph.get_render_pass ("geometry_pass")
-	);
+	assert (render_graph.get_render_pass ("geometry_pass"));
 
 	render_graph.add_pass (lighting_pass);
-	assert (
-		render_graph.get_render_pass ("lighting_pass")
-	);
+	assert (render_graph.get_render_pass ("lighting_pass"));
 }
 
 void RenderManager::resize (int new_width, int new_height) {
@@ -427,27 +389,17 @@ void RenderManager::create_depth_texture () const {
 	depth_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
 
 	buffer_manager->depth_texture = SDL_CreateGPUTexture (device, &depth_info);
-	assert (
-		buffer_manager->depth_texture
-	);
+	assert (buffer_manager->depth_texture);
 }
 
 SDL_GPURenderPass* RenderManager::create_render_pass (
 	const RenderPassConfig& render_pass_config
 ) const {
-	assert (
-		buffer_manager->command_buffer
-	);
-	assert (
-		buffer_manager->depth_texture
-	);
-	assert (
-		buffer_manager->swap_chain_texture
-	);
+	assert (buffer_manager->command_buffer);
+	assert (buffer_manager->depth_texture);
+	assert (buffer_manager->swap_chain_texture);
 
-	assert (
-		!render_pass_config.color_targets.empty ()
-	);
+	assert (!render_pass_config.color_targets.empty ());
 
 	std::vector<SDL_GPUColorTargetInfo> color_target_infos;
 	color_target_infos.reserve (render_pass_config.color_targets.size ());
@@ -495,15 +447,11 @@ SDL_GPURenderPass* RenderManager::create_render_pass (
 void RenderManager::push_uniform_bindings (
 	std::vector<UniformBinding>& uniform_bindings
 ) const {
-	assert (
-		!uniform_bindings.empty ()
-	);
+	assert (!uniform_bindings.empty ());
 
 	for (const auto& [name, slot, data, size, stage] : uniform_bindings) {
 		assert (data);
-		assert (
-			size % UNIFORM_ALIGNMENT == 0
-		);
+		assert (size % UNIFORM_ALIGNMENT == 0);
 		assert (size > 0);
 
 		if (stage == ShaderStage::Vertex || stage == ShaderStage::Both) {
@@ -525,7 +473,7 @@ void RenderManager::draw_mesh (
 	const Buffer* instance_buffer, const Buffer* index_buffer,
 	const Drawable* drawable
 ) {
-	assert (pipeline );
+	assert (pipeline);
 	assert (vertex_buffer);
 	assert (instance_buffer);
 	assert (drawable);
@@ -634,14 +582,10 @@ void RenderManager::render (RenderState* render_state, float delta_time) {
 	assert (render_state);
 
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
-	assert (
-		buffer_manager->command_buffer
-	);
+	assert (buffer_manager->command_buffer);
 
 	acquire_swap_chain ();
-	assert (
-		buffer_manager->swap_chain_texture
-	);
+	assert (buffer_manager->swap_chain_texture);
 
 	prepare_drawables (render_state->drawables);
 

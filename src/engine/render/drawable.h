@@ -17,7 +17,7 @@ struct Drawable {
 	InstanceBatch* instance_batch = nullptr;
 
 	Buffer* instance_buffer = nullptr;
-	Buffer* index_buffer    = nullptr;
+	Buffer* index_buffer = nullptr;
 	Buffer* vertex_buffer = nullptr;
 };
 
