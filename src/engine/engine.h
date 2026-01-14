@@ -7,7 +7,7 @@
 #include "cameras/camera.h"
 #include "inputs/input.h"
 #include "render/render.h"
-#include "simulation/simulation.h"
+#include "runtime/runtime.h"
 
 class Engine {
   public:
@@ -16,7 +16,7 @@ class Engine {
 
 	InputManager input;
 
-	std::unique_ptr<Simulation> simulation;
+	std::unique_ptr<Runtime> runtime;
 	std::unique_ptr<CameraManager> camera;
 	std::unique_ptr<RenderManager> render;
 	std::unique_ptr<AssetManager> asset;

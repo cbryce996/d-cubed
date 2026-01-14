@@ -1,14 +1,16 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "engine/engine.h"
+#include "../engine/engine.h"
 
-class Game {
+#include <mutex>
+
+class Simulation {
   public:
 	std::mutex mutex;
 
-	explicit Game (std::unique_ptr<Engine> engine);
-	~Game ();
+	explicit Simulation (std::unique_ptr<Engine> engine);
+	~Simulation ();
 
 	void run ();
 	void write_game_state (RenderState* render_state);

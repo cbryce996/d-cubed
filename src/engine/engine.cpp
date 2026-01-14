@@ -1,5 +1,7 @@
 #include "engine.h"
 
+#include "simulation.h"
+
 #include <SDL3/SDL.h>
 
 #include <chrono>
@@ -67,7 +69,7 @@ Engine::Engine () {
 		camera_manager, asset_manager
 	);
 
-	simulation = std::make_unique<Simulation> ();
+	runtime = std::make_unique<Runtime> ();
 
 	SDL_SetWindowRelativeMouseMode (window, true);
 }
