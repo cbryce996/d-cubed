@@ -182,9 +182,6 @@ bool ShaderManager::load_shader (
 	std::vector<SDL_GPUVertexAttribute> sdl_attributes;
 
 	for (const auto& attribute : vertex_attributes) {
-		// 1. Fix the Slot Assignment
-		// Locations 0-3 = Mesh Data (Slot 0)
-		// Locations 4-7 = Instance Data (Slot 1)
 		uint32_t slot = (attribute.location < 4) ? 0 : 1;
 
 		if (!shader.vertex_buffer_layouts.contains (slot)) {
@@ -196,8 +193,6 @@ bool ShaderManager::load_shader (
 		VertexBufferLayout& layout = shader.vertex_buffer_layouts[slot];
 		layout.attributes.push_back (attribute);
 
-		// 2. Simplify: Don't loop inside unless it's actually a Mat4.
-		// In your current shader, these are all float4s/vec4s.
 		SDL_GPUVertexAttribute sdl_attribute;
 		sdl_attribute.location = attribute.location;
 		sdl_attribute.buffer_slot = slot;
@@ -206,7 +201,6 @@ bool ShaderManager::load_shader (
 
 		layout.sdl_attributes.push_back (sdl_attribute);
 
-		// 3. Increment stride by the actual size of the single attribute
 		layout.stride += ShaderTypeUtils::get_size (attribute.type);
 	}
 

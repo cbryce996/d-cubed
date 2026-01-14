@@ -8,7 +8,6 @@ if [ -z "$FILES" ]; then
     exit 1
 fi
 
-# Run clang-format in check mode
 if ! clang-format --dry-run --Werror $FILES; then
     echo "❌  Formatting check failed"
     exit 1

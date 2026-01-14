@@ -37,7 +37,6 @@ SDL_GPUGraphicsPipeline*
 PipelineManager::create_pipeline (const PipelineConfig& pipeline_config) const {
 	const Shader* shader = pipeline_config.shader;
 
-	// --- 1. Vertex Input Descriptions (How many buffers?) ---
 	std::vector<SDL_GPUVertexBufferDescription> buffer_descriptions;
 	for (auto const& [slot, layout] : shader->vertex_buffer_layouts) {
 		SDL_GPUVertexBufferDescription description = {
@@ -49,7 +48,6 @@ PipelineManager::create_pipeline (const PipelineConfig& pipeline_config) const {
 		buffer_descriptions.push_back (description);
 	}
 
-	// --- 2. Vertex Attributes (What is inside the buffers?) ---
 	std::vector<SDL_GPUVertexAttribute> sdl_attributes;
 	for (auto const& [slot, layout] : shader->vertex_buffer_layouts) {
 		for (const auto& sdl_attr : layout.sdl_attributes) {
@@ -57,7 +55,6 @@ PipelineManager::create_pipeline (const PipelineConfig& pipeline_config) const {
 		}
 	}
 
-	// Combine them into the Vertex Input State
 	SDL_GPUVertexInputState vertex_input_state = {
 		.vertex_buffer_descriptions = buffer_descriptions.data (),
 		.num_vertex_buffers = static_cast<Uint32> (buffer_descriptions.size ()),
@@ -65,7 +62,6 @@ PipelineManager::create_pipeline (const PipelineConfig& pipeline_config) const {
 		.num_vertex_attributes = static_cast<Uint32> (sdl_attributes.size ())
 	};
 
-	// --- 3. Graphics States (How should it be drawn?) ---
 	SDL_GPURasterizerState rasterizer_state = {
 		.fill_mode = SDL_GPU_FILLMODE_FILL,
 		.cull_mode = pipeline_config.cull_mode,
@@ -81,7 +77,6 @@ PipelineManager::create_pipeline (const PipelineConfig& pipeline_config) const {
 		.enable_stencil_test = false
 	};
 
-	// --- 4. Target Info (Where is it being drawn to?) ---
 	std::vector<SDL_GPUColorTargetDescription> color_targets;
 
 	for (auto format : pipeline_config.color_formats) {

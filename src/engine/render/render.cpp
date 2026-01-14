@@ -261,7 +261,6 @@ void RenderManager::setup_render_graph () {
 		assert (buffer_manager->g_albedo_texture);
 		assert (buffer_manager->depth_texture);
 
-		// Create pass config
 		RenderPassConfig geometry_pass_config{};
 		geometry_pass_config.color_targets = {
 			buffer_manager->g_position_texture,
@@ -271,11 +270,9 @@ void RenderManager::setup_render_graph () {
 		geometry_pass_config.clear_color = {0.0f, 0.0f, 0.0f, 0.0f};
 		geometry_pass_config.clear_depth = true;
 
-		// Create render pass
 		current_render_pass = create_render_pass (geometry_pass_config);
 		set_viewport (current_render_pass);
 
-		// Draw drawables
 		for (const Drawable& drawable : *render_context.drawables) {
 			assert (
 				render_context.pipeline_manager->get_pipeline ("cube_geometry")
@@ -302,7 +299,6 @@ void RenderManager::setup_render_graph () {
 	lighting_pass.execute = [this] (const RenderContext& render_context) {
 		assert (buffer_manager->swap_chain_texture);
 
-		// Create pass config
 		RenderPassConfig lighting_pass_config{};
 		lighting_pass_config.color_targets = {
 			buffer_manager->swap_chain_texture
@@ -311,7 +307,6 @@ void RenderManager::setup_render_graph () {
 		lighting_pass_config.clear_color = {0.0f, 0.0f, 0.0f, 0.0f};
 		lighting_pass_config.clear_depth = false;
 
-		// Create viewport
 		current_render_pass = create_render_pass (lighting_pass_config);
 		set_viewport (current_render_pass);
 
@@ -321,7 +316,6 @@ void RenderManager::setup_render_graph () {
 		const Pipeline* pipeline
 			= render_context.pipeline_manager->get_pipeline ("cube_lighting");
 
-		// Draw screen
 		draw_screen (pipeline);
 
 		SDL_EndGPURenderPass (current_render_pass);
