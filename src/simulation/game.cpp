@@ -20,12 +20,14 @@ std::vector<glm::vec3> base_positions;
 std::vector<glm::vec3> random_rot_axes;
 
 static constexpr int NUM_SPHERES = 1000;
-static constexpr int NUM_CUBES   = 500;
+static constexpr int NUM_CUBES = 500;
 
 std::vector<Block> sphere_instances;
 std::vector<Block> cube_instances;
 
-void setup_instances (std::vector<Block>& out_instances, const int count, const uint32_t seed) {
+void setup_instances (
+	std::vector<Block>& out_instances, const int count, const uint32_t seed
+) {
 	std::mt19937 rng (seed);
 	out_instances.resize (count);
 
@@ -35,13 +37,9 @@ void setup_instances (std::vector<Block>& out_instances, const int count, const 
 	std::uniform_real_distribution<float> phase_dist (0.0f, 6.28f);
 
 	for (int i = 0; i < count; ++i) {
-		glm::vec3 random_pos (
-			pos_dist (rng), pos_dist (rng), pos_dist (rng)
-		);
+		glm::vec3 random_pos (pos_dist (rng), pos_dist (rng), pos_dist (rng));
 
-		glm::vec3 random_axis (
-			rot_dist (rng), rot_dist (rng), rot_dist (rng)
-		);
+		glm::vec3 random_axis (rot_dist (rng), rot_dist (rng), rot_dist (rng));
 
 		float len = glm::length (random_axis);
 		if (len < 0.0001f)
@@ -146,8 +144,7 @@ void Game::write_game_state (RenderState* render_state) {
 	// --- SPHERES ---
 	sphere_batch.blocks.resize (NUM_SPHERES);
 	std::memcpy (
-		sphere_batch.blocks.data (),
-		sphere_instances.data (),
+		sphere_batch.blocks.data (), sphere_instances.data (),
 		NUM_SPHERES * sizeof (Block)
 	);
 
@@ -161,8 +158,7 @@ void Game::write_game_state (RenderState* render_state) {
 	// --- CUBES ---
 	cube_batch.blocks.resize (NUM_CUBES);
 	std::memcpy (
-		cube_batch.blocks.data (),
-		cube_instances.data (),
+		cube_batch.blocks.data (), cube_instances.data (),
 		NUM_CUBES * sizeof (Block)
 	);
 
