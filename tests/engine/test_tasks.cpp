@@ -1,5 +1,6 @@
 #include "simulation/tasks/tasks.h"
 
+#include <future>
 #include <gtest/gtest.h>
 #include <thread>
 
@@ -24,15 +25,24 @@ TEST_F (TasksTest, SetsThreadCountOnInit) {
 }
 
 TEST_F (TasksTest, JoinsThreadsOnStop) {
-	TaskScheduler* task_scheduler = new TaskScheduler ();
+	TaskScheduler task_scheduler;
 
-	task_scheduler->submit (task);
-	task_scheduler->start ();
-	ASSERT_TRUE (task_scheduler->running);
+	std::promise<void> ran;
+	auto future = ran.get_future();
 
-	task_scheduler->wait_idle ();
+	task_scheduler.submit ([&] {
+		task_ran = true;
+		ran.set_value();
+	});
+
+	task_scheduler.start ();
+	ASSERT_TRUE (task_scheduler.running);
+
+	ASSERT_EQ (future.wait_for (std::chrono::seconds (1)),
+			   std::future_status::ready);
+
 	ASSERT_TRUE (task_ran);
 
-	task_scheduler->stop ();
-	ASSERT_FALSE (task_scheduler->running);
+	task_scheduler.stop ();
+	ASSERT_FALSE (task_scheduler.running);
 }
