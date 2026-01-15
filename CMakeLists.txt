@@ -10,10 +10,12 @@ set(SRC_FILES
     src/engine/engine.cpp
     src/engine/runtime/tasks/tasks.cpp
     src/engine/inputs/input.cpp
-    src/engine/simulation/demos/instancing.cpp
-    src/engine/simulation/demos/wave.cpp
+    src/engine/scene/object/demos/instancing.cpp
+    src/engine/scene/object/demos/wave.cpp
+    src/engine/scene/object/object.cpp
+    src/engine/scene/scene.cpp
     src/engine/runtime/schedule/schedule.cpp
-    src/engine/runtime/Runtime.cpp
+    src/engine/runtime/runtime.cpp
     src/engine/render/render.cpp
     src/engine/render/graph/graph.cpp
     src/engine/render/pipelines/pipeline.cpp
@@ -31,7 +33,7 @@ add_definitions(-DSHADERS_DIR="${CMAKE_SOURCE_DIR}/assets/shaders/")
 target_include_directories(game_lib PUBLIC
     src
     src/engine
-        src/engine/simulation
+        src/engine/scene
     external/tinyobjloader
 )
 

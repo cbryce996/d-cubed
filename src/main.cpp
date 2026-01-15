@@ -1,11 +1,13 @@
 #include "engine/engine.h"
-#include "simulation/demos/instancing.h"
+#include "object/demos/instancing.h"
 
 int main () {
 	std::unique_ptr<Engine> engine = std::make_unique<Engine> ();
-	std::unique_ptr<ISimulation> simulation
-		= std::make_unique<InstancingDemo> ();
-	engine->request_simulation (std::move (simulation));
+
+	std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
+	scene->add_object (std::make_unique<InstancingDemo> ());
+
+	engine->request_scene (std::move (scene));
 	engine->run ();
 
 	return 0;

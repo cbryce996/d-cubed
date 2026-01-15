@@ -8,7 +8,7 @@
 #include "inputs/input.h"
 #include "render/render.h"
 #include "runtime/runtime.h"
-#include "simulation/simulation.h"
+#include "scene/scene.h"
 
 class Engine {
   public:
@@ -16,13 +16,13 @@ class Engine {
 	~Engine ();
 
 	void run ();
-	void request_simulation (std::unique_ptr<ISimulation> in_simulation);
-	void commit_simulation_change ();
+	void request_scene (std::unique_ptr<Scene> in_scene);
+	void commit_scene_change ();
 
 	InputManager input;
 
-	std::unique_ptr<ISimulation> simulation = nullptr;
-	std::unique_ptr<ISimulation> pending_simulation = nullptr;
+	std::unique_ptr<Scene> active_scene = nullptr;
+	std::unique_ptr<Scene> pending_scene = nullptr;
 
 	std::unique_ptr<Runtime> runtime;
 	std::unique_ptr<CameraManager> camera;

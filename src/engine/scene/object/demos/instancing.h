@@ -1,17 +1,21 @@
 #ifndef INSTANCING_H
 #define INSTANCING_H
 
-#include "simulation/simulation.h"
+#include "scene/scene.h"
 
-class InstancingDemo final : public ISimulation {
+#include <string>
+
+class InstancingDemo final : public ISceneObject {
   public:
-	InstancingDemo () = default;
+	InstancingDemo ();
+
+	std::string name;
 
 	void on_load () override;
 	void on_unload () override;
+	void update (float dt_ms, float sim_time_ms) override;
 
-	void fixed_update (float dt_ms, float sim_time_ms) override;
-	void build_render_state (RenderState& out) override;
+	void collect_drawables (RenderState& out_render_state) override;
 
   private:
 	void setup_instances (
