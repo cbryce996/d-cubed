@@ -62,7 +62,11 @@ Buffer* BufferManager::get_or_create_index_buffer (const Drawable* drawable) {
 
 Buffer*
 BufferManager::get_or_create_instance_buffer (const Drawable* drawable) {
-	std::string key = drawable->mesh->name + "_instance";
+	const std::string key
+		= "instance_"
+		  + std::to_string (
+			  reinterpret_cast<uintptr_t> (drawable->instance_batch)
+		  );
 	Buffer* buffer = buffers.contains (key) ? &buffers[key] : nullptr;
 	if (buffer)
 		return buffer;

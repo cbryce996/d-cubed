@@ -8,11 +8,12 @@ set(CMAKE_OSX_ARCHITECTURES arm64)
 set(SRC_FILES
     src/main.cpp
     src/engine/engine.cpp
-        src/engine/runtime/tasks/tasks.cpp
+    src/engine/runtime/tasks/tasks.cpp
     src/engine/inputs/input.cpp
-        src/simulation/simulation.cpp
-        src/engine/runtime/schedule/schedule.cpp
-        src/engine/runtime/Runtime.cpp
+    src/engine/simulation/demos/instancing.cpp
+    src/engine/simulation/demos/wave.cpp
+    src/engine/runtime/schedule/schedule.cpp
+    src/engine/runtime/Runtime.cpp
     src/engine/render/render.cpp
     src/engine/render/graph/graph.cpp
     src/engine/render/pipelines/pipeline.cpp
@@ -30,7 +31,7 @@ add_definitions(-DSHADERS_DIR="${CMAKE_SOURCE_DIR}/assets/shaders/")
 target_include_directories(game_lib PUBLIC
     src
     src/engine
-        src/simulation
+        src/engine/simulation
     external/tinyobjloader
 )
 

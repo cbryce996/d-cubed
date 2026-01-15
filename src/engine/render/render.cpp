@@ -236,14 +236,14 @@ void RenderManager::setup_render_graph () {
 
 		UniformBinding view_uniform_binding{};
 		view_uniform_binding.data = &view_uniform_block.data;
-		view_uniform_binding.slot = 1;
+		view_uniform_binding.slot = 0;
 		view_uniform_binding.size = sizeof (Block);
 		view_uniform_binding.stage = ShaderStage::Vertex;
 		uniform_bindings.push_back (view_uniform_binding);
 
 		UniformBinding global_uniform_binding{};
 		global_uniform_binding.data = &global_uniform_block.data;
-		global_uniform_binding.slot = 0;
+		global_uniform_binding.slot = 1;
 		global_uniform_binding.size = sizeof (Block);
 		global_uniform_binding.stage = ShaderStage::Both;
 		uniform_bindings.push_back (global_uniform_binding);
@@ -476,7 +476,7 @@ void RenderManager::draw_mesh (
 	SDL_BindGPUGraphicsPipeline (current_render_pass, pipeline->pipeline);
 
 	// Bing vertex buffer with instance
-	const SDL_GPUBufferBinding vertex_bindings[3] = {
+	const SDL_GPUBufferBinding vertex_bindings[2] = {
 		{vertex_buffer->gpu_buffer.buffer, 0},
 		{instance_buffer->gpu_buffer.buffer, 0},
 	};

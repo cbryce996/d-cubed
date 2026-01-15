@@ -1,8 +1,12 @@
 #include "engine.h"
 
-#include "simulation.h"
+#include "runtime/clock.h"
+#include "simulation/demos/instancing.h"
+#include "simulation/demos/wave.h"
 
 #include <SDL3/SDL.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -78,4 +82,82 @@ Engine::~Engine () {
 	SDL_DestroyGPUDevice (gpu_device);
 	SDL_DestroyWindow (window);
 	SDL_Quit ();
+}
+
+void Engine::run () {
+	running = true;
+
+	runtime->task_scheduler.start ();
+	Clock clock (60);
+
+	while (running) {
+		commit_simulation_change ();
+		float dt = clock.begin_frame ();
+
+		SDL_Event e;
+		while (SDL_PollEvent (&e)) {
+			if (e.type == SDL_EVENT_QUIT)
+				running = false;
+			if (e.type == SDL_EVENT_WINDOW_RESIZED)
+				render->resize (e.window.data1, e.window.data2);
+		}
+
+		input.poll ();
+
+		const KeyboardInput& keyboard = input.get_keyboard_input ();
+
+		if (keyboard.keys[SDL_SCANCODE_ESCAPE])
+			running = false;
+		if (keyboard.keys[SDL_SCANCODE_1]) {
+			request_simulation (std::make_unique<InstancingDemo> ());
+		}
+		if (keyboard.keys[SDL_SCANCODE_2]) {
+			request_simulation (std::make_unique<WaveDemo> ());
+		}
+
+		const MouseInput& mouse = input.get_mouse_input ();
+
+		render->camera_manager->update_camera_position (
+			clock.fixed_dt_ms, keyboard.keys
+		);
+		render->camera_manager->update_camera_look (&mouse);
+
+		while (clock.should_step_simulation ()) {
+			runtime->update (clock.fixed_dt_ms);
+
+			if (simulation)
+				simulation->fixed_update (
+					clock.fixed_dt_ms, runtime->simulation_time_ms
+				);
+
+			clock.consume_simulation_step ();
+		}
+
+		RenderState state{};
+		if (simulation)
+			simulation->build_render_state (state);
+
+		render->render (&state, runtime->simulation_time_ms);
+
+		clock.end_frame ();
+	}
+
+	runtime->task_scheduler.stop ();
+}
+
+void Engine::request_simulation (std::unique_ptr<ISimulation> simulation) {
+	pending_simulation = std::move (simulation);
+}
+
+void Engine::commit_simulation_change () {
+	if (!pending_simulation)
+		return;
+
+	if (simulation)
+		simulation->on_unload ();
+
+	simulation = std::move (pending_simulation);
+
+	if (simulation)
+		simulation->on_load ();
 }
