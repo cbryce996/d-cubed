@@ -4,7 +4,7 @@
 https://github.com/cbryce996/d-cubed/actions/workflows/ci.yml
 )
 
-https://github.com/user-attachments/assets/62ead7ad-d64f-4199-aec5-69004e1431ea
+https://github.com/user-attachments/assets/c639ef8e-7388-4695-a30c-3ee516f5888a
 
 **D-Cubed (D³)** is an open-source real-time rendering engine focused on exploring low-level interactions between the CPU and GPU. Built with as few dependencies as possible to encourage experimentation with mathematics, linear algebra, and first principles in real-time rendering.
 
