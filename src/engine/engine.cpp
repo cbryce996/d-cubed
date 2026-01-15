@@ -1,8 +1,8 @@
 #include "engine.h"
 
+#include "object/demos/instancing.h"
+#include "object/demos/wave.h"
 #include "runtime/clock.h"
-#include "simulation/demos/instancing.h"
-#include "simulation/demos/wave.h"
 
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>
@@ -91,7 +91,7 @@ void Engine::run () {
 	Clock clock (60);
 
 	while (running) {
-		commit_simulation_change ();
+		commit_scene_change ();
 		float dt = clock.begin_frame ();
 
 		SDL_Event e;
@@ -109,10 +109,29 @@ void Engine::run () {
 		if (keyboard.keys[SDL_SCANCODE_ESCAPE])
 			running = false;
 		if (keyboard.keys[SDL_SCANCODE_1]) {
-			request_simulation (std::make_unique<InstancingDemo> ());
+			std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
+			scene->add_object (std::make_unique<InstancingDemo> ());
+			request_scene (std::move (scene));
 		}
 		if (keyboard.keys[SDL_SCANCODE_2]) {
-			request_simulation (std::make_unique<WaveDemo> ());
+			std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
+
+			float spacing = 0.25f;
+
+			scene->add_object (
+				std::make_unique<Wave> (
+					glm::vec3 (0, 0, 0), 0.0f, 0.0f, "wave1"
+				)
+			);
+
+			scene->add_object (
+				std::make_unique<Wave> (
+					glm::vec3 (spacing, -20, spacing), glm::radians (45.0f),
+					0.0f, "wave2"
+				)
+			);
+
+			request_scene (std::move (scene));
 		}
 
 		const MouseInput& mouse = input.get_mouse_input ();
@@ -125,8 +144,8 @@ void Engine::run () {
 		while (clock.should_step_simulation ()) {
 			runtime->update (clock.fixed_dt_ms);
 
-			if (simulation)
-				simulation->fixed_update (
+			if (active_scene)
+				active_scene->update (
 					clock.fixed_dt_ms, runtime->simulation_time_ms
 				);
 
@@ -134,8 +153,8 @@ void Engine::run () {
 		}
 
 		RenderState state{};
-		if (simulation)
-			simulation->build_render_state (state);
+		if (active_scene)
+			active_scene->collect_drawables (state);
 
 		render->render (&state, runtime->simulation_time_ms);
 
@@ -145,19 +164,19 @@ void Engine::run () {
 	runtime->task_scheduler.stop ();
 }
 
-void Engine::request_simulation (std::unique_ptr<ISimulation> simulation) {
-	pending_simulation = std::move (simulation);
+void Engine::request_scene (std::unique_ptr<Scene> in_scene) {
+	pending_scene = std::move (in_scene);
 }
 
-void Engine::commit_simulation_change () {
-	if (!pending_simulation)
+void Engine::commit_scene_change () {
+	if (!pending_scene)
 		return;
 
-	if (simulation)
-		simulation->on_unload ();
+	if (active_scene)
+		active_scene->on_unload ();
 
-	simulation = std::move (pending_simulation);
+	active_scene = std::move (pending_scene);
 
-	if (simulation)
-		simulation->on_load ();
+	if (active_scene)
+		active_scene->on_load ();
 }

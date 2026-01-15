@@ -4,7 +4,10 @@
 #include "maths/geometry/sphere.h"
 #include "render/material.h"
 
+#include <glm/glm.hpp>
 #include <random>
+
+InstancingDemo::InstancingDemo () : ISceneObject ("InstancingDemo") {}
 
 void InstancingDemo::setup_instances (
 	std::vector<Block>& out, int count, uint32_t seed
@@ -52,7 +55,7 @@ void InstancingDemo::on_unload () {
 	cube_instances.clear ();
 }
 
-void InstancingDemo::fixed_update (float dt_ms, const float sim_time_ms) {
+void InstancingDemo::update (float dt_ms, const float sim_time_ms) {
 	const float t = sim_time_ms * 0.001f;
 
 	auto animate = [&] (std::vector<Block>& instances) {
@@ -69,7 +72,7 @@ void InstancingDemo::fixed_update (float dt_ms, const float sim_time_ms) {
 	animate (cube_instances);
 }
 
-void InstancingDemo::build_render_state (RenderState& render_state) {
+void InstancingDemo::collect_drawables (RenderState& out_render_state) {
 	static auto sphere_mesh = std::make_shared<Mesh> (
 		Sphere::generate (1.0f, 20, 20)
 	);
@@ -90,13 +93,13 @@ void InstancingDemo::build_render_state (RenderState& render_state) {
 	sphere_batch.blocks = sphere_instances;
 	cube_batch.blocks = cube_instances;
 
-	render_state.drawables.push_back (
+	out_render_state.drawables.push_back (
 		{.mesh = sphere_mesh.get (),
 		 .material = &material,
 		 .instance_batch = &sphere_batch}
 	);
 
-	render_state.drawables.push_back (
+	out_render_state.drawables.push_back (
 		{.mesh = cube_mesh.get (),
 		 .material = &material,
 		 .instance_batch = &cube_batch}

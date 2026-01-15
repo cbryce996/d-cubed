@@ -22,12 +22,6 @@ float hash11(float p) {
     return fract(p);
 }
 
-vec3 cosmicBlue(float seed) {
-    float variation = hash11(seed) * 0.5;
-    vec3 base = vec3(0.1, 0.2, 0.7);
-    return base + variation;
-}
-
 vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPos, vec3 lightPos) {
     vec3 L = lightPos - fragPos;
     float distance = length(L);
@@ -36,7 +30,7 @@ vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPos, vec3 lightPos) {
     float diff = max(dot(normal, lightDir), 0.0) * 10.0;
     float atten = 1.0 / (distance * 1.0 + 10.0);
 
-    float ambient = 0.3;
+    float ambient = 0.5;
     return color * (ambient + diff * atten);
 }
 
@@ -50,13 +44,26 @@ void main() {
     vec4 normalData   = texture(inNormal, inUV);
     vec4 colorData    = texture(inColor, inUV);
 
+    if (length(normalData.xyz) < 0.0001) {
+        outColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+
     vec3 position = positionData.xyz;
-    vec3 normal   = normalData.xyz;
-    float seed    = colorData.a;
+    vec3 normal   = normalize(normalData.xyz);
 
-    vec3 baseColor = cosmicBlue(seed);
+    vec3 baseColor = vec3(1.0);
 
-    vec3 litColor = applyCameraLight(baseColor, normal, position, global_u.camera_pos.xyz);
+    vec3 litColor = applyCameraLight(
+        baseColor,
+        normal,
+        position,
+        global_u.camera_pos.xyz
+    );
+
+    float dither = screenDither(inUV, dot(position, vec3(1.0)));
+
+    litColor *= dither;
 
     outColor = vec4(litColor, 1.0);
 }
