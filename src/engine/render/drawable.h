@@ -1,9 +1,6 @@
 #ifndef DRAWABLE_H
 #define DRAWABLE_H
 
-#include "buffers/buffer.h"
-#include "memory.h"
-
 struct Mesh;
 struct Material;
 

@@ -9,6 +9,8 @@
 
 #include "scene/entity.h"
 
+#include <random>
+
 inline glm::vec3
 model_to_world (const glm::vec3& local_pos, const glm::mat4& model_matrix) {
 	return glm::vec3 (model_matrix * glm::vec4 (local_pos, 1.0f));
@@ -50,6 +52,12 @@ inline glm::mat4 compute_model_matrix (const Transform& transform) {
 	glm::mat4 scale = glm::scale (glm::mat4 (1.0f), transform.scale);
 
 	return translation * rotation * scale;
+}
+
+inline uint64_t generate_uuid64() {
+	static std::mt19937_64 rng{ std::random_device{}() };
+	static std::uniform_int_distribution<uint64_t> dist;
+	return dist(rng);
 }
 
 #endif // UTILS_H

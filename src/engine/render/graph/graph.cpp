@@ -8,13 +8,13 @@
 RenderGraph::RenderGraph () = default;
 RenderGraph::~RenderGraph () = default;
 
-void RenderGraph::add_pass (const RenderPassNode& pass) {
+void RenderGraph::add_pass (const RenderPass& pass) {
 	render_passes.emplace (pass.name, pass);
 	topological_sort ();
 }
 
-RenderPassNode* RenderGraph::get_render_pass (const std::string& name) {
-	RenderPassNode* render_pass = render_passes.contains (name)
+RenderPass* RenderGraph::get_render_pass (const std::string& name) {
+	RenderPass* render_pass = render_passes.contains (name)
 									  ? &render_passes[name]
 									  : nullptr;
 	if (!render_pass) {
@@ -26,7 +26,7 @@ RenderPassNode* RenderGraph::get_render_pass (const std::string& name) {
 
 void RenderGraph::execute_all (RenderContext& render_context) {
 	for (const std::string& name : sorted_pass_order) {
-		RenderPassNode& render_pass = render_passes[name];
+		RenderPass& render_pass = render_passes[name];
 		render_pass.execute (render_context);
 		render_pass.completed = true;
 	}

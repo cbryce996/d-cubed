@@ -1,8 +1,9 @@
 #ifndef PIPELINE_H
 #define PIPELINE_H
 
-#include "../drawable.h"
-#include "memory.h"
+#include "render/graph/graph.h"
+#include "render/material.h"
+#include "render/shaders/shader.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
@@ -10,37 +11,12 @@
 #include <string>
 #include <unordered_map>
 
-#include "../shaders/shader.h"
-
 constexpr SDL_GPUVertexElementFormat get_format () {
 #if BASE_COLLECTION_SIZE == 4
 	return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
 #else
 	return SDL_GPU_VERTEXELEMENTFORMAT_INVALID;
 #endif
-}
-
-struct PipelineConfig {
-	const Shader* shader;
-
-	const SDL_GPUPrimitiveType primitive_type;
-	const SDL_GPUCullMode cull_mode;
-	const SDL_GPUCompareOp compare_op;
-
-	const SDL_GPUCompareOp depth_compare;
-	const SDL_GPUTextureFormat depth_format;
-	const SDL_GPUTextureFormat depth_stencil_format;
-
-	const bool enable_depth_test;
-	const bool enable_depth_write;
-
-	std::vector<SDL_GPUTextureFormat> color_formats;
-	const bool has_depth_stencil_target;
-
-	std::string key () const {
-		return shader->name + "_" + std::to_string (primitive_type) + "_"
-			   + std::to_string (enable_depth_test);
-	}
 };
 
 struct Pipeline {
@@ -55,16 +31,21 @@ class PipelineManager {
 		const std::shared_ptr<ShaderManager>& shader_manager
 	);
 	~PipelineManager ();
-	void load_pipeline (
-		const PipelineConfig* pipeline_config, const std::string& name
+	Pipeline*
+	get_or_create (
+		const RenderPassLayout& render_pass_layout, Material& material
 	);
 
-	Pipeline* get_pipeline (const std::string& name);
+	Pipeline* get_pipeline (const RenderPassLayout& render_pass_layout);
+	void
+	add_pipeline (
+		const RenderPassLayout& render_pass_layout, const Pipeline& pipeline
+	);
 
-	void add_pipeline (Pipeline& pipeline);
-
-	SDL_GPUGraphicsPipeline*
-	create_pipeline (const PipelineConfig& pipeline_config) const;
+	[[nodiscard]] SDL_GPUGraphicsPipeline*
+	create_pipeline (
+		const RenderPassLayout& render_pass_layout, Material& material
+	) const;
 
   private:
 	SDL_GPUDevice* device = nullptr;
