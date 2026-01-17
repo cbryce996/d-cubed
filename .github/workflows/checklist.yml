@@ -1,0 +1,21 @@
+name: Checklist
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  checklist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for "Has tests" checkbox
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+            const required = "- [x] Has tests";
+            if (!body.includes(required)) {
+              core.setFailed(
+                'PR must check "- [x] Has tests" in the checklist.'
+              );
+            }
