@@ -2,6 +2,7 @@
 #define SHADER_H
 
 #include "memory.h"
+#include "utils.h"
 
 #include <string>
 #include <unordered_map>
@@ -94,9 +95,10 @@ struct VertexBufferLayout {
 };
 
 struct Shader {
+	std::string name;
+
 	SDL_GPUShader* vertex_shader = nullptr;
 	SDL_GPUShader* fragment_shader = nullptr;
-	std::string name;
 
 	std::unordered_map<uint32_t, VertexBufferLayout> vertex_buffer_layouts;
 	std::unordered_map<std::string, UniformBlock> uniform_blocks;

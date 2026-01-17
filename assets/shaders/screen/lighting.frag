@@ -7,9 +7,9 @@ layout(binding = 1) uniform GlobalUniform {
     vec4 pad2;
 } global_u;
 
-layout(binding = 0) uniform sampler2D inPosition;
-layout(binding = 3) uniform sampler2D inNormal;
+layout(binding = 1) uniform sampler2D inPosition;
 layout(binding = 2) uniform sampler2D inColor;
+layout(binding = 3) uniform sampler2D inNormal;
 
 layout(location = 0) in vec2 inUV;
 
@@ -22,16 +22,29 @@ float hash11(float p) {
     return fract(p);
 }
 
-vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPos, vec3 lightPos) {
-    vec3 L = lightPos - fragPos;
-    float distance = length(L);
-    vec3 lightDir = normalize(L);
+float softMax(float x, float maxVal) {
+    return (x * maxVal) / (x + maxVal);
+}
 
-    float diff = max(dot(normal, lightDir), 0.0) * 10.0;
+vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPosition, vec3 lightPosition) {
+    vec3 L = lightPosition - fragPosition;
+    float distance = length(L);
+    vec3 lightDir = L / max(distance, 1e-6);
+
+    float diff = max(dot(normal, lightDir), 0.0) * 100.0;
     float atten = 1.0 / (distance * 1.0 + 10.0);
 
-    float ambient = 0.5;
-    return color * (ambient + diff * atten);
+    float range    = 100.0;
+    float maxLight = 1.0;
+    float ambient  = 0.0;
+
+    float rangeAtten = 1.0 - smoothstep(0.0, range, distance);
+
+    float lighting = ambient + diff * atten * rangeAtten;
+
+    lighting = softMax(lighting, maxLight);
+
+    return color * lighting;
 }
 
 float screenDither(vec2 uv, float seed) {
@@ -44,7 +57,7 @@ void main() {
     vec4 normalData   = texture(inNormal, inUV);
     vec4 colorData    = texture(inColor, inUV);
 
-    if (length(normalData.xyz) < 0.0001) {
+    if (length(normalData.xyz) == 0.0) {
         outColor = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
@@ -55,15 +68,11 @@ void main() {
     vec3 baseColor = vec3(1.0);
 
     vec3 litColor = applyCameraLight(
-        baseColor,
-        normal,
-        position,
-        global_u.camera_pos.xyz
+    baseColor,
+    normal,
+    position,
+    global_u.light_pos.xyz
     );
-
-    float dither = screenDither(inUV, dot(position, vec3(1.0)));
-
-    litColor *= dither;
 
     outColor = vec4(litColor, 1.0);
 }

@@ -2,9 +2,12 @@
 #define RENDERER_H
 
 #include "assets/asset.h"
+#include "buffers/buffer.h"
 #include "cameras/camera.h"
 #include "drawable.h"
 #include "graph/graph.h"
+#include "material.h"
+#include "mesh.h"
 #include "pipelines/pipeline.h"
 #include "shaders/shader.h"
 
@@ -29,13 +32,6 @@ struct UniformBinding {
 
 struct RenderState {
 	std::vector<Drawable> drawables;
-};
-
-struct RenderPassConfig {
-	std::vector<SDL_GPUTexture*> color_targets;
-	SDL_GPUTexture* depth_target; // nullable
-	SDL_FColor clear_color;
-	bool clear_depth;
 };
 
 struct RenderContext {
@@ -82,8 +78,8 @@ class RenderManager {
 	void render (RenderState* render_state, float time);
 
 	void create_depth_texture () const;
-	void create_gbuffer_textures (int width, int height);
-	void destroy_gbuffer_textures ();
+	void create_gbuffer_textures (int width, int height) const;
+	void destroy_gbuffer_textures () const;
 
 	void draw_mesh (
 		const Pipeline* pipeline, const Buffer* vertex_buffer,
