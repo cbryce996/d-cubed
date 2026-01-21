@@ -27,12 +27,12 @@ struct Pipeline {
 };
 
 struct PipelineState {
-	const RenderPassState* render_pass_state;
-	const MaterialState* material_state;
+	RenderPassState render_pass_state;
+	MaterialState material_state;
 
 	bool operator== (const PipelineState& other) const {
-		return *render_pass_state == *other.render_pass_state
-			   && *material_state == *other.material_state;
+		return render_pass_state == other.render_pass_state
+			   && material_state == other.material_state;
 	}
 };
 
@@ -43,10 +43,10 @@ template <> struct hash<PipelineState> {
 		size_t h = 0;
 
 		hash_combine (
-			h, std::hash<RenderPassState> () (*pipeline_state.render_pass_state)
+			h, std::hash<RenderPassState> () (pipeline_state.render_pass_state)
 		);
 		hash_combine (
-			h, std::hash<MaterialState> () (*pipeline_state.material_state)
+			h, std::hash<MaterialState> () (pipeline_state.material_state)
 		);
 
 		return h;

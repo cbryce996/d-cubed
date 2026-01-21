@@ -4,6 +4,8 @@
 #include "utils.h"
 
 #include <SDL3/SDL.h>
+#include <functional>
+#include <string>
 #include <vector>
 
 struct RenderContext;
@@ -29,7 +31,7 @@ struct RenderPassState {
 struct RenderPassInstance {
 	std::string name;
 	RenderPassType type;
-	const RenderPassState* state;
+	RenderPassState state = {};
 
 	std::vector<SDL_GPUTexture*> color_targets;
 	SDL_GPUTexture* depth_target; // nullable

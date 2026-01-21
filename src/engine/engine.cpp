@@ -119,18 +119,9 @@ void Engine::run () {
 		if (keyboard.keys[SDL_SCANCODE_2]) {
 			std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
 
-			float spacing = 0.25f;
-
 			scene->add_object (
 				std::make_unique<Wave> (
 					glm::vec3 (0, 0, 0), 0.0f, 0.0f, "wave1"
-				)
-			);
-
-			scene->add_object (
-				std::make_unique<Wave> (
-					glm::vec3 (spacing, -20, spacing), glm::radians (45.0f),
-					0.0f, "wave2"
 				)
 			);
 

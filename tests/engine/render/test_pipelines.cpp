@@ -16,7 +16,7 @@ class FakePipelineFactory final : public IPipelineFactory {
 			0xDEADBEEF
 		);
 
-		pipeline->name = state.material_state->shader;
+		pipeline->name = state.material_state.shader;
 
 		return pipeline;
 	}
@@ -47,8 +47,8 @@ class PipelineManagerTest : public ::testing::Test {
 		};
 
 		pipeline_state = {
-			.render_pass_state = &render_pass_state,
-			.material_state = &material_state,
+			.render_pass_state = render_pass_state,
+			.material_state = material_state,
 		};
 	}
 };
@@ -91,8 +91,8 @@ TEST_F (PipelineManagerTest, EquivalentStatesProduceSameHash) {
 	MaterialState mat_copy = material_state;
 
 	const PipelineState equivalent{
-		.render_pass_state = &pass_copy,
-		.material_state = &mat_copy,
+		.render_pass_state = pass_copy,
+		.material_state = mat_copy,
 	};
 
 	EXPECT_EQ (hasher (pipeline_state), hasher (equivalent));
@@ -103,8 +103,8 @@ TEST_F (PipelineManagerTest, DifferentMaterialStateIsNotEqual) {
 	different.shader = "other_shader";
 
 	const PipelineState other{
-		.render_pass_state = &render_pass_state,
-		.material_state = &different,
+		.render_pass_state = render_pass_state,
+		.material_state = different,
 	};
 
 	EXPECT_FALSE (pipeline_state == other);
@@ -120,8 +120,8 @@ TEST_F (PipelineManagerTest, DifferentStateCreatesDifferentPipeline) {
 	different.shader = "other_shader";
 
 	const PipelineState other{
-		.render_pass_state = &render_pass_state,
-		.material_state = &different,
+		.render_pass_state = render_pass_state,
+		.material_state = different,
 	};
 
 	Pipeline* second = pipeline_manager.get_or_create (other);

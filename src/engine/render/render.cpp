@@ -158,58 +158,57 @@ void RenderManager::destroy_gbuffer_textures () const {
 }
 
 void RenderManager::setup_render_graph () {
-	RenderPassInstance setup_uniforms_pass{.state = nullptr};
+	RenderPassInstance setup_uniforms_pass;
 	setup_uniforms_pass.name = "setup_uniforms_pass";
 	setup_uniforms_pass.type = RenderPassType::Setup;
-	setup_uniforms_pass.execute =
-		[this] (
-			const RenderContext& render_context,
-			const RenderPassInstance& render_pass_instance
-		) {
-			assert (render_context.camera_manager->get_active_camera ());
+	setup_uniforms_pass.execute = [this] (
+									  RenderContext& render_context,
+									  RenderPassInstance& render_pass_instance
+								  ) {
+		assert (render_context.camera_manager->get_active_camera ());
 
-			const Camera* active_camera
-				= render_context.camera_manager->get_active_camera ();
-			const float aspect_ratio = static_cast<float> (width)
-									   / static_cast<float> (height);
-			const glm::vec3 light_pos_world = active_camera->transform.position;
+		const Camera* active_camera
+			= render_context.camera_manager->get_active_camera ();
+		const float aspect_ratio = static_cast<float> (width)
+								   / static_cast<float> (height);
+		const glm::vec3 light_pos_world = active_camera->transform.position;
 
-			// Create view uniform
-			const glm::mat4 view_projection
-				= CameraManager::compute_view_projection (
-					*active_camera, aspect_ratio
-				);
-			Block view_uniform_block = Block::from (view_projection);
-
-			// Create global uniform
-			Block global_uniform_block{};
-			global_uniform_block.clear ();
-			global_uniform_block.write (0, glm::vec4 (light_pos_world, 1.0f));
-			global_uniform_block.write (
-				1, glm::vec4 (render_context.time, 0.0f, 0.0f, 0.0f)
+		// Create view uniform
+		const glm::mat4 view_projection
+			= CameraManager::compute_view_projection (
+				*active_camera, aspect_ratio
 			);
-			global_uniform_block.write (
-				2, glm::vec4 (active_camera->transform.position, 0.0f)
-			);
+		Block view_uniform_block = Block::from (view_projection);
 
-			std::vector<UniformBinding> uniform_bindings;
+		// Create global uniform
+		Block global_uniform_block{};
+		global_uniform_block.clear ();
+		global_uniform_block.write (0, glm::vec4 (light_pos_world, 1.0f));
+		global_uniform_block.write (
+			1, glm::vec4 (render_context.time, 0.0f, 0.0f, 0.0f)
+		);
+		global_uniform_block.write (
+			2, glm::vec4 (active_camera->transform.position, 0.0f)
+		);
 
-			UniformBinding view_uniform_binding{};
-			view_uniform_binding.data = &view_uniform_block.data;
-			view_uniform_binding.slot = 0;
-			view_uniform_binding.size = sizeof (Block);
-			view_uniform_binding.stage = ShaderStage::Vertex;
-			uniform_bindings.push_back (view_uniform_binding);
+		std::vector<UniformBinding> uniform_bindings;
 
-			UniformBinding global_uniform_binding{};
-			global_uniform_binding.data = &global_uniform_block.data;
-			global_uniform_binding.slot = 1;
-			global_uniform_binding.size = sizeof (Block);
-			global_uniform_binding.stage = ShaderStage::Both;
-			uniform_bindings.push_back (global_uniform_binding);
+		UniformBinding view_uniform_binding{};
+		view_uniform_binding.data = &view_uniform_block.data;
+		view_uniform_binding.slot = 0;
+		view_uniform_binding.size = sizeof (Block);
+		view_uniform_binding.stage = ShaderStage::Vertex;
+		uniform_bindings.push_back (view_uniform_binding);
 
-			push_uniform_bindings (uniform_bindings);
-		};
+		UniformBinding global_uniform_binding{};
+		global_uniform_binding.data = &global_uniform_block.data;
+		global_uniform_binding.slot = 1;
+		global_uniform_binding.size = sizeof (Block);
+		global_uniform_binding.stage = ShaderStage::Both;
+		uniform_bindings.push_back (global_uniform_binding);
+
+		push_uniform_bindings (uniform_bindings);
+	};
 
 	RenderPassState geometry_pass_state{
 		.depth_compare = SDL_GPU_COMPAREOP_LESS,
@@ -222,25 +221,26 @@ void RenderManager::setup_render_graph () {
 		.has_depth_stencil_target = true,
 	};
 
-	RenderPassInstance geometry_pass{.state = &geometry_pass_state};
+	RenderPassInstance geometry_pass{.state = geometry_pass_state};
 	geometry_pass.name = "geometry_pass";
 	geometry_pass.type = RenderPassType::Geometry;
-	geometry_pass.dependencies = {"setup_uniforms_pass"};
-	geometry_pass.color_targets = {
-		buffer_manager->g_position_texture, buffer_manager->g_normal_texture,
-		buffer_manager->g_albedo_texture
-	};
+	geometry_pass.dependencies.clear ();
 	geometry_pass.depth_target = buffer_manager->depth_texture;
 	geometry_pass.clear_color = {0.0f, 0.0f, 0.0f, 0.0f};
 	geometry_pass.clear_depth = true;
 	geometry_pass.execute = [this] (
-								const RenderContext& render_context,
-								const RenderPassInstance& render_pass_instance
+								RenderContext& render_context,
+								RenderPassInstance& render_pass_instance
 							) {
 		assert (buffer_manager->g_position_texture);
 		assert (buffer_manager->g_normal_texture);
 		assert (buffer_manager->g_albedo_texture);
 		assert (buffer_manager->depth_texture);
+
+		render_pass_instance.color_targets = {
+			buffer_manager->g_position_texture,
+			buffer_manager->g_normal_texture, buffer_manager->g_albedo_texture
+		};
 
 		current_render_pass = begin_render_pass (render_pass_instance);
 		set_viewport (current_render_pass);
@@ -271,26 +271,30 @@ void RenderManager::setup_render_graph () {
 		.has_depth_stencil_target = false,
 	};
 
-	RenderPassInstance lighting_pass{.state = &lighting_pass_state};
+	RenderPassInstance lighting_pass{.state = lighting_pass_state};
 	lighting_pass.name = "lighting_pass";
 	lighting_pass.type = RenderPassType::Lighting;
 	lighting_pass.dependencies = {"geometry_pass"};
-	lighting_pass.color_targets = {buffer_manager->swap_chain_texture};
+	lighting_pass.color_targets.clear ();
 	lighting_pass.depth_target = nullptr;
 	lighting_pass.clear_color = {0.0f, 0.0f, 0.0f, 0.0f};
 	lighting_pass.clear_depth = false;
 	lighting_pass.execute = [this] (
-								const RenderContext& render_context,
-								const RenderPassInstance& render_pass_instance
+								RenderContext& render_context,
+								RenderPassInstance& render_pass_instance
 							) {
 		assert (buffer_manager->swap_chain_texture);
+
+		render_pass_instance.color_targets = {
+			buffer_manager->swap_chain_texture
+		};
 
 		current_render_pass = begin_render_pass (render_pass_instance);
 		set_viewport (current_render_pass);
 
 		const PipelineState pipeline_state{
 			.render_pass_state = render_pass_instance.state,
-			.material_state = &Materials::DeferredState,
+			.material_state = Materials::DeferredState,
 		};
 
 		const Pipeline* pipeline
@@ -303,12 +307,15 @@ void RenderManager::setup_render_graph () {
 
 	render_graph.add_pass (setup_uniforms_pass);
 	assert (render_graph.get_render_pass ("setup_uniforms_pass"));
+	assert (setup_uniforms_pass.execute);
 
 	render_graph.add_pass (geometry_pass);
 	assert (render_graph.get_render_pass ("geometry_pass"));
+	assert (geometry_pass.execute);
 
 	render_graph.add_pass (lighting_pass);
 	assert (render_graph.get_render_pass ("lighting_pass"));
+	assert (lighting_pass.execute);
 }
 
 void RenderManager::resize (int new_width, int new_height) {
@@ -369,11 +376,17 @@ void RenderManager::create_depth_texture () const {
 SDL_GPURenderPass* RenderManager::begin_render_pass (
 	const RenderPassInstance& render_pass_instance
 ) const {
+	assert (render_pass_instance.type != RenderPassType::Setup);
+
 	assert (buffer_manager->command_buffer);
 	assert (buffer_manager->depth_texture);
 	assert (buffer_manager->swap_chain_texture);
 
 	assert (!render_pass_instance.color_targets.empty ());
+
+	for (auto color_target : render_pass_instance.color_targets) {
+		assert (color_target);
+	}
 
 	std::vector<SDL_GPUColorTargetInfo> color_target_infos;
 	color_target_infos.reserve (render_pass_instance.color_targets.size ());
@@ -405,17 +418,21 @@ SDL_GPURenderPass* RenderManager::begin_render_pass (
 		depth_target_info.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
 		depth_target_info.cycle = true;
 
-		return SDL_BeginGPURenderPass (
+		SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass (
 			buffer_manager->command_buffer, color_target_infos.data (),
 			static_cast<uint32_t> (color_target_infos.size ()),
 			&depth_target_info
 		);
+		assert (render_pass);
+		return render_pass;
 	}
 
-	return SDL_BeginGPURenderPass (
+	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass (
 		buffer_manager->command_buffer, color_target_infos.data (),
 		static_cast<uint32_t> (color_target_infos.size ()), nullptr
 	);
+	assert (render_pass);
+	return render_pass;
 }
 
 void RenderManager::push_uniform_bindings (

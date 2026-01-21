@@ -1,5 +1,5 @@
-#ifndef PLANET_H
-#define PLANET_H
+#ifndef SPHERE_H
+#define SPHERE_H
 
 #include "maths/vector.h"
 #include "render/mesh.h"
@@ -72,8 +72,8 @@ build_indices (int lat_steps, int long_steps, std::vector<uint32_t>& indices) {
 	for (int col = 0; col < long_steps; ++col) {
 		constexpr uint32_t north = 0;
 		indices.push_back (north);
-		indices.push_back (first_ring + col);
 		indices.push_back (first_ring + col + 1);
+		indices.push_back (first_ring + col);
 	}
 
 	for (int ring = 0; ring < ring_count - 1; ++ring) {
@@ -99,8 +99,8 @@ build_indices (int lat_steps, int long_steps, std::vector<uint32_t>& indices) {
 	const uint32_t last_ring = first_ring + (ring_count - 1) * R;
 
 	for (int col = 0; col < long_steps; ++col) {
-		indices.push_back (last_ring + col + 1);
 		indices.push_back (last_ring + col);
+		indices.push_back (last_ring + col + 1);
 		indices.push_back (south);
 	}
 }
@@ -140,4 +140,4 @@ generate (const float radius, const int lat_steps, const int long_steps) {
 }
 }
 
-#endif // PLANET_H
+#endif // SPHERE_H

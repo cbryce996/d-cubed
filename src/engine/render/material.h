@@ -24,7 +24,7 @@ struct MaterialState {
 
 struct MaterialInstance {
 	std::string name;
-	const MaterialState* state;
+	MaterialState state;
 	glm::vec4 base_color = {1.0f, 1.0f, 1.0f, 1.0f};
 };
 
@@ -59,7 +59,7 @@ inline static MaterialState GeometryState{
 
 inline static MaterialInstance Geometry{
 	.name = "geometry",
-	.state = &GeometryState,
+	.state = GeometryState,
 	.base_color = {1.0f, 1.0f, 1.0f, 1.0f}
 };
 
@@ -74,7 +74,7 @@ inline static MaterialState DeferredState{
 
 inline static MaterialInstance Deferred{
 	.name = "deferred",
-	.state = &DeferredState,
+	.state = DeferredState,
 	.base_color = {1.0f, 1.0f, 1.0f, 1.0f}
 };
 }
