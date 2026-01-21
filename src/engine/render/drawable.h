@@ -1,11 +1,6 @@
 #ifndef DRAWABLE_H
 #define DRAWABLE_H
-
-#include "buffers/buffer.h"
-#include "memory.h"
-
-struct Mesh;
-struct Material;
+#include "material.h"
 
 struct InstanceBatch {
 	std::vector<Block> blocks;
@@ -13,7 +8,7 @@ struct InstanceBatch {
 
 struct Drawable {
 	Mesh* mesh = nullptr;
-	Material* material = nullptr;
+	MaterialInstance* material = nullptr;
 	InstanceBatch* instance_batch = nullptr;
 
 	Buffer* instance_buffer = nullptr;

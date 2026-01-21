@@ -84,24 +84,18 @@ void InstancingDemo::collect_drawables (RenderState& out_render_state) {
 	static InstanceBatch sphere_batch;
 	static InstanceBatch cube_batch;
 
-	static Material material{
-		.name = "default_instanced",
-		.pipeline_name = "lit_opaque_backcull",
-		.shader_name = "geometry_basic"
-	};
-
 	sphere_batch.blocks = sphere_instances;
 	cube_batch.blocks = cube_instances;
 
 	out_render_state.drawables.push_back (
 		{.mesh = sphere_mesh.get (),
-		 .material = &material,
+		 .material = &Materials::Geometry,
 		 .instance_batch = &sphere_batch}
 	);
 
 	out_render_state.drawables.push_back (
 		{.mesh = cube_mesh.get (),
-		 .material = &material,
+		 .material = &Materials::Geometry,
 		 .instance_batch = &cube_batch}
 	);
 }

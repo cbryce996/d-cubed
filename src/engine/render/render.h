@@ -2,6 +2,7 @@
 #define RENDERER_H
 
 #include "assets/asset.h"
+#include "buffers/buffer.h"
 #include "cameras/camera.h"
 #include "drawable.h"
 #include "graph/graph.h"
@@ -12,6 +13,8 @@
 #include <SDL3/SDL_gpu.h>
 
 #include <vector>
+
+struct Material;
 
 enum class ShaderStage : uint8_t {
 	Vertex = 1 << 0,
@@ -29,13 +32,6 @@ struct UniformBinding {
 
 struct RenderState {
 	std::vector<Drawable> drawables;
-};
-
-struct RenderPassConfig {
-	std::vector<SDL_GPUTexture*> color_targets;
-	SDL_GPUTexture* depth_target; // nullable
-	SDL_FColor clear_color;
-	bool clear_depth;
 };
 
 struct RenderContext {
@@ -64,7 +60,6 @@ class RenderManager {
 		std::shared_ptr<AssetManager> asset_manager
 	);
 	~RenderManager ();
-	void load_pipelines () const;
 	void setup_render_graph ();
 	void resize (int new_width, int new_height);
 	void acquire_swap_chain ();
@@ -82,8 +77,10 @@ class RenderManager {
 	void render (RenderState* render_state, float time);
 
 	void create_depth_texture () const;
-	void create_gbuffer_textures (int width, int height);
-	void destroy_gbuffer_textures ();
+	[[nodiscard]] SDL_GPURenderPass*
+	begin_render_pass (const RenderPassInstance& render_pass_instance) const;
+	void create_gbuffer_textures (int width, int height) const;
+	void destroy_gbuffer_textures () const;
 
 	void draw_mesh (
 		const Pipeline* pipeline, const Buffer* vertex_buffer,
@@ -98,9 +95,6 @@ class RenderManager {
 	void prepare_drawables (std::vector<Drawable>& drawables) const;
 
 	void set_viewport (SDL_GPURenderPass* current_render_pass);
-
-	[[nodiscard]] SDL_GPURenderPass*
-	create_render_pass (const RenderPassConfig& render_pass_config) const;
 
   private:
 	SDL_GPUDevice* device = nullptr;

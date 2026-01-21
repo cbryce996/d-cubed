@@ -1,5 +1,5 @@
-#ifndef PLANET_H
-#define PLANET_H
+#ifndef SPHERE_H
+#define SPHERE_H
 
 #include "maths/vector.h"
 #include "render/mesh.h"
@@ -140,4 +140,4 @@ generate (const float radius, const int lat_steps, const int long_steps) {
 }
 }
 
-#endif // PLANET_H
+#endif // SPHERE_H

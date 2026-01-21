@@ -14,7 +14,7 @@ compile() {
     local NAME="${FILENAME%.*}"
     local STAGE="${FILENAME##*.}"
 
-    echo "=== Compiling: $NAME.$STAGE ==="
+    echo "=== Compiling: $FULL_PATH ==="
 
     # 1. GLSL to SPIR-V
     glslangValidator -V "$FULL_PATH" -o "$OUTPUT_DIR/$NAME.$STAGE.spv"
@@ -25,7 +25,8 @@ compile() {
         --output "$OUTPUT_DIR/$NAME.$STAGE.metal"
 
     # 3. SPIR-V to Reflection Metadata (.json)
-    spirv-cross "$OUTPUT_DIR/$NAME.$STAGE.spv" --reflect > "$OUTPUT_DIR/$NAME.$STAGE.json"
+    spirv-cross "$OUTPUT_DIR/$NAME.$STAGE.spv" \
+        --reflect > "$OUTPUT_DIR/$NAME.$STAGE.json"
 
     # 4. Metal Source to AIR
     xcrun -sdk $SDK metal -c \
@@ -45,10 +46,9 @@ compile() {
     echo "Success: $NAME.$STAGE.metallib"
 }
 
-echo "Scanning $SOURCE_DIR for shaders..."
+echo "Scanning $SOURCE_DIR recursively for shaders..."
 
-for shader_file in "$SOURCE_DIR"/*.vert "$SOURCE_DIR"/*.frag; do
-    [ -e "$shader_file" ] || continue
+find "$SOURCE_DIR" -type f \( -name "*.vert" -o -name "*.frag" \) | while read -r shader_file; do
     compile "$shader_file"
 done
 

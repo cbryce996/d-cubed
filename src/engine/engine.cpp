@@ -2,6 +2,7 @@
 
 #include "object/demos/instancing.h"
 #include "object/demos/wave.h"
+#include "render/pipelines/sdl/factory.h"
 #include "runtime/clock.h"
 
 #include <SDL3/SDL.h>
@@ -44,7 +45,9 @@ Engine::Engine () {
 		= std::make_shared<ShaderManager> (gpu_device);
 	std::shared_ptr<PipelineManager> pipeline_manager
 		= std::make_shared<PipelineManager> (
-			gpu_device, window, shader_manager
+			std::make_shared<SDLPipelineFactory> (
+				gpu_device, window, shader_manager
+			)
 		);
 	std::shared_ptr<BufferManager> buffer_manager
 		= std::make_shared<BufferManager> (gpu_device);
@@ -116,18 +119,9 @@ void Engine::run () {
 		if (keyboard.keys[SDL_SCANCODE_2]) {
 			std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
 
-			float spacing = 0.25f;
-
 			scene->add_object (
 				std::make_unique<Wave> (
 					glm::vec3 (0, 0, 0), 0.0f, 0.0f, "wave1"
-				)
-			);
-
-			scene->add_object (
-				std::make_unique<Wave> (
-					glm::vec3 (spacing, -20, spacing), glm::radians (45.0f),
-					0.0f, "wave2"
 				)
 			);
 
