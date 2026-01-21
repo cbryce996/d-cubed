@@ -6,8 +6,6 @@
 #include "cameras/camera.h"
 #include "drawable.h"
 #include "graph/graph.h"
-#include "material.h"
-#include "mesh.h"
 #include "pipelines/pipeline.h"
 #include "shaders/shader.h"
 
@@ -15,6 +13,8 @@
 #include <SDL3/SDL_gpu.h>
 
 #include <vector>
+
+struct Material;
 
 enum class ShaderStage : uint8_t {
 	Vertex = 1 << 0,
@@ -60,7 +60,6 @@ class RenderManager {
 		std::shared_ptr<AssetManager> asset_manager
 	);
 	~RenderManager ();
-	void load_pipelines () const;
 	void setup_render_graph ();
 	void resize (int new_width, int new_height);
 	void acquire_swap_chain ();
@@ -78,6 +77,8 @@ class RenderManager {
 	void render (RenderState* render_state, float time);
 
 	void create_depth_texture () const;
+	[[nodiscard]] SDL_GPURenderPass*
+	begin_render_pass (const RenderPassInstance& render_pass_instance) const;
 	void create_gbuffer_textures (int width, int height) const;
 	void destroy_gbuffer_textures () const;
 
@@ -94,9 +95,6 @@ class RenderManager {
 	void prepare_drawables (std::vector<Drawable>& drawables) const;
 
 	void set_viewport (SDL_GPURenderPass* current_render_pass);
-
-	[[nodiscard]] SDL_GPURenderPass*
-	create_render_pass (const RenderPassConfig& render_pass_config) const;
 
   private:
 	SDL_GPUDevice* device = nullptr;

@@ -53,17 +53,11 @@ void Wave::collect_drawables (RenderState& out_render_state) {
 
 	cube_mesh->to_gpu ();
 
-	static Material material{
-		.name = "grid_material",
-		.pipeline_name = "lit_opaque_backcull",
-		.shader_name = "anomaly"
-	};
-
 	batch.blocks = instances;
 
 	out_render_state.drawables.push_back (
 		{.mesh = cube_mesh.get (),
-		 .material = &material,
+		 .material = &Materials::Geometry,
 		 .instance_batch = &batch}
 	);
 }

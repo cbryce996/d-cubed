@@ -8,15 +8,15 @@
 RenderGraph::RenderGraph () = default;
 RenderGraph::~RenderGraph () = default;
 
-void RenderGraph::add_pass (const RenderPass& pass) {
+void RenderGraph::add_pass (const RenderPassInstance& pass) {
 	render_passes.emplace (pass.name, pass);
 	topological_sort ();
 }
 
-RenderPass* RenderGraph::get_render_pass (const std::string& name) {
-	RenderPass* render_pass = render_passes.contains (name)
-									  ? &render_passes[name]
-									  : nullptr;
+RenderPassInstance* RenderGraph::get_render_pass (const std::string& name) {
+	RenderPassInstance* render_pass = render_passes.contains (name)
+										  ? &render_passes[name]
+										  : nullptr;
 	if (!render_pass) {
 		SDL_LogError (SDL_LOG_CATEGORY_RENDER, "Render pass not found.");
 		return nullptr;
@@ -26,8 +26,8 @@ RenderPass* RenderGraph::get_render_pass (const std::string& name) {
 
 void RenderGraph::execute_all (RenderContext& render_context) {
 	for (const std::string& name : sorted_pass_order) {
-		RenderPass& render_pass = render_passes[name];
-		render_pass.execute (render_context);
+		RenderPassInstance& render_pass = render_passes[name];
+		render_pass.execute (render_context, render_pass);
 		render_pass.completed = true;
 	}
 }

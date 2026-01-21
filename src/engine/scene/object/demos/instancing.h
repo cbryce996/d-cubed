@@ -1,6 +1,8 @@
 #ifndef INSTANCING_H
 #define INSTANCING_H
 
+struct Material;
+
 #include "scene/scene.h"
 
 #include <string>

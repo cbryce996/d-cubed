@@ -54,10 +54,14 @@ inline glm::mat4 compute_model_matrix (const Transform& transform) {
 	return translation * rotation * scale;
 }
 
-inline uint64_t generate_uuid64() {
-	static std::mt19937_64 rng{ std::random_device{}() };
+inline uint64_t generate_uuid64 () {
+	static std::mt19937_64 rng{std::random_device{}()};
 	static std::uniform_int_distribution<uint64_t> dist;
-	return dist(rng);
+	return dist (rng);
+}
+
+inline void hash_combine (size_t& seed, const size_t value) {
+	seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
 }
 
 #endif // UTILS_H

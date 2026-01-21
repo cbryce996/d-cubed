@@ -5,8 +5,8 @@
 #include <string>
 #include <thread>
 
-#include "../../src/engine/assets/asset.h"
-#include "../../src/engine/render/mesh.h"
+#include "engine/assets/asset.h"
+#include "engine/render/mesh.h"
 
 struct FakeLoader : IMeshLoader {
 	bool load (
