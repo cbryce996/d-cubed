@@ -224,7 +224,7 @@ void RenderManager::setup_render_graph () {
 	RenderPassInstance geometry_pass{.state = geometry_pass_state};
 	geometry_pass.name = "geometry_pass";
 	geometry_pass.type = RenderPassType::Geometry;
-	geometry_pass.dependencies.clear ();
+	geometry_pass.color_targets.clear ();
 	geometry_pass.depth_target = buffer_manager->depth_texture;
 	geometry_pass.clear_color = {0.0f, 0.0f, 0.0f, 0.0f};
 	geometry_pass.clear_depth = true;
