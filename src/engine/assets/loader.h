@@ -1,8 +1,8 @@
 #ifndef LOADER_H
 #define LOADER_H
 
+#include "../render/block.h"
 #include "maths/vector.h"
-#include "memory.h"
 
 #include <string>
 

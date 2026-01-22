@@ -1,12 +1,11 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "memory.h"
+#include "block.h"
 
 #include <glm/glm.hpp>
 
 #include "maths/vector.h"
-#include "pipelines/pipeline.h"
 #include "render.h"
 
 struct Mesh {

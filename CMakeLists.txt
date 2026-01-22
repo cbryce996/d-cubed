@@ -101,6 +101,10 @@ add_executable(engine_tests
         tests/engine/test_cameras.cpp
         tests/engine/test_tasks.cpp
         tests/engine/render/test_pipelines.cpp
+        tests/engine/render/test_mesh.cpp
+        tests/engine/render/test_graph.cpp
+        tests/engine/render/test_material.cpp
+        tests/engine/render/test_pass.cpp
 )
 
 target_compile_features(engine_tests PRIVATE cxx_std_20)

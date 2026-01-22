@@ -9,10 +9,26 @@ RenderGraph::RenderGraph () = default;
 RenderGraph::~RenderGraph () = default;
 
 void RenderGraph::add_pass (const RenderPassInstance& pass) {
-	render_passes.emplace (pass.name, pass);
-	topological_sort ();
-}
+	if (render_passes.contains (pass.name)) {
+		SDL_LogError (
+			SDL_LOG_CATEGORY_RENDER, "Render pass already exists: %s",
+			pass.name.c_str ()
+		);
+		return;
+	}
 
+	// transactional insert
+	render_passes.emplace (pass.name, pass);
+
+	if (!validate ()) {
+		render_passes.erase (pass.name); // rollback
+		SDL_LogError (
+			SDL_LOG_CATEGORY_RENDER,
+			"Invalid render graph state after adding pass: %s",
+			pass.name.c_str ()
+		);
+	}
+}
 RenderPassInstance* RenderGraph::get_render_pass (const std::string& name) {
 	RenderPassInstance* render_pass = render_passes.contains (name)
 										  ? &render_passes[name]
@@ -32,44 +48,56 @@ void RenderGraph::execute_all (RenderContext& render_context) {
 	}
 }
 
-void RenderGraph::topological_sort () {
+bool RenderGraph::validate () {
 	sorted_pass_order.clear ();
 
 	std::unordered_set<std::string> visited;
 	std::unordered_set<std::string> on_stack;
 
-	std::function<void (const std::string&)> visit =
-		[&] (const std::string& name) {
-			if (on_stack.contains (name)) {
+	for (const auto& pass : render_passes | std::views::values) {
+		for (const auto& dep : pass.dependencies) {
+			if (!render_passes.contains (dep)) {
 				SDL_LogError (
-					SDL_LOG_CATEGORY_RENDER,
-					"Cycle detected in render graph at pass: %s", name.c_str ()
+					SDL_LOG_CATEGORY_RENDER, "Missing dependency: %s",
+					dep.c_str ()
 				);
-				throw std::runtime_error ("Cycle in render graph");
+				return false;
 			}
+		}
+	}
 
-			if (visited.contains (name))
+	bool valid = true;
+
+	std::function<void (const std::string&)> dfs =
+		[&] (const std::string& node) {
+			if (!valid)
 				return;
 
-			auto it = render_passes.find (name);
-			if (it == render_passes.end ()) {
+			if (on_stack.contains (node)) {
 				SDL_LogError (
-					SDL_LOG_CATEGORY_RENDER,
-					"Unknown render pass dependency: %s", name.c_str ()
+					SDL_LOG_CATEGORY_RENDER, "Cycle detected at pass: %s",
+					node.c_str ()
 				);
-				throw std::runtime_error ("Missing dependency in render graph");
+				valid = false;
+				return;
 			}
 
-			on_stack.insert (name);
+			if (visited.contains (node))
+				return;
 
-			for (const std::string& dep : it->second.dependencies)
-				visit (dep);
+			on_stack.insert (node);
 
-			on_stack.erase (name);
-			visited.insert (name);
-			sorted_pass_order.push_back (name);
+			for (const auto& dep : render_passes[node].dependencies) {
+				dfs (dep);
+			}
+
+			on_stack.erase (node);
+			visited.insert (node);
+			sorted_pass_order.push_back (node);
 		};
 
 	for (const auto& name : render_passes | std::views::keys)
-		visit (name);
+		dfs (name);
+
+	return valid;
 }

@@ -16,9 +16,10 @@ struct MaterialState {
 
 	bool operator== (const MaterialState& other) const {
 		return shader == other.shader && primitive_type == other.primitive_type
-			   && cull_mode == other.cull_mode && compare_op == other.compare_op
+			   && cull_mode == other.cull_mode && compare_op
 			   && enable_depth_test == other.enable_depth_test
-			   && enable_depth_write == other.enable_depth_write;
+			   && enable_depth_write == other.enable_depth_write
+			   && (!enable_depth_test || compare_op == other.compare_op);
 	}
 };
 

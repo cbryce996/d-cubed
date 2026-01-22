@@ -1,0 +1,15 @@
+#!/bin/sh
+
+echo "=== Running pre-commit checks ==="
+
+# Run make check
+if ! make check; then
+  echo ""
+  echo "❌  Pre-commit failed: checks did not pass"
+  echo "Fix issues before committing."
+  exit 1
+fi
+
+echo ""
+echo "✅  Pre-commit checks passed"
+exit 0
