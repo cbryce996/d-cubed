@@ -105,6 +105,7 @@ add_executable(engine_tests
         tests/engine/render/test_graph.cpp
         tests/engine/render/test_material.cpp
         tests/engine/render/test_pass.cpp
+        tests/engine/render/test_block.cpp
 )
 
 target_compile_features(engine_tests PRIVATE cxx_std_20)
