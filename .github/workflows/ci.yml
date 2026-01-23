@@ -71,6 +71,7 @@ jobs:
         with:
           name: build-folder
           path: build
+          overwrite: true
 
 
   coverage:
