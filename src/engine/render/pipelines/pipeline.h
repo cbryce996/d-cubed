@@ -2,16 +2,16 @@
 #define PIPELINE_H
 
 #include "render/material.h"
-#include "render/pass.h"
-#include "render/shaders/shader.h"
+#include "render/pass/pass.h"
 
-#include <functional>
+#include <SDL3/SDL.h>
 #include <string>
 #include <unordered_map>
 
+class BufferManager;
+struct UniformBinding;
 struct RenderPassState;
 struct MaterialState;
-struct MeshState;
 
 constexpr SDL_GPUVertexElementFormat get_format () {
 #if BASE_COLLECTION_SIZE == 4
@@ -30,15 +30,10 @@ struct PipelineState {
 	RenderPassState render_pass_state;
 	MaterialState material_state;
 
-	bool operator== (const PipelineState& other) const {
-		return render_pass_state == other.render_pass_state
-			   && material_state == other.material_state;
-	}
+	bool operator== (const PipelineState& other) const;
 };
 
-namespace std {
-
-template <> struct hash<PipelineState> {
+template <> struct std::hash<PipelineState> {
 	size_t operator() (const PipelineState& pipeline_state) const noexcept {
 		size_t h = 0;
 
@@ -53,8 +48,6 @@ template <> struct hash<PipelineState> {
 	}
 };
 
-}
-
 class IPipelineFactory {
   public:
 	virtual ~IPipelineFactory () = default;
@@ -68,6 +61,10 @@ class PipelineManager {
 	~PipelineManager ();
 
 	Pipeline* get_or_create (const PipelineState& state);
+	void push_uniforms (
+		const std::vector<UniformBinding>& uniform_bindings,
+		const BufferManager& buffer_manager
+	) const;
 
   private:
 	std::shared_ptr<IPipelineFactory> factory;

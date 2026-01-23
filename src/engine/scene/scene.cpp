@@ -1,5 +1,7 @@
 #include "scene.h"
 
+#include "object/object.h"
+
 #include <ranges>
 
 void Scene::on_load () {

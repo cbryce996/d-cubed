@@ -1,5 +1,7 @@
 #include "schedule.h"
 
+#include "runtime/tasks/tasks.h"
+
 Schedule::Schedule (float interval_ms, std::function<void (float)> task)
 	: interval (interval_ms), task (std::move (task)) {}
 

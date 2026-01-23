@@ -66,4 +66,10 @@ template <> struct std::hash<RenderPassState> {
 	}
 };
 
+namespace RenderPasses {
+extern RenderPassInstance UniformPass;
+extern RenderPassInstance GeometryPass;
+extern RenderPassInstance DeferredPass;
+}
+
 #endif // PASS_H

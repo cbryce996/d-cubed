@@ -1,4 +1,5 @@
 #include "runtime.h"
+#include "schedule/schedule.h"
 
 Runtime::Runtime () = default;
 

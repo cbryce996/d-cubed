@@ -1,7 +1,9 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include "render/pass.h"
+#include "render/context.h"
+#include "render/pass/pass.h"
+
 #include <string>
 #include <unordered_map>
 #include <vector>

@@ -2,6 +2,8 @@
 
 #include "factory.h"
 
+#include "render/shaders/shader.h"
+
 SDLPipelineFactory::SDLPipelineFactory (
 	SDL_GPUDevice* device, SDL_Window* window,
 	const std::shared_ptr<ShaderManager>& shader_manager

@@ -1,15 +1,21 @@
 #include "engine.h"
 
+#include "assets/asset.h"
+#include "cameras/camera.h"
 #include "object/demos/instancing.h"
 #include "object/demos/wave.h"
+#include "render/buffers/buffer.h"
 #include "render/pipelines/sdl/factory.h"
+#include "render/render.h"
+#include "render/shaders/shader.h"
 #include "runtime/clock.h"
+#include "runtime/runtime.h"
+#include "scene.h"
 
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include <chrono>
 #include <iostream>
 
 Engine::Engine () {

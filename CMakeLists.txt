@@ -41,6 +41,8 @@ set(GAME_LIB_SOURCES
         src/engine/runtime/runtime.cpp
         src/engine/render/render.cpp
         src/engine/render/graph/graph.cpp
+        src/engine/render/pass/pass.cpp
+        src/engine/render/frame/frame.cpp
         src/engine/render/pipelines/pipeline.cpp
         src/engine/render/pipelines/sdl/factory.cpp
         src/engine/render/buffers/buffer.cpp

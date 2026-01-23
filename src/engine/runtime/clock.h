@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <thread>
 
 class Clock {
 	using clock = std::chrono::high_resolution_clock;

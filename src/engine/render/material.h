@@ -49,33 +49,27 @@ template <> struct std::hash<MaterialState> {
 };
 
 namespace Materials {
-inline static MaterialState GeometryState{
-	.shader = "geometry",
-	.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-	.cull_mode = SDL_GPU_CULLMODE_BACK,
-	.compare_op = SDL_GPU_COMPAREOP_LESS,
-	.enable_depth_test = true,
-	.enable_depth_write = true
-};
-
 inline static MaterialInstance Geometry{
 	.name = "geometry",
-	.state = GeometryState,
+	.state
+	= {.shader = "geometry",
+	   .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+	   .cull_mode = SDL_GPU_CULLMODE_BACK,
+	   .compare_op = SDL_GPU_COMPAREOP_LESS,
+	   .enable_depth_test = true,
+	   .enable_depth_write = true},
 	.base_color = {1.0f, 1.0f, 1.0f, 1.0f}
-};
-
-inline static MaterialState DeferredState{
-	.shader = "lighting",
-	.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-	.cull_mode = SDL_GPU_CULLMODE_BACK,
-	.compare_op = SDL_GPU_COMPAREOP_LESS,
-	.enable_depth_test = false,
-	.enable_depth_write = false
 };
 
 inline static MaterialInstance Deferred{
 	.name = "deferred",
-	.state = DeferredState,
+	.state
+	= {.shader = "lighting",
+	   .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+	   .cull_mode = SDL_GPU_CULLMODE_BACK,
+	   .compare_op = SDL_GPU_COMPAREOP_LESS,
+	   .enable_depth_test = false,
+	   .enable_depth_write = false},
 	.base_color = {1.0f, 1.0f, 1.0f, 1.0f}
 };
 }

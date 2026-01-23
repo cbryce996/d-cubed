@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include "SDL3/SDL_log.h"
+#include "render/pass/pass.h"
 
 RenderGraph::RenderGraph () = default;
 RenderGraph::~RenderGraph () = default;

@@ -2,6 +2,7 @@
 
 #include "maths/geometry/cube.h"
 #include "render/material.h"
+#include "render/render.h"
 
 Wave::Wave (
 	glm::vec3 offset_, float rotation_radians_, float phase_offset_,

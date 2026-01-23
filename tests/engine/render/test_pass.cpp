@@ -1,4 +1,4 @@
-#include "render/pass.h"
+#include "../../../src/engine/render/pass/pass.h"
 
 #include <gtest/gtest.h>
 

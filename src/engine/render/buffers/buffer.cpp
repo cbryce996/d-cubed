@@ -3,6 +3,7 @@
 #include "../mesh.h"
 #include "SDL3/SDL_gpu.h"
 #include "SDL3/SDL_log.h"
+#include "render/drawable.h"
 
 BufferManager::BufferManager (SDL_GPUDevice* device) : device (device) {}
 

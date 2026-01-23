@@ -1,7 +1,12 @@
 #ifndef WAVE_H
 #define WAVE_H
-#include "scene/scene.h"
 
+#include "object/object.h"
+#include "render/drawable.h"
+
+#include <glm/glm.hpp>
+
+struct Block;
 class Wave final : public ISceneObject {
   public:
 	explicit Wave (
