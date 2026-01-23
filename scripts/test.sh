@@ -43,8 +43,10 @@ if [ "$COVERAGE" = "1" ]; then
         exit 1
     fi
 
+    echo "Merging coverage data..."
     llvm-profdata merge -sparse build/coverage_*.profraw -o "$COVERAGE_DATA"
 
+    echo "Generating HTML report..."
     mkdir -p "$COVERAGE_HTML_DIR"
 
     llvm-cov show "$TEST_BINARY" \
@@ -53,7 +55,18 @@ if [ "$COVERAGE" = "1" ]; then
       --output-dir="$COVERAGE_HTML_DIR" \
       --ignore-filename-regex="external|tests|/usr/include|/opt/homebrew"
 
-    echo ""
-    echo "✅ Coverage report generated!"
-    echo "📁 HTML report: $COVERAGE_HTML_DIR/index.html"
+    echo "Generating LCOV report..."
+
+    llvm-cov export "$TEST_BINARY" \
+      -instr-profile="$COVERAGE_DATA" \
+      -format=lcov \
+      --ignore-filename-regex="external|tests|/usr/include|/opt/homebrew" \
+      > build/coverage.lcov
+
+    if [ ! -f build/coverage.lcov ]; then
+        echo "❌ LCOV file not generated!"
+        exit 1
+    fi
+
+    echo "✅ Coverage generated successfully"
 fi
