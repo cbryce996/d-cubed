@@ -9,7 +9,15 @@ mkdir -p "$BUILD_DIR"
 
 echo "Configuring CMake"
 rm -rf build
-if ! cmake -B "$BUILD_DIR" -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug; then
+
+if [ "$COVERAGE" = "1" ]; then
+    echo "📊 Coverage build enabled"
+    CMAKE_FLAGS="-DENABLE_COVERAGE=ON"
+else
+    CMAKE_FLAGS=""
+fi
+
+if ! cmake -B "$BUILD_DIR" -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug $CMAKE_FLAGS; then
     echo "❌  CMake configuration failed!"
     exit 1
 fi
