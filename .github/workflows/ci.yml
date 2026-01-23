@@ -79,6 +79,10 @@ jobs:
           fi
           brew update
           brew install llvm
+          
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
