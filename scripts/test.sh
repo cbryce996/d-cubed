@@ -32,29 +32,26 @@ if [ "$COVERAGE" = "1" ]; then
     echo "📊 Coverage mode enabled"
     echo "Running binary with coverage instrumentation..."
 
-    rm -f "$COVERAGE_RAW"
+    export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
 
-    # THIS IS THE CRITICAL LINE
-    LLVM_PROFILE_FILE="$COVERAGE_RAW" "$TEST_BINARY"
+    rm -f build/coverage_*.profraw
 
-    if [ ! -f "$COVERAGE_RAW" ]; then
-        echo "❌ Coverage file not generated!"
+    LLVM_PROFILE_FILE="build/coverage_%p.profraw" "$TEST_BINARY"
+
+    if ! ls build/coverage_*.profraw 1> /dev/null 2>&1; then
+        echo "❌ Coverage files not generated!"
         exit 1
     fi
 
-    echo "Merging coverage data..."
-
-    llvm-profdata merge -sparse "$COVERAGE_RAW" -o "$COVERAGE_DATA"
-
-    echo "Generating coverage report..."
+    llvm-profdata merge -sparse build/coverage_*.profraw -o "$COVERAGE_DATA"
 
     mkdir -p "$COVERAGE_HTML_DIR"
 
     llvm-cov show "$TEST_BINARY" \
-        -instr-profile="$COVERAGE_DATA" \
-        --format=html \
-        --output-dir="$COVERAGE_HTML_DIR" \
-        --ignore-filename-regex="external|tests|/usr/include|/opt/homebrew"
+      -instr-profile="$COVERAGE_DATA" \
+      --format=html \
+      --output-dir="$COVERAGE_HTML_DIR" \
+      --ignore-filename-regex="external|tests|/usr/include|/opt/homebrew"
 
     echo ""
     echo "✅ Coverage report generated!"
