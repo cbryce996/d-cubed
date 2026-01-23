@@ -38,7 +38,8 @@ jobs:
           brew update
           brew install cmake ninja llvm glm sdl3 googletest nlohmann-json
       - name: Build project
-        run: make build
+        run: |
+          COVERAGE=1 make build
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
