@@ -1,5 +1,6 @@
 #include "engine/engine.h"
 #include "object/demos/instancing.h"
+#include "scene.h"
 
 int main () {
 	std::unique_ptr<Engine> engine = std::make_unique<Engine> ();

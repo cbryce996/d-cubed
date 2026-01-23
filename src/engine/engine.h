@@ -1,14 +1,16 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include <SDL3/SDL.h>
-
-#include "assets/asset.h"
-#include "cameras/camera.h"
 #include "inputs/input.h"
-#include "render/render.h"
-#include "runtime/runtime.h"
-#include "scene/scene.h"
+
+#include <SDL3/SDL.h>
+#include <memory>
+
+class AssetManager;
+class RenderManager;
+class CameraManager;
+class Runtime;
+class Scene;
 
 class Engine {
   public:

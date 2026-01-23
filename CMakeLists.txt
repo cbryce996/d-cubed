@@ -41,6 +41,8 @@ set(GAME_LIB_SOURCES
         src/engine/runtime/runtime.cpp
         src/engine/render/render.cpp
         src/engine/render/graph/graph.cpp
+        src/engine/render/pass/pass.cpp
+        src/engine/render/frame/frame.cpp
         src/engine/render/pipelines/pipeline.cpp
         src/engine/render/pipelines/sdl/factory.cpp
         src/engine/render/buffers/buffer.cpp
@@ -101,6 +103,11 @@ add_executable(engine_tests
         tests/engine/test_cameras.cpp
         tests/engine/test_tasks.cpp
         tests/engine/render/test_pipelines.cpp
+        tests/engine/render/test_mesh.cpp
+        tests/engine/render/test_graph.cpp
+        tests/engine/render/test_material.cpp
+        tests/engine/render/test_pass.cpp
+        tests/engine/render/test_block.cpp
 )
 
 target_compile_features(engine_tests PRIVATE cxx_std_20)

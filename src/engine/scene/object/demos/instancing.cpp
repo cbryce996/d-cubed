@@ -2,7 +2,9 @@
 
 #include "maths/geometry/cube.h"
 #include "maths/geometry/sphere.h"
+#include "render/drawable.h"
 #include "render/material.h"
+#include "render/render.h"
 
 #include <glm/glm.hpp>
 #include <random>

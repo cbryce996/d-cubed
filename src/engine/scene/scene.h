@@ -1,10 +1,11 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "object/object.h"
-#include "render/render.h"
-
+#include <glm/glm.hpp>
 #include <string>
+
+class ISceneObject;
+struct RenderState;
 
 struct SceneLighting {
 	glm::vec3 main_light_position;

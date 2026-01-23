@@ -1,6 +1,13 @@
 #ifndef DRAWABLE_H
 #define DRAWABLE_H
-#include "material.h"
+
+#include "render/block.h"
+
+#include <vector>
+
+struct Buffer;
+struct Mesh;
+struct MaterialInstance;
 
 struct InstanceBatch {
 	std::vector<Block> blocks;

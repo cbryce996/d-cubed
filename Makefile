@@ -1,7 +1,7 @@
 SCRIPT_DIR := scripts
 BUILD_DIR := build
 
-.PHONY: shaders format build tests clean
+.PHONY: shaders format build tests clean setup_hooks
 
 check: check_format build tests
 
@@ -24,6 +24,10 @@ build:
 tests:
 	@echo "=== Test ==="
 	@${SCRIPT_DIR}/test.sh
+
+hooks:
+	@echo "=== Hooks ==="
+	@${SCRIPT_DIR}/setup_hooks.sh
 
 clean:
 	@echo "=== Clean ==="

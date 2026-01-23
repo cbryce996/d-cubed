@@ -3,6 +3,12 @@
 
 #include "render/pipelines/pipeline.h"
 
+#include <SDL3/SDL.h>
+
+struct Pipeline;
+struct PipelineState;
+class ShaderManager;
+
 class SDLPipelineFactory : public IPipelineFactory {
   public:
 	SDLPipelineFactory (

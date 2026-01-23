@@ -1,7 +1,9 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "render/render.h"
+#include <string>
+
+struct RenderState;
 
 class ISceneObject {
   public:

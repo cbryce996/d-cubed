@@ -42,15 +42,6 @@ struct alignas (UNIFORM_ALIGNMENT) Block {
 		std::memcpy (&v, &data[slot * 4], BASE_BLOCK_SIZE * sizeof (float));
 		return v;
 	}
-
-	[[nodiscard]] glm::mat4 to_cpu () const {
-		glm::mat4 m;
-		m[0] = to_cpu (0);
-		m[1] = to_cpu (1);
-		m[2] = to_cpu (2);
-		m[3] = to_cpu (3);
-		return m;
-	}
 };
 
 #endif // MEMORY_H

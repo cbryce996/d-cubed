@@ -1,8 +1,12 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include "render/pass.h"
+#include "render/context.h"
+#include "render/pass/pass.h"
+
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 struct RenderContext;
 
@@ -19,7 +23,7 @@ class RenderGraph {
 	std::unordered_map<std::string, RenderPassInstance> render_passes;
 	std::vector<std::string> sorted_pass_order;
 
-	void topological_sort ();
+	bool validate ();
 };
 
 #endif // GRAPH_H

@@ -1,13 +1,12 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "memory.h"
+#include "maths/vector.h"
+#include "render/block.h"
 
 #include <glm/glm.hpp>
 
-#include "maths/vector.h"
-#include "pipelines/pipeline.h"
-#include "render.h"
+struct Vector3;
 
 struct Mesh {
 	std::string name;

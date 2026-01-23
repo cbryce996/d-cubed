@@ -1,11 +1,13 @@
 #ifndef INSTANCING_H
 #define INSTANCING_H
 
-struct Material;
-
-#include "scene/scene.h"
+#include "object/object.h"
+#include "render/block.h"
 
 #include <string>
+#include <vector>
+
+struct Material;
 
 class InstancingDemo final : public ISceneObject {
   public:
