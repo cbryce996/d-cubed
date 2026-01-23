@@ -36,9 +36,10 @@ jobs:
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           fi
           brew update
-          brew install cmake ninja glm sdl3 googletest nlohmann-json
+          brew install cmake ninja llvm glm sdl3 googletest nlohmann-json
       - name: Build project
-        run: make build
+        run: |
+          COVERAGE=1 make build
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -56,11 +57,48 @@ jobs:
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           fi
           brew update
-          brew install cmake ninja glm sdl3 googletest nlohmann-json
+          brew install cmake ninja llvm glm sdl3 googletest nlohmann-json
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-folder
           path: build
-      - name: Run unit tests
-        run: make tests
+      - name: Run unit tests (with coverage)
+        run: |
+          COVERAGE=1 make tests
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-folder
+          path: build
+          overwrite: true
+
+
+  coverage:
+    runs-on: macos-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install coverage tools
+        run: |
+          if ! command -v brew &> /dev/null; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+          brew update
+          brew install llvm
+          
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-folder
+          path: build
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: build/coverage.lcov
+          fail_ci_if_error: true
