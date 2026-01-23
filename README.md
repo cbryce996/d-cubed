@@ -4,7 +4,7 @@
 https://github.com/cbryce996/d-cubed/actions/workflows/ci.yml
 )
 ![License](https://img.shields.io/badge/license-Dual--License-blueviolet.svg)
-[![Coverage](https://codecov.io/gh/YOUR_ORG/YOUR_REPO/branch/master/graph/badge.svg)](https://codecov.io/gh/YOUR_ORG/YOUR_REPO)
+[![Coverage](https://codecov.io/gh/cbryce996/d-cubed/branch/master/graph/badge.svg)](https://codecov.io/gh/cbryce996/d-cubed)
 
 
 https://github.com/user-attachments/assets/c639ef8e-7388-4695-a30c-3ee516f5888a
