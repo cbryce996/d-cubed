@@ -1,8 +1,8 @@
 #ifndef CUBE_H
 #define CUBE_H
 
+#include "../../mesh/mesh.h"
 #include "maths/vector.h"
-#include "render/mesh.h"
 
 #include <cassert>
 #include <vector>
@@ -89,22 +89,22 @@ inline void calculate_normals (
 	assert (normals.size () == vertices.size ());
 }
 
-inline Mesh generate (const float size) {
+inline MeshInstance generate (const float size) {
 	assert (size > 0.0f);
 
-	Mesh cube{};
+	MeshInstance cube{};
 	cube.name = "Cube";
 
 	const float h = size * 0.5f;
 
-	sample (h, cube.vertices);
-	build_indices (cube.indices);
-	calculate_normals (cube.vertices, cube.normals);
+	sample (h, cube.cpu_state.vertices);
+	build_indices (cube.cpu_state.indices);
+	calculate_normals (cube.cpu_state.vertices, cube.cpu_state.normals);
 
-	assert (!cube.vertices.empty ());
-	assert (cube.vertices.size () == cube.normals.size ());
-	assert (!cube.indices.empty ());
-	assert (cube.indices.size () % 3 == 0);
+	assert (!cube.cpu_state.vertices.empty ());
+	assert (cube.cpu_state.vertices.size () == cube.cpu_state.normals.size ());
+	assert (!cube.cpu_state.indices.empty ());
+	assert (cube.cpu_state.indices.size () % 3 == 0);
 
 	return cube;
 }

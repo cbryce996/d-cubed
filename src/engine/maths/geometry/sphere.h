@@ -1,8 +1,8 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include "../../mesh/mesh.h"
 #include "maths/vector.h"
-#include "render/mesh.h"
 
 #include <cassert>
 #include <cmath>
@@ -118,23 +118,27 @@ inline void calculate_normals (
 	}
 }
 
-inline Mesh
+inline MeshInstance
 generate (const float radius, const int lat_steps, const int long_steps) {
 	assert (radius > 0.0f);
 	assert (lat_steps > 0);
 	assert (long_steps > 0);
 
-	Mesh sphere{};
+	MeshInstance sphere{};
 	sphere.name = "Sphere";
 
-	sample_unit_sphere (radius, lat_steps, long_steps, sphere.vertices);
-	build_indices (lat_steps, long_steps, sphere.indices);
-	calculate_normals (sphere.vertices, sphere.normals);
+	sample_unit_sphere (
+		radius, lat_steps, long_steps, sphere.cpu_state.vertices
+	);
+	build_indices (lat_steps, long_steps, sphere.cpu_state.indices);
+	calculate_normals (sphere.cpu_state.vertices, sphere.cpu_state.normals);
 
-	assert (!sphere.vertices.empty ());
-	assert (sphere.vertices.size () == sphere.normals.size ());
-	assert (!sphere.indices.empty ());
-	assert (sphere.indices.size () % 3 == 0);
+	assert (!sphere.cpu_state.vertices.empty ());
+	assert (
+		sphere.cpu_state.vertices.size () == sphere.cpu_state.normals.size ()
+	);
+	assert (!sphere.cpu_state.indices.empty ());
+	assert (sphere.cpu_state.indices.size () % 3 == 0);
 
 	return sphere;
 }

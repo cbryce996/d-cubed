@@ -13,14 +13,6 @@ struct UniformBinding;
 struct RenderPassState;
 struct MaterialState;
 
-constexpr SDL_GPUVertexElementFormat get_format () {
-#if BASE_COLLECTION_SIZE == 4
-	return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
-#else
-	return SDL_GPU_VERTEXELEMENTFORMAT_INVALID;
-#endif
-};
-
 struct Pipeline {
 	SDL_GPUGraphicsPipeline* pipeline = nullptr;
 	std::string name;
@@ -61,10 +53,6 @@ class PipelineManager {
 	~PipelineManager ();
 
 	Pipeline* get_or_create (const PipelineState& state);
-	void push_uniforms (
-		const std::vector<UniformBinding>& uniform_bindings,
-		const BufferManager& buffer_manager
-	) const;
 
   private:
 	std::shared_ptr<IPipelineFactory> factory;

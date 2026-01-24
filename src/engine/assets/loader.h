@@ -1,10 +1,10 @@
 #ifndef LOADER_H
 #define LOADER_H
 
-#include "../render/block.h"
 #include "maths/vector.h"
 
 #include <string>
+#include <vector>
 
 struct IMeshLoader {
 	virtual ~IMeshLoader () = default;

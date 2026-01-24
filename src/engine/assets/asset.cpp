@@ -1,6 +1,6 @@
 #include "engine/assets/asset.h"
 
-#include "../render/mesh.h"
+#include "../mesh/mesh.h"
 
 #include <SDL3/SDL_log.h>
 
@@ -9,9 +9,9 @@
 AssetManager::AssetManager (std::shared_ptr<IMeshLoader> loader)
 	: loader (std::move (loader)) {}
 
-std::shared_ptr<Mesh>
+std::shared_ptr<MeshInstance>
 AssetManager::load_mesh_from_file (const std::string& path) {
-	auto mesh = std::make_shared<Mesh> ();
+	auto mesh = std::make_shared<MeshInstance> ();
 	mesh->name = path;
 
 	std::vector<Vector3> vertices;
@@ -23,18 +23,19 @@ AssetManager::load_mesh_from_file (const std::string& path) {
 		return nullptr;
 	}
 
-	mesh->vertices = vertices;
+	mesh->cpu_state.vertices = vertices;
 	meshes[path] = mesh;
 
 	return mesh;
 }
 
-std::shared_ptr<Mesh> AssetManager::load_mesh (const std::string& path) {
+std::shared_ptr<MeshInstance>
+AssetManager::load_mesh (const std::string& path) {
 	std::lock_guard lock (mesh_mutex);
 
-	auto it = meshes.find (path);
-	if (it != meshes.end ())
-		return it->second;
+	auto iterator = meshes.find (path);
+	if (iterator != meshes.end ())
+		return iterator->second;
 
 	auto mesh = load_mesh_from_file (path);
 	meshes[path] = mesh;
@@ -54,8 +55,8 @@ void AssetManager::reload_mesh (const std::string& path) {
 	}).detach ();
 }
 
-std::shared_ptr<Mesh> AssetManager::get_mesh (const std::string& path) {
+std::shared_ptr<MeshInstance> AssetManager::get_mesh (const std::string& path) {
 	std::lock_guard lock (mesh_mutex);
-	auto it = meshes.find (path);
-	return it != meshes.end () ? it->second : nullptr;
+	auto iterator = meshes.find (path);
+	return iterator != meshes.end () ? iterator->second : nullptr;
 }

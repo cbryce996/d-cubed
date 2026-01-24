@@ -1,7 +1,6 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include "../block.h"
 #include "utils.h"
 
 #include <string>

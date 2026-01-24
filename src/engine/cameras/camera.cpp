@@ -1,11 +1,13 @@
 #include "camera.h"
+#include "inputs/input.h"
+#include "utils.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "SDL3/SDL_scancode.h"
-#include "utils.h"
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_scancode.h>
 
 CameraManager::CameraManager (const Camera& active_camera) {
 	add_camera (active_camera);

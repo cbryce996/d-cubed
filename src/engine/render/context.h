@@ -1,10 +1,11 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
+#include "drawable.h"
+
 #include <SDL3/SDL.h>
 #include <vector>
 
-struct Drawable;
 class CameraManager;
 class FrameManager;
 class ShaderManager;
