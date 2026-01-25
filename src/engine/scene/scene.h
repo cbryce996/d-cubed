@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <string>
 
-class ISceneObject;
+class IEntity;
 struct RenderState;
 
 struct SceneLighting {
@@ -19,14 +19,13 @@ class Scene {
 	void on_unload ();
 
 	void update (float dt_ms, float sim_time_ms);
-	void collect_drawables (RenderState& out);
+	void collect_drawables (RenderState& out_render_state);
 
-	void add_object (std::unique_ptr<ISceneObject> object);
+	void add_entity (std::unique_ptr<IEntity> object);
 
   private:
 	bool loaded = false;
-	std::unordered_map<std::string, std::unique_ptr<ISceneObject>>
-		scene_objects;
+	std::unordered_map<std::string, std::unique_ptr<IEntity>> scene_entities;
 };
 
 #endif // SCENE_H

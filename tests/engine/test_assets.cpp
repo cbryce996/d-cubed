@@ -5,8 +5,8 @@
 #include <string>
 #include <thread>
 
+#include "../../src/engine/mesh/mesh.h"
 #include "engine/assets/asset.h"
-#include "engine/render/mesh.h"
 
 struct FakeLoader : IMeshLoader {
 	bool load (
@@ -23,53 +23,66 @@ class AssetManagerTest : public ::testing::Test {
 };
 
 TEST_F (AssetManagerTest, LoadsMeshSuccessfully) {
-	std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
-	AssetManager* asset_manager = new AssetManager (loader);
+	const std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
+	auto* asset_manager = new AssetManager (loader);
 
-	std::shared_ptr<Mesh> mesh = asset_manager->load_mesh ("cube.obj");
-	ASSERT_NE (mesh, nullptr) << "Expected mesh to not be null";
-	EXPECT_GT (mesh->vertices.size (), 0) << "Expected loaded mesh to have "
-											 "vertices";
-	EXPECT_EQ (mesh->name, "cube.obj") << "Expected mesh to have name";
+	const std::shared_ptr<MeshInstance> mesh = asset_manager->load_mesh (
+		"cube.obj"
+	);
+	ASSERT_NE (mesh, nullptr);
+	EXPECT_GT (mesh->cpu_state.vertices.size (), 0);
+	EXPECT_EQ (mesh->name, "cube.obj");
 }
 
 TEST_F (AssetManagerTest, CachesLoadedMesh) {
-	std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
-	AssetManager* asset_manager = new AssetManager (loader);
+	const std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
+	auto* asset_manager = new AssetManager (loader);
 
-	std::shared_ptr<Mesh> mesh1 = asset_manager->load_mesh ("cube.obj");
-	std::shared_ptr<Mesh> mesh2 = asset_manager->load_mesh ("cube.obj");
-	ASSERT_EQ (mesh1, mesh2) << "Expected cached mesh";
+	const std::shared_ptr<MeshInstance> mesh1 = asset_manager->load_mesh (
+		"cube.obj"
+	);
+	const std::shared_ptr<MeshInstance> mesh2 = asset_manager->load_mesh (
+		"cube.obj"
+	);
+	ASSERT_EQ (mesh1, mesh2);
 }
 
 TEST_F (AssetManagerTest, RetrievesLoadedMesh) {
-	std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
-	AssetManager* asset_manager = new AssetManager (loader);
+	const std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
+	auto* asset_manager = new AssetManager (loader);
 
 	asset_manager->load_mesh ("cube.obj");
-	std::shared_ptr<Mesh> mesh = asset_manager->get_mesh ("cube.obj");
-	ASSERT_NE (mesh, nullptr) << "Expected mesh to not be null";
-	EXPECT_EQ (mesh->name, "cube.obj") << "Expected mesh to have name'";
+	const std::shared_ptr<MeshInstance> mesh = asset_manager->get_mesh (
+		"cube.obj"
+	);
+	ASSERT_NE (mesh, nullptr);
+	EXPECT_EQ (mesh->name, "cube.obj");
 }
 
 TEST_F (AssetManagerTest, ReturnsNullForMissingMesh) {
-	std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
-	AssetManager* asset_manager = new AssetManager (loader);
+	const std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
+	auto* asset_manager = new AssetManager (loader);
 
-	std::shared_ptr<Mesh> mesh = asset_manager->get_mesh ("null.obj");
-	EXPECT_EQ (mesh, nullptr) << "Expected mesh to be null";
+	const std::shared_ptr<MeshInstance> mesh = asset_manager->get_mesh (
+		"null.obj"
+	);
+	EXPECT_EQ (mesh, nullptr);
 }
 
 TEST_F (AssetManagerTest, ReloadsMeshUpdatesCache) {
-	std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
-	AssetManager* asset_manager = new AssetManager (loader);
+	const std::shared_ptr<IMeshLoader> loader = std::make_shared<FakeLoader> ();
+	auto* asset_manager = new AssetManager (loader);
 
-	std::shared_ptr<Mesh> mesh1 = asset_manager->load_mesh ("cube.obj");
+	const std::shared_ptr<MeshInstance> mesh1 = asset_manager->load_mesh (
+		"cube.obj"
+	);
 	asset_manager->reload_mesh ("cube.obj");
 
 	std::this_thread::sleep_for (std::chrono::milliseconds (100));
 
-	std::shared_ptr<Mesh> mesh2 = asset_manager->get_mesh ("cube.obj");
-	ASSERT_NE (mesh2, nullptr) << "Expected mesh to not be null";
-	EXPECT_NE (mesh1, mesh2) << "Expected mesh to not be cached";
+	const std::shared_ptr<MeshInstance> mesh2 = asset_manager->get_mesh (
+		"cube.obj"
+	);
+	ASSERT_NE (mesh2, nullptr);
+	EXPECT_NE (mesh1, mesh2);
 }

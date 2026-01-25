@@ -2,7 +2,7 @@
 #include "pass.h"
 
 #include "cameras/camera.h"
-#include "render/block.h"
+#include "mesh/mesh.h"
 #include "render/buffers/buffer.h"
 #include "render/context.h"
 #include "render/drawable.h"
@@ -28,37 +28,41 @@ RenderPassInstance UniformPass = {
 			= CameraManager::compute_view_projection (
 				*active_camera, aspect_ratio
 			);
-		Block view_uniform_block = Block::from (view_projection);
+
+		Block view_uniform_block{};
+		write_vec4 (view_uniform_block, 0, view_projection[0]);
+		write_vec4 (view_uniform_block, 1, view_projection[1]);
+		write_vec4 (view_uniform_block, 2, view_projection[2]);
+		write_vec4 (view_uniform_block, 3, view_projection[3]);
 
 		Block global_uniform_block{};
-		global_uniform_block.clear ();
-		global_uniform_block.write (0, glm::vec4 (light_pos_world, 1.0f));
-		global_uniform_block.write (
-			1, glm::vec4 (render_context.time, 0.0f, 0.0f, 0.0f)
+		write_vec4 (global_uniform_block, 0, glm::vec4 (light_pos_world, 1.0f));
+		write_vec4 (
+			global_uniform_block, 1,
+			glm::vec4 (render_context.time, 0.0f, 0.0f, 0.0f)
 		);
-		global_uniform_block.write (
-			2, glm::vec4 (active_camera->transform.position, 0.0f)
+		write_vec4 (
+			global_uniform_block, 2,
+			glm::vec4 (active_camera->transform.position, 0.0f)
 		);
 
 		std::vector<UniformBinding> uniform_bindings;
 
 		UniformBinding view_uniform_binding{};
-		view_uniform_binding.data = &view_uniform_block.data;
+		view_uniform_binding.data = view_uniform_block.data;
 		view_uniform_binding.slot = 0;
 		view_uniform_binding.size = sizeof (Block);
 		view_uniform_binding.stage = ShaderStage::Vertex;
 		uniform_bindings.push_back (view_uniform_binding);
 
 		UniformBinding global_uniform_binding{};
-		global_uniform_binding.data = &global_uniform_block.data;
+		global_uniform_binding.data = global_uniform_block.data;
 		global_uniform_binding.slot = 1;
 		global_uniform_binding.size = sizeof (Block);
 		global_uniform_binding.stage = ShaderStage::Both;
 		uniform_bindings.push_back (global_uniform_binding);
 
-		render_context.pipeline_manager->push_uniforms (
-			uniform_bindings, *render_context.buffer_manager
-		);
+		render_context.buffer_manager->push_uniforms (uniform_bindings);
 	}
 };
 
@@ -96,7 +100,7 @@ RenderPassInstance GeometryPass = {
 		render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, *render_context.buffer_manager);
 		render_context.frame_manager->set_viewport (render_context.render_pass, render_context.width, render_context.height);
 
-		for (const Drawable& drawable : *render_context.drawables) {
+		for (Drawable& drawable : *render_context.drawables) {
 			const PipelineState pipeline_state{
 				.render_pass_state = render_pass_instance.state,
 				.material_state = drawable.material->state,
@@ -104,13 +108,10 @@ RenderPassInstance GeometryPass = {
 
 			const Pipeline* pipeline = render_context.pipeline_manager
 										   ->get_or_create (pipeline_state);
-			const Buffer* vertex_buffer = drawable.vertex_buffer;
-			const Buffer* instance_buffer = drawable.instance_buffer;
-			const Buffer* index_buffer = drawable.index_buffer;
 
 			render_context.frame_manager->draw_mesh (
-				*pipeline, *vertex_buffer, *instance_buffer, *index_buffer,
-				drawable, *render_context.render_pass
+				*pipeline, *render_context.buffer_manager, drawable,
+				*render_context.render_pass
 			);
 		}
 

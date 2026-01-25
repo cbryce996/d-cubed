@@ -1,11 +1,12 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "entity/entity.h"
+
 #include <string>
 #include <unordered_map>
 
-#include "../inputs/input.h"
-#include "entity.h"
+struct MouseInput;
 
 struct Lens {
 	float fov;

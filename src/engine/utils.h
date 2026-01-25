@@ -3,11 +3,13 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 
+#include "entity/entity.h"
+#include "mesh/mesh.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
-
-#include "scene/entity.h"
 
 #include <random>
 
@@ -62,6 +64,11 @@ inline uint64_t generate_uuid64 () {
 
 inline void hash_combine (size_t& seed, const size_t value) {
 	seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+}
+
+inline void write_vec4 (Block& block, size_t slot, const glm::vec4& v) {
+	assert (slot < 4);
+	std::memcpy (&block.data[slot * 4], glm::value_ptr (v), sizeof (glm::vec4));
 }
 
 #endif // UTILS_H

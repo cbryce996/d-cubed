@@ -1,13 +1,12 @@
 #ifndef WAVE_H
 #define WAVE_H
 
-#include "object/object.h"
-#include "render/drawable.h"
+#include "entity/entity.h"
 
 #include <glm/glm.hpp>
 
 struct Block;
-class Wave final : public ISceneObject {
+class Wave final : public IEntity {
   public:
 	explicit Wave (
 		glm::vec3 offset = glm::vec3 (0.0f), float rotation_radians = 0.0f,
@@ -17,14 +16,10 @@ class Wave final : public ISceneObject {
 	void on_load () override;
 	void on_unload () override;
 	void update (float dt_ms, float sim_time_ms) override;
-
-	void collect_drawables (RenderState& out_render_state) override;
+	void pack_instances (std::vector<Block>& out_blocks) const override;
 
   private:
 	void setup_grid ();
-
-	std::vector<Block> instances;
-	InstanceBatch batch;
 
 	glm::vec3 offset;
 	float rotation;

@@ -1,9 +1,9 @@
 #include "buffer.h"
 
-#include "../mesh.h"
 #include "SDL3/SDL_gpu.h"
 #include "SDL3/SDL_log.h"
-#include "render/drawable.h"
+#include "render/material.h"
+#include "render/render.h"
 
 BufferManager::BufferManager (SDL_GPUDevice* device) : device (device) {}
 
@@ -18,15 +18,23 @@ Buffer* BufferManager::get_buffer (const std::string& name) {
 	return buffer;
 }
 
-Buffer* BufferManager::get_or_create_vertex_buffer (const Drawable* drawable) {
-	std::string key = drawable->mesh->name + "_vertex";
+Buffer* BufferManager::get_or_create_vertex_buffer (const MeshInstance& mesh) {
+	const std::string key = mesh.name + "_vertex";
+
 	Buffer* buffer = buffers.contains (key) ? &buffers[key] : nullptr;
 	if (buffer)
 		return buffer;
 
+	const size_t raw_size = mesh.gpu_state.vertices.size () * sizeof (Block);
+
+	assert (raw_size > 0);
+	assert (raw_size % ALIGNMENT == 0);
+	assert (sizeof (Block) % ALIGNMENT == 0);
+
 	buffer = new Buffer{};
-	buffer->name = drawable->mesh->name;
-	buffer->size = drawable->mesh->vertices.size () * sizeof (Block);
+	buffer->name = key;
+	buffer->size = raw_size;
+
 	buffer->gpu_buffer.buffer = create_buffer (
 		{.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = buffer->size}
 	);
@@ -34,23 +42,29 @@ Buffer* BufferManager::get_or_create_vertex_buffer (const Drawable* drawable) {
 		{.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = buffer->size}
 	);
 
-	add_buffer (*buffer);
+	assert (buffer->gpu_buffer.buffer);
+	assert (buffer->cpu_buffer.buffer);
+
+	buffers.emplace (key, *buffer);
 	return buffer;
 }
 
-Buffer* BufferManager::get_or_create_index_buffer (const Drawable* drawable) {
-	assert (drawable);
-	assert (drawable->mesh);
-	assert (!drawable->mesh->gpu_indices.empty ());
+Buffer* BufferManager::get_or_create_index_buffer (const MeshInstance& mesh) {
+	const std::string key = mesh.name + "_index";
 
-	std::string key = drawable->mesh->name + "_index";
 	Buffer* buffer = buffers.contains (key) ? &buffers[key] : nullptr;
 	if (buffer)
 		return buffer;
 
+	const size_t raw_size = mesh.gpu_state.indices.size () * sizeof (uint32_t);
+
+	assert (raw_size > 0);
+	assert (raw_size % 4 == 0);
+
 	buffer = new Buffer{};
 	buffer->name = key;
-	buffer->size = drawable->mesh->gpu_indices.size () * sizeof (uint32_t);
+	buffer->size = raw_size;
+
 	buffer->gpu_buffer.buffer = create_buffer (
 		{.usage = SDL_GPU_BUFFERUSAGE_INDEX, .size = buffer->size}
 	);
@@ -58,23 +72,36 @@ Buffer* BufferManager::get_or_create_index_buffer (const Drawable* drawable) {
 		{.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = buffer->size}
 	);
 
+	assert (buffer->gpu_buffer.buffer);
+	assert (buffer->cpu_buffer.buffer);
+
+	buffers.emplace (key, *buffer);
 	return buffer;
 }
 
 Buffer*
-BufferManager::get_or_create_instance_buffer (const Drawable* drawable) {
+BufferManager::get_or_create_instance_buffer (const Drawable& drawable) {
 	const std::string key
-		= "instance_"
+		= "instance_" + drawable.mesh->name + "_" + drawable.material->name
+		  + "_"
 		  + std::to_string (
-			  reinterpret_cast<uintptr_t> (drawable->instance_batch)
+			  reinterpret_cast<uintptr_t> (&drawable.instance_blocks)
 		  );
+
 	Buffer* buffer = buffers.contains (key) ? &buffers[key] : nullptr;
 	if (buffer)
 		return buffer;
 
+	const size_t raw_size = drawable.instance_blocks.size () * sizeof (Block);
+
+	assert (raw_size > 0);
+	assert (raw_size % ALIGNMENT == 0);
+	assert (sizeof (Block) % ALIGNMENT == 0);
+
 	buffer = new Buffer{};
 	buffer->name = key;
-	buffer->size = drawable->instance_batch->blocks.size () * sizeof (Block);
+	buffer->size = raw_size;
+
 	buffer->gpu_buffer.buffer = create_buffer (
 		{.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
 		 .size = buffer->size}
@@ -83,12 +110,11 @@ BufferManager::get_or_create_instance_buffer (const Drawable* drawable) {
 		{.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = buffer->size}
 	);
 
-	add_buffer (*buffer);
-	return buffer;
-}
+	assert (buffer->gpu_buffer.buffer);
+	assert (buffer->cpu_buffer.buffer);
 
-void BufferManager::add_buffer (Buffer& buffer) {
-	buffers.emplace (buffer.name, buffer);
+	buffers.emplace (key, *buffer);
+	return buffer;
 }
 
 SDL_GPUBuffer*
@@ -110,14 +136,14 @@ SDL_GPUTransferBuffer* BufferManager::create_transfer_buffer (
 	return SDL_CreateGPUTransferBuffer (device, &buffer_create_info);
 }
 
-void BufferManager::upload (const Buffer* buffer) const {
+void BufferManager::upload (const Buffer& buffer) const {
 	SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass (command_buffer);
 
 	const SDL_GPUTransferBufferLocation transfer_loc{
-		buffer->cpu_buffer.buffer, 0
+		buffer.cpu_buffer.buffer, 0
 	};
 	const SDL_GPUBufferRegion buffer_region{
-		buffer->gpu_buffer.buffer, 0, static_cast<Uint32> (buffer->size)
+		buffer.gpu_buffer.buffer, 0, static_cast<Uint32> (buffer.size)
 	};
 
 	SDL_UploadToGPUBuffer (copy, &transfer_loc, &buffer_region, true);
@@ -125,31 +151,46 @@ void BufferManager::upload (const Buffer* buffer) const {
 }
 
 void BufferManager::write (
-	const void* data, size_t size, Buffer* buffer
+	const void* data, const size_t size, Buffer& buffer
 ) const {
-	if (size > buffer->size) {
-		SDL_LogError (
-			SDL_LOG_CATEGORY_RENDER, "Mesh too large to copy into buffer."
-		);
-		return;
-	}
+	assert (data);
+	assert (size > 0);
+	assert (size <= buffer.size);
+	assert (size % ALIGNMENT == 0);
+	assert (buffer.size % ALIGNMENT == 0);
 
 	void* mapped_buffer = SDL_MapGPUTransferBuffer (
-		device, buffer->cpu_buffer.buffer, true
+		device, buffer.cpu_buffer.buffer, true
 	);
 
-	if (!mapped_buffer) {
-		SDL_LogError (
-			SDL_LOG_CATEGORY_RENDER, "Failed to map vertex buffer: %s",
-			SDL_GetError ()
-		);
-		return;
-	}
+	assert (mapped_buffer);
+	assert (reinterpret_cast<uintptr_t> (mapped_buffer) % ALIGNMENT == 0);
 
-	buffer->cpu_buffer.mapped = true;
-	buffer->cpu_buffer.mapped_buffer = mapped_buffer;
+	buffer.cpu_buffer.mapped = true;
+	buffer.cpu_buffer.mapped_buffer = mapped_buffer;
 
 	std::memcpy (mapped_buffer, data, size);
 
-	SDL_UnmapGPUTransferBuffer (device, buffer->cpu_buffer.buffer);
+	SDL_UnmapGPUTransferBuffer (device, buffer.cpu_buffer.buffer);
+}
+
+void BufferManager::push_uniforms (
+	const std::vector<UniformBinding>& uniform_bindings
+) const {
+	assert (!uniform_bindings.empty ());
+
+	for (const auto& [name, slot, data, size, stage] : uniform_bindings) {
+		assert (data);
+		assert (size > 0);
+		assert (size % BLOCK_BYTES == 0);
+		assert (reinterpret_cast<uintptr_t> (data) % ALIGNMENT == 0);
+
+		if (stage == ShaderStage::Vertex || stage == ShaderStage::Both) {
+			SDL_PushGPUVertexUniformData (command_buffer, slot, data, size);
+		}
+
+		if (stage == ShaderStage::Fragment || stage == ShaderStage::Both) {
+			SDL_PushGPUFragmentUniformData (command_buffer, slot, data, size);
+		}
+	}
 }

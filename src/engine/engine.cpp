@@ -2,8 +2,7 @@
 
 #include "assets/asset.h"
 #include "cameras/camera.h"
-#include "object/demos/instancing.h"
-#include "object/demos/wave.h"
+#include "entity/demos/wave.h"
 #include "render/buffers/buffer.h"
 #include "render/pipelines/sdl/factory.h"
 #include "render/render.h"
@@ -119,13 +118,8 @@ void Engine::run () {
 			running = false;
 		if (keyboard.keys[SDL_SCANCODE_1]) {
 			std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
-			scene->add_object (std::make_unique<InstancingDemo> ());
-			request_scene (std::move (scene));
-		}
-		if (keyboard.keys[SDL_SCANCODE_2]) {
-			std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
 
-			scene->add_object (
+			scene->add_entity (
 				std::make_unique<Wave> (
 					glm::vec3 (0, 0, 0), 0.0f, 0.0f, "wave1"
 				)

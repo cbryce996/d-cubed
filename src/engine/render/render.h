@@ -14,7 +14,6 @@ class BufferManager;
 class PipelineManager;
 class ShaderManager;
 struct Drawable;
-struct Material;
 
 enum class ShaderStage : uint8_t {
 	Vertex = 1 << 0,

@@ -5,9 +5,7 @@
 #include <unordered_map>
 
 #include "SDL3/SDL_gpu.h"
-
-constexpr size_t UNIFORM_BUFFER_SIZE = 512 * 1024;
-constexpr size_t TRANSFER_BUFFER_SIZE = 1024 * 1024;
+#include "render/render.h"
 
 struct Drawable;
 
@@ -68,9 +66,9 @@ class BufferManager {
 	SDL_GPUSampler* linear_sampler = nullptr;
 
 	Buffer* get_buffer (const std::string& name);
-	Buffer* get_or_create_vertex_buffer (const Drawable* drawable);
-	Buffer* get_or_create_index_buffer (const Drawable* drawable);
-	Buffer* get_or_create_instance_buffer (const Drawable* drawable);
+	Buffer* get_or_create_vertex_buffer (const MeshInstance& mesh);
+	Buffer* get_or_create_index_buffer (const MeshInstance& mesh);
+	Buffer* get_or_create_instance_buffer (const Drawable& drawable);
 
 	void add_buffer (Buffer& buffer);
 
@@ -79,8 +77,10 @@ class BufferManager {
 	[[nodiscard]] SDL_GPUTransferBuffer*
 	create_transfer_buffer (TransferBufferConfig buffer_config) const;
 
-	void write (const void* data, size_t size, Buffer* buffer) const;
-	void upload (const Buffer* buffer) const;
+	void write (const void* data, size_t size, Buffer& buffer) const;
+	void
+	push_uniforms (const std::vector<UniformBinding>& uniform_bindings) const;
+	void upload (const Buffer& buffer) const;
 
   private:
 	SDL_GPUDevice* device = nullptr;

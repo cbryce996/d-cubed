@@ -1,22 +1,20 @@
 #ifndef DRAWABLE_H
 #define DRAWABLE_H
 
-#include "render/block.h"
+#include "entity/entity.h"
+#include "mesh/mesh.h"
 
 #include <vector>
 
 struct Buffer;
-struct Mesh;
+struct MeshInstance;
 struct MaterialInstance;
 
-struct InstanceBatch {
-	std::vector<Block> blocks;
-};
-
 struct Drawable {
-	Mesh* mesh = nullptr;
+	MeshInstance* mesh = nullptr;
 	MaterialInstance* material = nullptr;
-	InstanceBatch* instance_batch = nullptr;
+	std::vector<Block> instance_blocks;
+	Transform transform;
 
 	Buffer* instance_buffer = nullptr;
 	Buffer* index_buffer = nullptr;

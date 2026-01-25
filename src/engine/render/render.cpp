@@ -4,7 +4,6 @@
 #include "buffers/buffer.h"
 #include "context.h"
 #include "drawable.h"
-#include "mesh.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
@@ -115,11 +114,11 @@ void RenderManager::create_gbuffer_textures (
 
 	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
 	buffer_manager->g_normal_texture = SDL_CreateGPUTexture (device, &info);
-	assert (buffer_manager->g_position_texture);
+	assert (buffer_manager->g_normal_texture);
 
 	info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
 	buffer_manager->g_albedo_texture = SDL_CreateGPUTexture (device, &info);
-	assert (buffer_manager->g_position_texture);
+	assert (buffer_manager->g_albedo_texture);
 
 	if (!buffer_manager->linear_sampler) {
 		SDL_GPUSamplerCreateInfo sampler_info{};
@@ -133,7 +132,7 @@ void RenderManager::create_gbuffer_textures (
 		buffer_manager->linear_sampler = SDL_CreateGPUSampler (
 			device, &sampler_info
 		);
-		assert (buffer_manager->g_position_texture);
+		assert (buffer_manager->linear_sampler);
 	}
 
 	SDL_LogInfo (
@@ -173,7 +172,7 @@ void RenderManager::setup_render_graph () {
 	assert (RenderPasses::DeferredPass.execute);
 }
 
-void RenderManager::resize (int new_width, int new_height) {
+void RenderManager::resize (const int new_width, const int new_height) {
 	width = new_width;
 	height = new_height;
 
@@ -231,42 +230,42 @@ void RenderManager::create_depth_texture () const {
 void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 	for (Drawable& drawable : drawables) {
 		assert (drawable.mesh);
-		assert (drawable.instance_batch);
+		assert (&drawable.instance_blocks);
 
 		// --- Instance buffer ---
 		drawable.instance_buffer
-			= buffer_manager->get_or_create_instance_buffer (&drawable);
+			= buffer_manager->get_or_create_instance_buffer (drawable);
 
 		buffer_manager->write (
-			drawable.instance_batch->blocks.data (),
-			drawable.instance_batch->blocks.size () * sizeof (Block),
-			drawable.instance_buffer
+			drawable.instance_blocks.data (),
+			drawable.instance_blocks.size () * sizeof (Block),
+			*drawable.instance_buffer
 		);
-		buffer_manager->upload (drawable.instance_buffer);
+		buffer_manager->upload (*drawable.instance_buffer);
 
 		// --- Vertex buffer ---
 		drawable.vertex_buffer = buffer_manager->get_or_create_vertex_buffer (
-			&drawable
+			*drawable.mesh
 		);
 
 		buffer_manager->write (
-			drawable.mesh->gpu_vertices.data (),
-			drawable.mesh->gpu_vertices.size () * sizeof (Block),
-			drawable.vertex_buffer
+			drawable.mesh->gpu_state.vertices.data (),
+			drawable.mesh->gpu_state.vertices.size () * sizeof (Block),
+			*drawable.vertex_buffer
 		);
-		buffer_manager->upload (drawable.vertex_buffer);
+		buffer_manager->upload (*drawable.vertex_buffer);
 
 		// --- Index buffer ---
 		drawable.index_buffer = buffer_manager->get_or_create_index_buffer (
-			&drawable
+			*drawable.mesh
 		);
 
 		buffer_manager->write (
-			drawable.mesh->gpu_indices.data (),
-			drawable.mesh->gpu_indices.size () * sizeof (uint32_t),
-			drawable.index_buffer
+			drawable.mesh->gpu_state.indices.data (),
+			drawable.mesh->gpu_state.indices.size () * sizeof (uint32_t),
+			*drawable.index_buffer
 		);
-		buffer_manager->upload (drawable.index_buffer);
+		buffer_manager->upload (*drawable.index_buffer);
 	}
 }
 
