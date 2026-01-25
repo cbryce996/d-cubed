@@ -1,10 +1,7 @@
 #ifndef FRAME_H
 #define FRAME_H
 
-#include "mesh/mesh.h"
-
 #include <SDL3/SDL.h>
-
 struct Drawable;
 struct Buffer;
 struct Pipeline;

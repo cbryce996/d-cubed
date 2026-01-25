@@ -1,5 +1,6 @@
 #include "scene.h"
 
+#include "entity/components/prefabs/instancing.h"
 #include "entity/entity.h"
 #include "render/drawable.h"
 #include "render/render.h"
@@ -35,7 +36,11 @@ void Scene::collect_drawables (RenderState& out_render_state) {
 		};
 
 		drawable.instance_blocks.clear ();
-		entity->pack_instances (drawable.instance_blocks);
+
+		if (entity->has_component<InstancingComponent> ()) {
+			const auto* inst = entity->get_component<InstancingComponent> ();
+			inst->pack (drawable.instance_blocks);
+		}
 
 		out_render_state.drawables.push_back (drawable);
 	}

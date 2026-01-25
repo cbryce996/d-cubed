@@ -2,7 +2,7 @@
 
 #include "assets/asset.h"
 #include "cameras/camera.h"
-#include "entity/demos/wave.h"
+#include "entity/prefabs/spheres.h"
 #include "render/buffers/buffer.h"
 #include "render/pipelines/sdl/factory.h"
 #include "render/render.h"
@@ -120,7 +120,7 @@ void Engine::run () {
 			std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
 
 			scene->add_entity (
-				std::make_unique<Wave> (
+				std::make_unique<Spheres> (
 					glm::vec3 (0, 0, 0), 0.0f, 0.0f, "wave1"
 				)
 			);

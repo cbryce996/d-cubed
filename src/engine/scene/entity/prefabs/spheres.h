@@ -1,25 +1,27 @@
-#ifndef WAVE_H
-#define WAVE_H
+#ifndef SPHERES_H
+#define SPHERES_H
 
 #include "entity/entity.h"
 
 #include <glm/glm.hpp>
 
+class InstancingComponent;
 struct Block;
-class Wave final : public IEntity {
+
+class Spheres final : public IEntity {
   public:
-	explicit Wave (
+	explicit Spheres (
 		glm::vec3 offset = glm::vec3 (0.0f), float rotation_radians = 0.0f,
 		float phase_offset = 0.0f, std::string name = "Wave"
 	);
 
 	void on_load () override;
 	void on_unload () override;
+
 	void update (float dt_ms, float sim_time_ms) override;
-	void pack_instances (std::vector<Block>& out_blocks) const override;
 
   private:
-	void setup_grid ();
+	void setup_grid (InstancingComponent& instancing) const;
 
 	glm::vec3 offset;
 	float rotation;
@@ -29,4 +31,4 @@ class Wave final : public IEntity {
 	static constexpr float SPACING = 1.5f;
 };
 
-#endif // WAVE_H
+#endif // SPHERES_H
