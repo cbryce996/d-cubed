@@ -3,8 +3,8 @@
 
 #include "drawable.h"
 
-#include <vector>
 #include <SDL3/SDL.h>
+#include <vector>
 
 class CameraManager;
 class FrameManager;

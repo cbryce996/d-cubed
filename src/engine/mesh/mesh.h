@@ -16,7 +16,6 @@ struct MeshCPUState {
 
 struct MeshGPUState {
 	std::vector<Block> vertices;
-	std::vector<Block> normals;
 	std::vector<uint32_t> indices;
 };
 

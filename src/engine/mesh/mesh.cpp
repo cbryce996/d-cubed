@@ -1,5 +1,6 @@
 #include "mesh.h"
 #include "assets/asset.h"
+#include "maths/geometry/sphere.h"
 
 #include <cassert>
 
@@ -76,5 +77,4 @@ void to_cpu (MeshInstance& mesh) {
 	assert (!mesh.cpu_state.normals.empty ());
 	assert (!mesh.cpu_state.indices.empty ());
 }
-
 }

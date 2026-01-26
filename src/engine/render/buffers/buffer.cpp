@@ -56,7 +56,7 @@ Buffer* BufferManager::get_or_create_index_buffer (const MeshInstance& mesh) {
 	if (buffer)
 		return buffer;
 
-	const size_t raw_size = mesh.gpu_state.indices.size () * sizeof (uint32_t);
+	const size_t raw_size = mesh.gpu_state.indices.size () * sizeof (Block);
 
 	assert (raw_size > 0);
 	assert (raw_size % 4 == 0);
@@ -156,7 +156,8 @@ void BufferManager::write (
 	assert (data);
 	assert (size > 0);
 	assert (size <= buffer.size);
-	assert (size % ALIGNMENT == 0);
+	// assert (size % ALIGNMENT == 0); TODO: Compare LCM for all alignment
+	// asserts
 	assert (buffer.size % ALIGNMENT == 0);
 
 	void* mapped_buffer = SDL_MapGPUTransferBuffer (

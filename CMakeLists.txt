@@ -36,6 +36,7 @@ set(GAME_LIB_SOURCES
         src/engine/scene/entity/components/prefabs/instancing.cpp
         src/engine/scene/entity/components/prefabs/wave.cpp
         src/engine/scene/entity/prefabs/spheres.cpp
+        src/engine/scene/entity/prefabs/static.cpp
         src/engine/scene/entity/entity.cpp
         src/engine/scene/scene.cpp
         src/engine/runtime/schedule/schedule.cpp

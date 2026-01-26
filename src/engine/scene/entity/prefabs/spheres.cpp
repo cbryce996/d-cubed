@@ -6,10 +6,12 @@
 
 Spheres::Spheres (
 	glm::vec3 offset_, float rotation_radians_, float phase_offset_,
-	std::string name
+	std::string name, MeshInstance* mesh, MaterialInstance* material,
+	const Transform& transform, const Transform& world_transform
 )
-	: IEntity (std::move (name)), offset (offset_),
-	  rotation (rotation_radians_), phase_offset (phase_offset_) {}
+	: IEntity (std::move (name), mesh, material, transform, world_transform),
+	  offset (offset_), rotation (rotation_radians_),
+	  phase_offset (phase_offset_) {}
 
 void Spheres::setup_grid (InstancingComponent& instancing) const {
 	instancing.instances.clear ();

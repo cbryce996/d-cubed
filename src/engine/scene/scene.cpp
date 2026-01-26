@@ -23,6 +23,7 @@ void Scene::on_unload () {
 
 void Scene::update (const float dt_ms, const float sim_time_ms) {
 	for (const auto& entity : scene_entities | std::views::values) {
+		entity->update_world_transform ();
 		entity->update (dt_ms, sim_time_ms);
 	}
 }

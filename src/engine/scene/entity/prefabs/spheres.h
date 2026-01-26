@@ -12,7 +12,9 @@ class Spheres final : public IEntity {
   public:
 	explicit Spheres (
 		glm::vec3 offset = glm::vec3 (0.0f), float rotation_radians = 0.0f,
-		float phase_offset = 0.0f, std::string name = "Wave"
+		float phase_offset = 0.0f, std::string name = "Spheres",
+		MeshInstance* mesh = nullptr, MaterialInstance* material = nullptr,
+		const Transform& transform = {}, const Transform& world_transform = {}
 	);
 
 	void on_load () override;

@@ -24,17 +24,29 @@ struct Transform {
 
 class IEntity {
   public:
-	explicit IEntity (std::string name);
+	explicit IEntity (
+		std::string name, MeshInstance* mesh, MaterialInstance* material,
+		const Transform& transform, const Transform& world_transform
+	);
 	virtual ~IEntity ();
 
 	std::string name;
 	Transform transform;
+	Transform world_transform;
+
 	MeshInstance* mesh = nullptr;
 	MaterialInstance* material = nullptr;
+
+	IEntity* parent = nullptr;
+	std::vector<IEntity*> children;
 
 	virtual void on_load () {}
 	virtual void on_unload () {}
 	virtual void update (float dt_ms, float sim_time_ms) = 0;
+
+	void set_parent (IEntity* in_entity);
+	void add_child (IEntity* in_entity);
+	void update_world_transform ();
 
 	template <typename T, typename... Args> T& add_component (Args&&... args) {
 		static_assert (std::is_base_of_v<IEntityComponent, T>);

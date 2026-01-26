@@ -71,4 +71,13 @@ inline void write_vec4 (Block& block, size_t slot, const glm::vec4& v) {
 	std::memcpy (&block.data[slot * 4], glm::value_ptr (v), sizeof (glm::vec4));
 }
 
+inline Transform combine (const Transform& parent, const Transform& local) {
+	Transform out;
+	out.scale = parent.scale * local.scale;
+	out.rotation = parent.rotation * local.rotation;
+	out.position = parent.position
+				   + (parent.rotation * (local.position * parent.scale));
+	return out;
+}
+
 #endif // UTILS_H
