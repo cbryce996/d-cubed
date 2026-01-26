@@ -2,7 +2,7 @@
 
 #include "assets/asset.h"
 #include "cameras/camera.h"
-#include "entity/demos/wave.h"
+#include "entity/prefabs/spheres.h"
 #include "render/buffers/buffer.h"
 #include "render/pipelines/sdl/factory.h"
 #include "render/render.h"
@@ -59,9 +59,9 @@ Engine::Engine () {
 
 	Camera camera{};
 	camera.name = "main";
-	camera.transform.position = glm::vec3 (0.0f, 0.0f, 3.0f);
+	camera.transform.position = glm::vec3 (0.0f, -20.0f, 20.0f);
 	camera.transform.rotation = glm::quat (
-		glm::vec3 (0.0f, glm::radians (180.0f), 0.0f)
+		glm::vec3 (glm::radians (70.0f), 0.0f, 0.0f)
 	);
 	camera.transform.scale = glm::vec3 (1.0f);
 	camera.lens.fov = 100.0f;
@@ -120,7 +120,7 @@ void Engine::run () {
 			std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
 
 			scene->add_entity (
-				std::make_unique<Wave> (
+				std::make_unique<Spheres> (
 					glm::vec3 (0, 0, 0), 0.0f, 0.0f, "wave1"
 				)
 			);

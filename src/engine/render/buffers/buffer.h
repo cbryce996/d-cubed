@@ -8,7 +8,7 @@
 #include "render/render.h"
 
 struct Drawable;
-
+struct MeshInstance;
 struct BufferConfig {
 	size_t size;
 	SDL_GPUBufferUsageFlags usage;

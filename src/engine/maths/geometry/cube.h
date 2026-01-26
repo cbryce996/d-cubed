@@ -1,8 +1,8 @@
 #ifndef CUBE_H
 #define CUBE_H
 
-#include "../../mesh/mesh.h"
 #include "maths/vector.h"
+#include "mesh/mesh.h"
 
 #include <cassert>
 #include <vector>

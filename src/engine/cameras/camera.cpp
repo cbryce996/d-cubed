@@ -103,7 +103,7 @@ glm::mat4 CameraManager::compute_view_projection (
 		camera.transform.position,
 		camera.transform.position
 			+ camera.transform.rotation * glm::vec3 (0.0f, 0.0f, -1.0f),
-		camera.transform.rotation * glm::vec3 (0.0f, 1.0f, 0.0f)
+		glm::vec3 (0.0f, 1.0f, 0.0f)
 	);
 
 	glm::mat4 projection = glm::perspective (

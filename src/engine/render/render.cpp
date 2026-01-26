@@ -233,8 +233,32 @@ void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 		assert (&drawable.instance_blocks);
 
 		// --- Instance buffer ---
-		drawable.instance_buffer
-			= buffer_manager->get_or_create_instance_buffer (drawable);
+		if (!drawable.instance_blocks.empty ()) {
+			drawable.instance_buffer
+				= buffer_manager->get_or_create_instance_buffer (drawable);
+		} else {
+			std::vector<Block> instance_blocks;
+
+			Block block{};
+			write_vec4 (
+				block, 0, glm::vec4 (drawable.transform.position, 1.0f)
+			);
+			write_vec4 (
+				block, 1,
+				glm::vec4 (
+					drawable.transform.rotation.x,
+					drawable.transform.rotation.y,
+					drawable.transform.rotation.z, drawable.transform.rotation.w
+				)
+			);
+			write_vec4 (block, 2, glm::vec4 (drawable.transform.scale, 0.0f));
+			write_vec4 (block, 3, glm::vec4 (0.0f));
+
+			instance_blocks.push_back (block);
+			drawable.instance_blocks = instance_blocks;
+			drawable.instance_buffer
+				= buffer_manager->get_or_create_instance_buffer (drawable);
+		}
 
 		buffer_manager->write (
 			drawable.instance_blocks.data (),

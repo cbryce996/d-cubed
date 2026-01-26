@@ -1,11 +1,11 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include "drawable.h"
 #include "graph/graph.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
-
 #include <vector>
 
 class AssetManager;
@@ -13,7 +13,6 @@ class CameraManager;
 class BufferManager;
 class PipelineManager;
 class ShaderManager;
-struct Drawable;
 
 enum class ShaderStage : uint8_t {
 	Vertex = 1 << 0,

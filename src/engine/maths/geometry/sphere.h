@@ -1,8 +1,8 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "../../mesh/mesh.h"
 #include "maths/vector.h"
+#include "mesh/mesh.h"
 
 #include <cassert>
 #include <cmath>

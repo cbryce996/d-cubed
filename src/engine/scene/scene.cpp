@@ -1,5 +1,6 @@
 #include "scene.h"
 
+#include "entity/components/prefabs/instancing.h"
 #include "entity/entity.h"
 #include "render/drawable.h"
 #include "render/render.h"
@@ -22,6 +23,7 @@ void Scene::on_unload () {
 
 void Scene::update (const float dt_ms, const float sim_time_ms) {
 	for (const auto& entity : scene_entities | std::views::values) {
+		entity->update_world_transform ();
 		entity->update (dt_ms, sim_time_ms);
 	}
 }
@@ -35,7 +37,11 @@ void Scene::collect_drawables (RenderState& out_render_state) {
 		};
 
 		drawable.instance_blocks.clear ();
-		entity->pack_instances (drawable.instance_blocks);
+
+		if (entity->has_component<InstancingComponent> ()) {
+			const auto* inst = entity->get_component<InstancingComponent> ();
+			inst->pack (drawable.instance_blocks);
+		}
 
 		out_render_state.drawables.push_back (drawable);
 	}

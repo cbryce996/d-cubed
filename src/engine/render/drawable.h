@@ -2,6 +2,7 @@
 #define DRAWABLE_H
 
 #include "entity/entity.h"
+#include "memory.h"
 #include "mesh/mesh.h"
 
 #include <vector>

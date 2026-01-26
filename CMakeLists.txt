@@ -33,7 +33,10 @@ set(GAME_LIB_SOURCES
         src/engine/engine.cpp
         src/engine/runtime/tasks/tasks.cpp
         src/engine/inputs/input.cpp
-        src/engine/scene/entity/demos/wave.cpp
+        src/engine/scene/entity/components/prefabs/instancing.cpp
+        src/engine/scene/entity/components/prefabs/wave.cpp
+        src/engine/scene/entity/prefabs/spheres.cpp
+        src/engine/scene/entity/prefabs/static.cpp
         src/engine/scene/entity/entity.cpp
         src/engine/scene/scene.cpp
         src/engine/runtime/schedule/schedule.cpp
@@ -107,6 +110,8 @@ add_executable(engine_tests
         tests/engine/render/test_graph.cpp
         tests/engine/render/test_material.cpp
         tests/engine/render/test_pass.cpp
+        tests/engine/scene/test_scene.cpp
+        tests/engine/scene/test_entity.cpp
 )
 
 target_compile_features(engine_tests PRIVATE cxx_std_20)

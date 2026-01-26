@@ -4,7 +4,6 @@
 #include "render/material.h"
 #include "render/pass/pass.h"
 
-#include <SDL3/SDL.h>
 #include <string>
 #include <unordered_map>
 

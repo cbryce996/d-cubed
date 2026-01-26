@@ -1,7 +1,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include "render/context.h"
 #include "render/pass/pass.h"
 
 #include <string>
