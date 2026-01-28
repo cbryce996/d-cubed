@@ -51,11 +51,9 @@ void Scene::add_entity (std::unique_ptr<IEntity> entity) {
 	const std::string& name = entity->name;
 
 	if (scene_entities.contains (name)) {
-		// Log error
 		return;
 	}
 
-	// If the scene is already active, load the object immediately
 	if (loaded) {
 		entity->on_load ();
 	}

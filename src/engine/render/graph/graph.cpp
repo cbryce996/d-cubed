@@ -18,11 +18,10 @@ void RenderGraph::add_pass (const RenderPassInstance& pass) {
 		return;
 	}
 
-	// transactional insert
 	render_passes.emplace (pass.name, pass);
 
 	if (!validate ()) {
-		render_passes.erase (pass.name); // rollback
+		render_passes.erase (pass.name);
 		SDL_LogError (
 			SDL_LOG_CATEGORY_RENDER,
 			"Invalid render graph state after adding pass: %s",

@@ -14,6 +14,10 @@
 #include "pipelines/pipeline.h"
 #include "shaders/shader.h"
 
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_sdlgpu3.h>
+#include <imgui_internal.h>
+
 RenderManager::RenderManager (
 	SDL_GPUDevice* device, SDL_Window* window,
 	std::shared_ptr<ShaderManager> shader_manager,
@@ -61,14 +65,14 @@ void RenderManager::load_shaders () const {
 			.entrypoint = "main0",
 			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_VERTEX,
-			.num_uniform_buffers = 2
+			.num_uniform_buffers = 1
 		},
 		ShaderConfig{
 			.path = shader_base + "bin/gbuffer.frag.metallib",
 			.entrypoint = "main0",
 			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-			.num_uniform_buffers = 2
+			.num_uniform_buffers = 1
 		},
 		"geometry"
 	);
@@ -79,14 +83,14 @@ void RenderManager::load_shaders () const {
 			.entrypoint = "main0",
 			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_VERTEX,
-			.num_uniform_buffers = 2
+			.num_uniform_buffers = 1
 		},
 		ShaderConfig{
 			.path = shader_base + "bin/lighting.frag.metallib",
 			.entrypoint = "main0",
 			.format = SDL_GPU_SHADERFORMAT_METALLIB,
 			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-			.num_uniform_buffers = 2,
+			.num_uniform_buffers = 1,
 			.num_samplers = 3
 		},
 		"lighting"
@@ -158,6 +162,56 @@ void RenderManager::destroy_gbuffer_textures () const {
 	}
 }
 
+void RenderManager::create_depth_texture () const {
+	if (buffer_manager->depth_texture)
+		return;
+
+	SDL_GPUTextureCreateInfo depth_info{};
+	depth_info.type = SDL_GPU_TEXTURETYPE_2D;
+	depth_info.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
+	depth_info.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+	depth_info.width = width;
+	depth_info.height = height;
+	depth_info.layer_count_or_depth = 1;
+	depth_info.num_levels = 1;
+	depth_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
+
+	buffer_manager->depth_texture = SDL_CreateGPUTexture (device, &depth_info);
+	assert (buffer_manager->depth_texture);
+}
+
+void RenderManager::create_viewport_texture (int w, int h) {
+	if (w <= 0 || h <= 0)
+		return;
+
+	if (buffer_manager->viewport_texture && buffer_manager->viewport_w == w
+		&& buffer_manager->viewport_h == h)
+		return;
+
+	SDL_WaitForGPUIdle (device);
+
+	if (buffer_manager->viewport_texture) {
+		SDL_ReleaseGPUTexture (device, buffer_manager->viewport_texture);
+		buffer_manager->viewport_texture = nullptr;
+	}
+
+	SDL_GPUTextureCreateInfo info{};
+	info.type = SDL_GPU_TEXTURETYPE_2D;
+	info.width = w;
+	info.height = h;
+	info.layer_count_or_depth = 1;
+	info.num_levels = 1;
+	info.sample_count = SDL_GPU_SAMPLECOUNT_1;
+	info.format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM;
+	info.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
+				 | SDL_GPU_TEXTUREUSAGE_SAMPLER;
+
+	buffer_manager->viewport_texture = SDL_CreateGPUTexture (device, &info);
+	buffer_manager->viewport_w = w;
+	buffer_manager->viewport_h = h;
+	assert (buffer_manager->viewport_texture);
+}
+
 void RenderManager::setup_render_graph () {
 	render_graph.add_pass (RenderPasses::UniformPass);
 	assert (render_graph.get_render_pass ("uniform_pass"));
@@ -169,6 +223,10 @@ void RenderManager::setup_render_graph () {
 
 	render_graph.add_pass (RenderPasses::DeferredPass);
 	assert (render_graph.get_render_pass ("deferred_pass"));
+	assert (RenderPasses::DeferredPass.execute);
+
+	render_graph.add_pass (RenderPasses::UIPass);
+	assert (render_graph.get_render_pass ("ui_pass"));
 	assert (RenderPasses::DeferredPass.execute);
 }
 
@@ -187,6 +245,7 @@ void RenderManager::resize (const int new_width, const int new_height) {
 	destroy_gbuffer_textures ();
 	create_gbuffer_textures (width, height);
 	create_depth_texture ();
+	create_viewport_texture (width, height);
 }
 
 void RenderManager::acquire_swap_chain () {
@@ -207,24 +266,6 @@ void RenderManager::acquire_swap_chain () {
 	width = static_cast<int> (w);
 	height = static_cast<int> (h);
 	buffer_manager->swap_chain_texture = swap_chain_texture;
-}
-
-void RenderManager::create_depth_texture () const {
-	if (buffer_manager->depth_texture)
-		return;
-
-	SDL_GPUTextureCreateInfo depth_info{};
-	depth_info.type = SDL_GPU_TEXTURETYPE_2D;
-	depth_info.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
-	depth_info.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
-	depth_info.width = width;
-	depth_info.height = height;
-	depth_info.layer_count_or_depth = 1;
-	depth_info.num_levels = 1;
-	depth_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
-
-	buffer_manager->depth_texture = SDL_CreateGPUTexture (device, &depth_info);
-	assert (buffer_manager->depth_texture);
 }
 
 void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
@@ -293,6 +334,105 @@ void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 	}
 }
 
+void RenderManager::create_ui () {
+	ImGuiDockNodeFlags dock_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+	ImGuiID dockspace_id = ImGui::DockSpaceOverViewport (
+		ImGui::GetID ("MainDockspace"), ImGui::GetMainViewport (), dock_flags,
+		nullptr
+	);
+
+	static bool built = false;
+	if (!built) {
+		layout_ui (dockspace_id);
+		built = true;
+	}
+
+	ImGui::PushStyleVar (ImGuiStyleVar_WindowPadding, ImVec2 (0, 0));
+	ImGui::PushStyleVar (ImGuiStyleVar_ItemSpacing, ImVec2 (0, 0));
+
+	ImGuiWindowFlags vp_flags = ImGuiWindowFlags_NoScrollbar
+								| ImGuiWindowFlags_NoScrollWithMouse;
+
+	ImGui::Begin ("Viewport", nullptr, vp_flags);
+	ImVec2 avail = ImGui::GetContentRegionAvail ();
+	int vw = (int)avail.x;
+	int vh = (int)avail.y;
+
+	viewport_w = (vw > 0) ? vw : 0;
+	viewport_h = (vh > 0) ? vh : 0;
+
+	if (buffer_manager->viewport_texture && vw > 0 && vh > 0) {
+		ImGui::Image (
+			(ImTextureID)buffer_manager->viewport_texture, avail, ImVec2 (0, 0),
+			ImVec2 (1, 1)
+		);
+	} else {
+		ImGui::Text ("Viewport texture not ready...");
+	}
+
+	ImGui::End ();
+	ImGui::PopStyleVar (2);
+
+	if (ImGui::BeginMainMenuBar ()) {
+		if (ImGui::BeginMenu ("File")) {
+			ImGui::MenuItem ("New");
+			ImGui::MenuItem ("Open");
+			ImGui::MenuItem ("Save");
+			ImGui::EndMenu ();
+		}
+		if (ImGui::BeginMenu ("Engine")) {
+			ImGui::MenuItem ("Reload Shaders");
+			ImGui::EndMenu ();
+		}
+		ImGui::EndMainMenuBar ();
+	}
+
+	ImGui::Begin ("Hierarchy");
+	ImGui::Text ("...");
+	ImGui::End ();
+	ImGui::Begin ("Inspector");
+	ImGui::Text ("...");
+	ImGui::End ();
+	ImGui::Begin ("Console");
+	ImGui::Text ("Logs...");
+	ImGui::End ();
+	ImGui::Begin ("Stats");
+	ImGui::Text ("FPS...");
+	ImGui::End ();
+}
+
+void RenderManager::layout_ui (ImGuiID dockspace_id) {
+	ImGui::DockBuilderRemoveNode (dockspace_id);
+	ImGui::DockBuilderAddNode (dockspace_id, ImGuiDockNodeFlags_DockSpace);
+	ImGui::DockBuilderSetNodeSize (
+		dockspace_id, ImGui::GetMainViewport ()->WorkSize
+	);
+
+	ImGuiID dock_main = dockspace_id;
+
+	ImGuiID dock_left = ImGui::DockBuilderSplitNode (
+		dock_main, ImGuiDir_Left, 0.20f, nullptr, &dock_main
+	);
+	ImGuiID dock_right = ImGui::DockBuilderSplitNode (
+		dock_main, ImGuiDir_Right, 0.25f, nullptr, &dock_main
+	);
+	ImGuiID dock_bottom = ImGui::DockBuilderSplitNode (
+		dock_main, ImGuiDir_Down, 0.25f, nullptr, &dock_main
+	);
+
+	ImGuiID dock_stats = ImGui::DockBuilderSplitNode (
+		dock_bottom, ImGuiDir_Right, 0.35f, nullptr, &dock_bottom
+	);
+
+	ImGui::DockBuilderDockWindow ("Hierarchy", dock_left);
+	ImGui::DockBuilderDockWindow ("Inspector", dock_right);
+	ImGui::DockBuilderDockWindow ("Viewport", dock_main);
+	ImGui::DockBuilderDockWindow ("Console", dock_bottom);
+	ImGui::DockBuilderDockWindow ("Stats", dock_stats);
+
+	ImGui::DockBuilderFinish (dockspace_id);
+}
+
 void RenderManager::render (RenderState* render_state, float delta_time) {
 	assert (render_state);
 
@@ -314,6 +454,18 @@ void RenderManager::render (RenderState* render_state, float delta_time) {
 		.height = height,
 		.time = delta_time
 	};
+
+	ImGui_ImplSDLGPU3_NewFrame ();
+	ImGui_ImplSDL3_NewFrame ();
+	ImGui::NewFrame ();
+
+	create_ui ();
+
+	if (viewport_w > 0 && viewport_h > 0) {
+		create_viewport_texture (viewport_w, viewport_h);
+	}
+
+	ImGui::Render ();
 
 	render_graph.execute_all (render_context);
 

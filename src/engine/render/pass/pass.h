@@ -10,7 +10,7 @@
 
 struct RenderContext;
 
-enum class RenderPassType { Setup, Geometry, Lighting, PostProcess };
+enum class RenderPassType { Setup, Geometry, Lighting, PostProcess, UI };
 
 struct RenderPassState {
 	SDL_GPUCompareOp depth_compare;
@@ -33,8 +33,9 @@ struct RenderPassInstance {
 	RenderPassType type;
 	RenderPassState state = {};
 
+	SDL_GPULoadOp load_op;
 	std::vector<SDL_GPUTexture*> color_targets;
-	SDL_GPUTexture* depth_target; // nullable
+	SDL_GPUTexture* depth_target;
 	SDL_FColor clear_color;
 	bool clear_depth;
 
@@ -70,6 +71,7 @@ namespace RenderPasses {
 extern RenderPassInstance UniformPass;
 extern RenderPassInstance GeometryPass;
 extern RenderPassInstance DeferredPass;
+extern RenderPassInstance UIPass;
 }
 
 #endif // PASS_H

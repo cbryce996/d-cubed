@@ -55,9 +55,14 @@ class BufferManager {
 	explicit BufferManager (SDL_GPUDevice* device);
 	~BufferManager ();
 
+	// TODO: Move these out of here
+	int viewport_w = 0;
+	int viewport_h = 0;
+
 	SDL_GPUCommandBuffer* command_buffer = nullptr;
 	SDL_GPUTexture* depth_texture = nullptr;
 	SDL_GPUTexture* swap_chain_texture = nullptr;
+	SDL_GPUTexture* viewport_texture = nullptr;
 
 	SDL_GPUTexture* g_position_texture = nullptr;
 	SDL_GPUTexture* g_normal_texture = nullptr;

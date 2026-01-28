@@ -12,8 +12,11 @@
 #include "scene.h"
 
 #include <SDL3/SDL.h>
+#include <backends/imgui_impl_sdl3.h>
+#include <backends/imgui_impl_sdlgpu3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <imgui.h>
 
 #include <iostream>
 
@@ -64,7 +67,7 @@ Engine::Engine () {
 		glm::vec3 (glm::radians (70.0f), 0.0f, 0.0f)
 	);
 	camera.transform.scale = glm::vec3 (1.0f);
-	camera.lens.fov = 100.0f;
+	camera.lens.fov = 70.0f;
 	camera.lens.aspect = 16.0f / 9.0f;
 	camera.lens.near_clip = 0.1f;
 	camera.lens.far_clip = 300.0f;
@@ -97,6 +100,23 @@ void Engine::run () {
 
 	runtime->task_scheduler.start ();
 	Clock clock (60);
+
+	IMGUI_CHECKVERSION ();
+	ImGui::CreateContext ();
+	ImGuiIO& io = ImGui::GetIO ();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	ImGui::StyleColorsDark ();
+
+	ImGui_ImplSDL3_InitForSDLGPU (window);
+
+	ImGui_ImplSDLGPU3_InitInfo init_info = {
+		gpu_device,
+		SDL_GetGPUSwapchainTextureFormat (gpu_device, window),
+		SDL_GPU_SAMPLECOUNT_1,
+	};
+
+	ImGui_ImplSDLGPU3_Init (&init_info);
 
 	while (running) {
 		commit_scene_change ();
@@ -147,6 +167,7 @@ void Engine::run () {
 		}
 
 		RenderState state{};
+		state.scene = active_scene.get ();
 		if (active_scene)
 			active_scene->collect_drawables (state);
 

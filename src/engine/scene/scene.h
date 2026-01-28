@@ -23,9 +23,10 @@ class Scene {
 
 	void add_entity (std::unique_ptr<IEntity> object);
 
+	std::unordered_map<std::string, std::unique_ptr<IEntity>> scene_entities;
+
   private:
 	bool loaded = false;
-	std::unordered_map<std::string, std::unique_ptr<IEntity>> scene_entities;
 };
 
 #endif // SCENE_H

@@ -49,12 +49,10 @@ inline MeshInstance generate (float size, uint32_t resolution = 1) {
 			const uint32_t i2 = i0 + verts_per_side;
 			const uint32_t i3 = i2 + 1;
 
-			// triangle 1
 			indices.push_back (i0);
 			indices.push_back (i1);
 			indices.push_back (i2);
 
-			// triangle 2
 			indices.push_back (i1);
 			indices.push_back (i3);
 			indices.push_back (i2);

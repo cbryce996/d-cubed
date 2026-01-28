@@ -1,6 +1,6 @@
 #version 450
 
-layout(binding = 0) uniform ViewUniform {
+layout(set=0, binding=0) uniform ViewUniform {
     mat4 view_projection;
 } view_u;
 
@@ -46,7 +46,7 @@ void main() {
     vec3 instancePos = inInstPos.xyz;
     vec3 scale       = inInstScale.xyz;
     vec3 axis        = inInstRot.xyz;
-    float angle      = inInstRot.w;   // ✅ FIXED
+    float angle      = inInstRot.w;
 
     mat3 rotation = safeQuaternionRotation(axis, angle);
 

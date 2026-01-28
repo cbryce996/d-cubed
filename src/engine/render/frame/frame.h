@@ -10,7 +10,7 @@ struct RenderPassInstance;
 
 class FrameManager {
   public:
-	SDL_GPURenderPass* begin_render_pass (
+	[[nodiscard]] SDL_GPURenderPass* begin_render_pass (
 		const RenderPassInstance& render_pass_instance,
 		const BufferManager& buffer_manager
 	) const;
@@ -26,6 +26,10 @@ class FrameManager {
 		const Pipeline& pipeline, BufferManager& buffer_manager,
 		SDL_GPURenderPass& render_pass
 	);
+	void draw_ui (
+		const BufferManager& buffer_manager, SDL_GPURenderPass& render_pass
+	);
+	void prepare_ui (const BufferManager& buffer_manager);
 };
 
 #endif // FRAME_H

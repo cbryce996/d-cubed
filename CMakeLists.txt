@@ -26,10 +26,58 @@ if(ENABLE_COVERAGE)
 endif()
 
 # ------------------------------------------------------------------------------
+# Dependencies
+# ------------------------------------------------------------------------------
+find_package(SDL3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(nlohmann_json REQUIRED)
+
+# ------------------------------------------------------------------------------
+# ImGui
+# ------------------------------------------------------------------------------
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/external/imgui)
+
+set(IMGUI_SOURCES
+        ${IMGUI_DIR}/imgui.cpp
+        ${IMGUI_DIR}/imgui_draw.cpp
+        ${IMGUI_DIR}/imgui_tables.cpp
+        ${IMGUI_DIR}/imgui_widgets.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_sdlgpu3.cpp
+)
+
+add_library(imgui STATIC ${IMGUI_SOURCES})
+
+# Metal backend requires Objective-C++
+set_source_files_properties(
+        ${IMGUI_DIR}/backends/imgui_impl_metal.mm
+        PROPERTIES
+        LANGUAGE OBJCXX
+)
+
+target_include_directories(imgui PUBLIC
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
+)
+
+target_link_libraries(imgui PUBLIC
+        SDL3::SDL3
+)
+
+# macOS Metal frameworks
+if(APPLE)
+    target_link_libraries(imgui PUBLIC
+            "-framework Metal"
+            "-framework QuartzCore"
+            "-framework Foundation"
+    )
+endif()
+
+# ------------------------------------------------------------------------------
 # Game library
 # ------------------------------------------------------------------------------
 set(GAME_LIB_SOURCES
-        src/main.cpp
+        src/engine/editor/scene_graph.cpp
         src/engine/engine.cpp
         src/engine/runtime/tasks/tasks.cpp
         src/engine/inputs/input.cpp
@@ -66,17 +114,11 @@ target_include_directories(game_lib PUBLIC
         external/tinyobjloader
 )
 
-# ------------------------------------------------------------------------------
-# Dependencies
-# ------------------------------------------------------------------------------
-find_package(SDL3 CONFIG REQUIRED)
-find_package(glm CONFIG REQUIRED)
-find_package(nlohmann_json REQUIRED)
-
 target_link_libraries(game_lib PUBLIC
         SDL3::SDL3
         glm::glm
         nlohmann_json::nlohmann_json
+        imgui
 )
 
 # ------------------------------------------------------------------------------
