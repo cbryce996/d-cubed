@@ -10,6 +10,7 @@
 #include <imgui.h>
 #include <vector>
 
+class EditorManager;
 class AssetManager;
 class CameraManager;
 class BufferManager;
@@ -43,7 +44,8 @@ class RenderManager {
 		std::shared_ptr<PipelineManager> pipeline_manager,
 		std::shared_ptr<BufferManager> buffer_manager,
 		std::shared_ptr<CameraManager> camera_manager,
-		std::shared_ptr<AssetManager> asset_manager
+		std::shared_ptr<AssetManager> asset_manager,
+		std::shared_ptr<EditorManager> editor_manager
 	);
 	~RenderManager ();
 	void setup_render_graph ();
@@ -54,16 +56,14 @@ class RenderManager {
 	int width = 1920;
 	int height = 1080;
 
-	int viewport_w = 0;
-	int viewport_h = 0;
-
+	std::shared_ptr<EditorManager> editor_manager;
 	std::shared_ptr<ShaderManager> shader_manager;
 	std::shared_ptr<PipelineManager> pipeline_manager;
 	std::shared_ptr<BufferManager> buffer_manager;
 	std::shared_ptr<CameraManager> camera_manager;
 	std::shared_ptr<AssetManager> asset_manager;
 
-	void render (RenderState* render_state, float time);
+	void render (RenderState& render_state, float delta_time);
 
 	void create_depth_texture () const;
 	void create_viewport_texture (int w, int h);
@@ -71,9 +71,6 @@ class RenderManager {
 	void destroy_gbuffer_textures () const;
 
 	void prepare_drawables (std::vector<Drawable>& drawables) const;
-	void create_ui ();
-	static void layout_ui (ImGuiID dockspace_id);
-	void draw_ui (const BufferManager& buffer_manager);
 
   private:
 	SDL_GPUDevice* device = nullptr;

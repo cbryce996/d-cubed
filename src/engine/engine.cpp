@@ -2,6 +2,7 @@
 
 #include "assets/asset.h"
 #include "cameras/camera.h"
+#include "editor/editor.h"
 #include "entity/prefabs/spheres.h"
 #include "render/buffers/buffer.h"
 #include "render/pipelines/sdl/factory.h"
@@ -78,10 +79,12 @@ Engine::Engine () {
 		= std::make_shared<CameraManager> (camera);
 	std::shared_ptr<AssetManager> asset_manager
 		= std::make_shared<AssetManager> ();
+	std::shared_ptr<EditorManager> editor_manager
+		= std::make_shared<EditorManager> ();
 
 	render = std::make_unique<RenderManager> (
 		gpu_device, window, shader_manager, pipeline_manager, buffer_manager,
-		camera_manager, asset_manager
+		camera_manager, asset_manager, editor_manager
 	);
 
 	runtime = std::make_unique<Runtime> ();
@@ -171,7 +174,7 @@ void Engine::run () {
 		if (active_scene)
 			active_scene->collect_drawables (state);
 
-		render->render (&state, runtime->simulation_time_ms);
+		render->render (state, runtime->simulation_time_ms);
 
 		clock.end_frame ();
 	}

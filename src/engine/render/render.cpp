@@ -11,6 +11,7 @@
 #include <glm/glm.hpp>
 
 #include "cameras/camera.h"
+#include "editor/editor.h"
 #include "pipelines/pipeline.h"
 #include "shaders/shader.h"
 
@@ -24,13 +25,15 @@ RenderManager::RenderManager (
 	std::shared_ptr<PipelineManager> pipeline_manager,
 	std::shared_ptr<BufferManager> buffer_manager,
 	std::shared_ptr<CameraManager> camera_manager,
-	std::shared_ptr<AssetManager> asset_manager
+	std::shared_ptr<AssetManager> asset_manager,
+	std::shared_ptr<EditorManager> editor_manager
 )
 	: shader_manager (std::move (shader_manager)),
 	  pipeline_manager (std::move (pipeline_manager)),
 	  buffer_manager (std::move (buffer_manager)),
 	  camera_manager (std::move (camera_manager)),
-	  asset_manager (std::move (asset_manager)), device (device),
+	  asset_manager (std::move (asset_manager)),
+	  editor_manager (std::move (editor_manager)), device (device),
 	  window (window) {
 	assert (device);
 	assert (window);
@@ -334,107 +337,8 @@ void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 	}
 }
 
-void RenderManager::create_ui () {
-	ImGuiDockNodeFlags dock_flags = ImGuiDockNodeFlags_PassthruCentralNode;
-	ImGuiID dockspace_id = ImGui::DockSpaceOverViewport (
-		ImGui::GetID ("MainDockspace"), ImGui::GetMainViewport (), dock_flags,
-		nullptr
-	);
-
-	static bool built = false;
-	if (!built) {
-		layout_ui (dockspace_id);
-		built = true;
-	}
-
-	ImGui::PushStyleVar (ImGuiStyleVar_WindowPadding, ImVec2 (0, 0));
-	ImGui::PushStyleVar (ImGuiStyleVar_ItemSpacing, ImVec2 (0, 0));
-
-	ImGuiWindowFlags vp_flags = ImGuiWindowFlags_NoScrollbar
-								| ImGuiWindowFlags_NoScrollWithMouse;
-
-	ImGui::Begin ("Viewport", nullptr, vp_flags);
-	ImVec2 avail = ImGui::GetContentRegionAvail ();
-	int vw = (int)avail.x;
-	int vh = (int)avail.y;
-
-	viewport_w = (vw > 0) ? vw : 0;
-	viewport_h = (vh > 0) ? vh : 0;
-
-	if (buffer_manager->viewport_texture && vw > 0 && vh > 0) {
-		ImGui::Image (
-			(ImTextureID)buffer_manager->viewport_texture, avail, ImVec2 (0, 0),
-			ImVec2 (1, 1)
-		);
-	} else {
-		ImGui::Text ("Viewport texture not ready...");
-	}
-
-	ImGui::End ();
-	ImGui::PopStyleVar (2);
-
-	if (ImGui::BeginMainMenuBar ()) {
-		if (ImGui::BeginMenu ("File")) {
-			ImGui::MenuItem ("New");
-			ImGui::MenuItem ("Open");
-			ImGui::MenuItem ("Save");
-			ImGui::EndMenu ();
-		}
-		if (ImGui::BeginMenu ("Engine")) {
-			ImGui::MenuItem ("Reload Shaders");
-			ImGui::EndMenu ();
-		}
-		ImGui::EndMainMenuBar ();
-	}
-
-	ImGui::Begin ("Hierarchy");
-	ImGui::Text ("...");
-	ImGui::End ();
-	ImGui::Begin ("Inspector");
-	ImGui::Text ("...");
-	ImGui::End ();
-	ImGui::Begin ("Console");
-	ImGui::Text ("Logs...");
-	ImGui::End ();
-	ImGui::Begin ("Stats");
-	ImGui::Text ("FPS...");
-	ImGui::End ();
-}
-
-void RenderManager::layout_ui (ImGuiID dockspace_id) {
-	ImGui::DockBuilderRemoveNode (dockspace_id);
-	ImGui::DockBuilderAddNode (dockspace_id, ImGuiDockNodeFlags_DockSpace);
-	ImGui::DockBuilderSetNodeSize (
-		dockspace_id, ImGui::GetMainViewport ()->WorkSize
-	);
-
-	ImGuiID dock_main = dockspace_id;
-
-	ImGuiID dock_left = ImGui::DockBuilderSplitNode (
-		dock_main, ImGuiDir_Left, 0.20f, nullptr, &dock_main
-	);
-	ImGuiID dock_right = ImGui::DockBuilderSplitNode (
-		dock_main, ImGuiDir_Right, 0.25f, nullptr, &dock_main
-	);
-	ImGuiID dock_bottom = ImGui::DockBuilderSplitNode (
-		dock_main, ImGuiDir_Down, 0.25f, nullptr, &dock_main
-	);
-
-	ImGuiID dock_stats = ImGui::DockBuilderSplitNode (
-		dock_bottom, ImGuiDir_Right, 0.35f, nullptr, &dock_bottom
-	);
-
-	ImGui::DockBuilderDockWindow ("Hierarchy", dock_left);
-	ImGui::DockBuilderDockWindow ("Inspector", dock_right);
-	ImGui::DockBuilderDockWindow ("Viewport", dock_main);
-	ImGui::DockBuilderDockWindow ("Console", dock_bottom);
-	ImGui::DockBuilderDockWindow ("Stats", dock_stats);
-
-	ImGui::DockBuilderFinish (dockspace_id);
-}
-
-void RenderManager::render (RenderState* render_state, float delta_time) {
-	assert (render_state);
+void RenderManager::render (RenderState& render_state, float delta_time) {
+	assert (&render_state);
 
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
 	assert (buffer_manager->command_buffer);
@@ -442,14 +346,14 @@ void RenderManager::render (RenderState* render_state, float delta_time) {
 	acquire_swap_chain ();
 	assert (buffer_manager->swap_chain_texture);
 
-	prepare_drawables (render_state->drawables);
+	prepare_drawables (render_state.drawables);
 
 	RenderContext render_context{
 		.camera_manager = camera_manager.get (),
 		.pipeline_manager = pipeline_manager.get (),
 		.buffer_manager = buffer_manager.get (),
 		.shader_manager = shader_manager.get (),
-		.drawables = &render_state->drawables,
+		.drawables = &render_state.drawables,
 		.width = width,
 		.height = height,
 		.time = delta_time
@@ -459,10 +363,10 @@ void RenderManager::render (RenderState* render_state, float delta_time) {
 	ImGui_ImplSDL3_NewFrame ();
 	ImGui::NewFrame ();
 
-	create_ui ();
+	editor_manager->create_ui (*buffer_manager, render_state);
 
-	if (viewport_w > 0 && viewport_h > 0) {
-		create_viewport_texture (viewport_w, viewport_h);
+	if (editor_manager->viewport_state.width > 0 && editor_manager->viewport_state.height > 0) {
+		create_viewport_texture (editor_manager->viewport_state.width, editor_manager->viewport_state.height);
 	}
 
 	ImGui::Render ();
