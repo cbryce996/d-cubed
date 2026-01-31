@@ -23,21 +23,22 @@ int main () {
 	static std::shared_ptr<MeshInstance> sphere
 		= std::make_shared<MeshInstance> (Sphere::generate (2.5f, 20, 20));
 
-	std::unique_ptr<StaticEntity> static_plane
-		= std::make_unique<StaticEntity> (
-			"static_plane", plane.get (), &Materials::Geometry
-		);
-	std::unique_ptr<StaticEntity> static_cube = std::make_unique<StaticEntity> (
+	auto static_plane = std::make_unique<StaticEntity> (
+		"static_plane", plane.get (), &Materials::Geometry
+	);
+	StaticEntity* static_plane_ptr = static_plane.get ();
+
+	auto static_cube = std::make_unique<StaticEntity> (
 		"static_cube", cube.get (), &Materials::Geometry,
 		Transform{glm::vec3 (-5.0f, -2.5f, -10.0f)}
 	);
-	static_cube->set_parent (std::move (static_plane).get ());
-	std::unique_ptr<StaticEntity> static_sphere
-		= std::make_unique<StaticEntity> (
-			"static_sphere", sphere.get (), &Materials::Geometry,
-			Transform{glm::vec3 (5.0f, -2.5f, 10.0f)}
-		);
-	static_cube->set_parent (std::move (static_sphere).get ());
+	static_cube->set_parent (static_plane_ptr);
+
+	auto static_sphere = std::make_unique<StaticEntity> (
+		"static_sphere", sphere.get (), &Materials::Geometry,
+		Transform{glm::vec3 (5.0f, -2.5f, 10.0f)}
+	);
+	static_sphere->set_parent (static_plane_ptr);
 
 	scene->add_entity (std::move (static_plane));
 	scene->add_entity (std::move (static_cube));

@@ -5,6 +5,7 @@
 #include "editor/editor.h"
 #include "entity/prefabs/spheres.h"
 #include "render/buffers/buffer.h"
+#include "render/frame/frame.h"
 #include "render/pipelines/sdl/factory.h"
 #include "render/render.h"
 #include "render/shaders/shader.h"
@@ -61,35 +62,19 @@ Engine::Engine () {
 	std::shared_ptr<BufferManager> buffer_manager
 		= std::make_shared<BufferManager> (gpu_device);
 
-	Camera camera{};
-	camera.name = "main";
-	camera.transform.position = glm::vec3 (0.0f, -20.0f, 20.0f);
-	camera.transform.rotation = glm::quat (
-		glm::vec3 (glm::radians (70.0f), 0.0f, 0.0f)
-	);
-	camera.transform.scale = glm::vec3 (1.0f);
-	camera.lens.fov = 70.0f;
-	camera.lens.aspect = 16.0f / 9.0f;
-	camera.lens.near_clip = 0.1f;
-	camera.lens.far_clip = 300.0f;
-	camera.move_speed = 0.1f;
-	camera.look_sensitivity = 0.1f;
-
-	std::shared_ptr<CameraManager> camera_manager
-		= std::make_shared<CameraManager> (camera);
 	std::shared_ptr<AssetManager> asset_manager
 		= std::make_shared<AssetManager> ();
 	std::shared_ptr<EditorManager> editor_manager
 		= std::make_shared<EditorManager> ();
+	std::shared_ptr<FrameManager> frame_manager
+		= std::make_shared<FrameManager> ();
 
 	render = std::make_unique<RenderManager> (
 		gpu_device, window, shader_manager, pipeline_manager, buffer_manager,
-		camera_manager, asset_manager, editor_manager
+		asset_manager, editor_manager, frame_manager
 	);
 
 	runtime = std::make_unique<Runtime> ();
-
-	SDL_SetWindowRelativeMouseMode (window, true);
 }
 
 Engine::~Engine () {
@@ -125,21 +110,38 @@ void Engine::run () {
 		commit_scene_change ();
 		float dt = clock.begin_frame ();
 
+		if (render->editor_manager->editor_mode == Editing) {
+			SDL_SetWindowRelativeMouseMode (window, false);
+		} else {
+			SDL_SetWindowRelativeMouseMode (window, true);
+		}
+
 		SDL_Event e;
 		while (SDL_PollEvent (&e)) {
+			ImGui_ImplSDL3_ProcessEvent (&e);
 			if (e.type == SDL_EVENT_QUIT)
 				running = false;
 			if (e.type == SDL_EVENT_WINDOW_RESIZED)
 				render->resize (e.window.data1, e.window.data2);
+			if (e.type == SDL_EVENT_KEY_DOWN && !e.key.repeat) {
+				if (e.key.key == SDL_GetKeyFromName ("I")) {
+					auto& editor = *render->editor_manager;
+
+					editor.editor_mode = (editor.editor_mode == Editing)
+											 ? Running
+											 : Editing;
+				}
+			}
 		}
 
 		input.poll ();
 
-		const KeyboardInput& keyboard = input.get_keyboard_input ();
+		const KeyboardInput& keyboard_input = input.get_keyboard_input ();
+		MouseInput mouse_input = input.get_mouse_input ();
 
-		if (keyboard.keys[SDL_SCANCODE_ESCAPE])
+		if (keyboard_input.keys[SDL_SCANCODE_ESCAPE])
 			running = false;
-		if (keyboard.keys[SDL_SCANCODE_1]) {
+		if (keyboard_input.keys[SDL_SCANCODE_1]) {
 			std::unique_ptr<Scene> scene = std::make_unique<Scene> ();
 
 			scene->add_entity (
@@ -150,13 +152,6 @@ void Engine::run () {
 
 			request_scene (std::move (scene));
 		}
-
-		const MouseInput& mouse = input.get_mouse_input ();
-
-		render->camera_manager->update_camera_position (
-			clock.fixed_dt_ms, keyboard.keys
-		);
-		render->camera_manager->update_camera_look (&mouse);
 
 		while (clock.should_step_simulation ()) {
 			runtime->update (clock.fixed_dt_ms);
@@ -174,7 +169,9 @@ void Engine::run () {
 		if (active_scene)
 			active_scene->collect_drawables (state);
 
-		render->render (state, runtime->simulation_time_ms);
+		render->render (
+			state, keyboard_input, mouse_input, runtime->simulation_time_ms
+		);
 
 		clock.end_frame ();
 	}

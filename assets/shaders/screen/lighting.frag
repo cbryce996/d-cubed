@@ -33,11 +33,11 @@ vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPosition, vec3 lightPosi
     vec3 lightDir = L / max(distance, 1e-6);
 
     float diff = max(dot(normal, lightDir), 0.0) * 30.0;
-    float atten = 1.0 / (distance * 1.0 + 10.0);
+    float atten = 1.0 / (distance * 0.5 + 10.0);
 
     float range    = 100.0;
     float maxLight = 0.9;
-    float ambient  = 0.5;
+    float ambient  = 0.2;
 
     float rangeAtten = 1.0 - smoothstep(0.0, range, distance);
 

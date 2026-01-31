@@ -27,7 +27,6 @@ class Engine {
 	std::unique_ptr<Scene> pending_scene = nullptr;
 
 	std::unique_ptr<Runtime> runtime;
-	std::unique_ptr<CameraManager> camera;
 	std::unique_ptr<RenderManager> render;
 	std::unique_ptr<AssetManager> asset;
 

@@ -12,6 +12,7 @@
 
 #include "cameras/camera.h"
 #include "editor/editor.h"
+#include "inputs/input.h"
 #include "pipelines/pipeline.h"
 #include "shaders/shader.h"
 
@@ -24,16 +25,16 @@ RenderManager::RenderManager (
 	std::shared_ptr<ShaderManager> shader_manager,
 	std::shared_ptr<PipelineManager> pipeline_manager,
 	std::shared_ptr<BufferManager> buffer_manager,
-	std::shared_ptr<CameraManager> camera_manager,
 	std::shared_ptr<AssetManager> asset_manager,
-	std::shared_ptr<EditorManager> editor_manager
+	std::shared_ptr<EditorManager> editor_manager,
+	std::shared_ptr<FrameManager> frame_manager
 )
-	: shader_manager (std::move (shader_manager)),
+	: editor_manager (std::move (editor_manager)),
+	  shader_manager (std::move (shader_manager)),
 	  pipeline_manager (std::move (pipeline_manager)),
 	  buffer_manager (std::move (buffer_manager)),
-	  camera_manager (std::move (camera_manager)),
 	  asset_manager (std::move (asset_manager)),
-	  editor_manager (std::move (editor_manager)), device (device),
+	  frame_manager (std::move (frame_manager)), device (device),
 	  window (window) {
 	assert (device);
 	assert (window);
@@ -41,7 +42,6 @@ RenderManager::RenderManager (
 	assert (this->shader_manager);
 	assert (this->pipeline_manager);
 	assert (this->buffer_manager);
-	assert (this->camera_manager);
 	assert (this->asset_manager);
 
 	SDL_GetWindowSize (window, &width, &height);
@@ -191,11 +191,11 @@ void RenderManager::create_viewport_texture (int w, int h) {
 		&& buffer_manager->viewport_h == h)
 		return;
 
-	SDL_WaitForGPUIdle (device);
-
-	if (buffer_manager->viewport_texture) {
+	// TODO: Time bomb! We must use a texture buffer here
+	static int frame_counter = 0;
+	frame_counter++;
+	if (frame_counter > 200) {
 		SDL_ReleaseGPUTexture (device, buffer_manager->viewport_texture);
-		buffer_manager->viewport_texture = nullptr;
 	}
 
 	SDL_GPUTextureCreateInfo info{};
@@ -337,7 +337,10 @@ void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 	}
 }
 
-void RenderManager::render (RenderState& render_state, float delta_time) {
+void RenderManager::render (
+	RenderState& render_state, const KeyboardInput& key_board_input,
+	MouseInput& mouse_input, float delta_time
+) {
 	assert (&render_state);
 
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
@@ -349,10 +352,11 @@ void RenderManager::render (RenderState& render_state, float delta_time) {
 	prepare_drawables (render_state.drawables);
 
 	RenderContext render_context{
-		.camera_manager = camera_manager.get (),
+		.camera_manager = render_state.scene->camera_manager.get (),
 		.pipeline_manager = pipeline_manager.get (),
 		.buffer_manager = buffer_manager.get (),
 		.shader_manager = shader_manager.get (),
+		.frame_manager = frame_manager.get (),
 		.drawables = &render_state.drawables,
 		.width = width,
 		.height = height,
@@ -365,8 +369,27 @@ void RenderManager::render (RenderState& render_state, float delta_time) {
 
 	editor_manager->create_ui (*buffer_manager, render_state);
 
-	if (editor_manager->viewport_state.width > 0 && editor_manager->viewport_state.height > 0) {
-		create_viewport_texture (editor_manager->viewport_state.width, editor_manager->viewport_state.height);
+	if (editor_manager->viewport_state.width > 0
+		&& editor_manager->viewport_state.height > 0) {
+		create_viewport_texture (
+			editor_manager->viewport_state.width,
+			editor_manager->viewport_state.height
+		);
+	}
+
+	const ImGuiIO& io = ImGui::GetIO ();
+
+	const bool allow_camera_input
+		= (editor_manager->editor_mode == Running)
+		  || (editor_manager->editor_mode == Editing
+			  && editor_manager->editor_state.viewport_hovered
+			  && !io.WantCaptureMouse);
+
+	if (allow_camera_input) {
+		render_state.scene->camera_manager->update_camera_position (
+			delta_time, key_board_input.keys
+		);
+		render_state.scene->camera_manager->update_camera_look (&mouse_input);
 	}
 
 	ImGui::Render ();

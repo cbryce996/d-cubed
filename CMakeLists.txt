@@ -48,13 +48,6 @@ set(IMGUI_SOURCES
 
 add_library(imgui STATIC ${IMGUI_SOURCES})
 
-# Metal backend requires Objective-C++
-set_source_files_properties(
-        ${IMGUI_DIR}/backends/imgui_impl_metal.mm
-        PROPERTIES
-        LANGUAGE OBJCXX
-)
-
 target_include_directories(imgui PUBLIC
         ${IMGUI_DIR}
         ${IMGUI_DIR}/backends

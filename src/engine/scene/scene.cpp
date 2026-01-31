@@ -1,11 +1,30 @@
 #include "scene.h"
 
+#include "cameras/camera.h"
 #include "entity/components/prefabs/instancing.h"
 #include "entity/entity.h"
 #include "render/drawable.h"
 #include "render/render.h"
 
 #include <ranges>
+
+Scene::Scene () {
+	Camera camera{};
+	camera.name = "main";
+	camera.transform.position = glm::vec3 (0.0f, -50.0f, 20.0f);
+	camera.transform.rotation = glm::quat (
+		glm::vec3 (glm::radians (70.0f), 0.0f, 0.0f)
+	);
+	camera.transform.scale = glm::vec3 (1.0f);
+	camera.lens.fov = 70.0f;
+	camera.lens.aspect = 16.0f / 9.0f;
+	camera.lens.near_clip = 0.1f;
+	camera.lens.far_clip = 300.0f;
+	camera.move_speed = 0.1f;
+	camera.look_sensitivity = 0.1f;
+
+	camera_manager = std::make_unique<CameraManager> (camera);
+}
 
 void Scene::on_load () {
 	for (const auto& entity : scene_entities | std::views::values) {
@@ -48,7 +67,10 @@ void Scene::collect_drawables (RenderState& out_render_state) {
 }
 
 void Scene::add_entity (std::unique_ptr<IEntity> entity) {
-	const std::string& name = entity->name;
+	assert (entity);
+	assert (!entity->name.empty ());
+
+	std::string name = entity->name;
 
 	if (scene_entities.contains (name)) {
 		return;
