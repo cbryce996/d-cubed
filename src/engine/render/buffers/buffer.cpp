@@ -194,3 +194,21 @@ void BufferManager::push_uniforms (
 		}
 	}
 }
+
+void BufferManager::ensure_viewport_target (const int width, const int height) {
+	if (width <= 0 || height <= 0)
+		return; // ImGui not ready yet
+
+	if (viewport_target.valid () && viewport_target.width == width
+		&& viewport_target.height == height)
+		return;
+
+	SDL_WaitForGPUIdle (device);
+
+	viewport_target.destroy (device);
+
+	viewport_target.create (
+		device, width, height, SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM,
+		SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER
+	);
+}

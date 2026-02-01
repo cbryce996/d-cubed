@@ -137,14 +137,15 @@ RenderPassInstance DeferredPass = {
 									RenderContext& render_context,
 									RenderPassInstance& render_pass_instance
 								) {
-			assert (render_context.buffer_manager->viewport_texture);
+			if (!render_context.buffer_manager->viewport_target.valid())
+				return;
 
 			render_pass_instance.color_targets = {
-				render_context.buffer_manager->viewport_texture
+				render_context.buffer_manager->viewport_target.write()
 			};
 
 			render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, *render_context.buffer_manager);
-			render_context.frame_manager->set_viewport (render_context.render_pass, render_context.buffer_manager->viewport_w, render_context.buffer_manager->viewport_h);
+			render_context.frame_manager->set_viewport (render_context.render_pass, render_context.buffer_manager->viewport_target.width, render_context.buffer_manager->viewport_target.height);
 
 			const PipelineState pipeline_state{
 				.render_pass_state = render_pass_instance.state,
@@ -157,6 +158,8 @@ RenderPassInstance DeferredPass = {
 			render_context.frame_manager->draw_screen (*pipeline, *render_context.buffer_manager, *render_context.render_pass);
 
 			SDL_EndGPURenderPass (render_context.render_pass);
+
+			render_context.buffer_manager->viewport_target.swap();
 		}
 	}
 };

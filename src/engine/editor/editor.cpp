@@ -183,10 +183,9 @@ void EditorManager::draw_viewport (
 	viewport_state.width = vw > 0 ? vw : 0;
 	viewport_state.height = vh > 0 ? vh : 0;
 
-	if (buffer_manager.viewport_texture && vw > 0 && vh > 0) {
-		ImGui::Image (
-			buffer_manager.viewport_texture, avail, ImVec2 (0, 0), ImVec2 (1, 1)
-		);
+	if (SDL_GPUTexture* texture = buffer_manager.viewport_target.read ();
+		texture && vw > 0 && vh > 0) {
+		ImGui::Image (texture, avail, ImVec2 (0, 0), ImVec2 (1, 1));
 	} else {
 		ImGui::Text ("Viewport texture not ready...");
 	}

@@ -6,6 +6,7 @@
 
 #include "SDL3/SDL_gpu.h"
 #include "render/render.h"
+#include "render/targets/target.h"
 
 struct Drawable;
 struct MeshInstance;
@@ -62,7 +63,8 @@ class BufferManager {
 	SDL_GPUCommandBuffer* command_buffer = nullptr;
 	SDL_GPUTexture* depth_texture = nullptr;
 	SDL_GPUTexture* swap_chain_texture = nullptr;
-	SDL_GPUTexture* viewport_texture = nullptr;
+
+	Target viewport_target;
 
 	SDL_GPUTexture* g_position_texture = nullptr;
 	SDL_GPUTexture* g_normal_texture = nullptr;
@@ -75,8 +77,6 @@ class BufferManager {
 	Buffer* get_or_create_index_buffer (const MeshInstance& mesh);
 	Buffer* get_or_create_instance_buffer (const Drawable& drawable);
 
-	void add_buffer (Buffer& buffer);
-
 	[[nodiscard]] SDL_GPUBuffer*
 	create_buffer (BufferConfig buffer_config) const;
 	[[nodiscard]] SDL_GPUTransferBuffer*
@@ -85,6 +85,7 @@ class BufferManager {
 	void write (const void* data, size_t size, Buffer& buffer) const;
 	void
 	push_uniforms (const std::vector<UniformBinding>& uniform_bindings) const;
+	void ensure_viewport_target (int width, int height);
 	void upload (const Buffer& buffer) const;
 
   private:

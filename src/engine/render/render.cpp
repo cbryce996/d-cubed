@@ -183,25 +183,27 @@ void RenderManager::create_depth_texture () const {
 	assert (buffer_manager->depth_texture);
 }
 
-void RenderManager::create_viewport_texture (int w, int h) {
-	if (w <= 0 || h <= 0)
+void RenderManager::create_viewport_texture (int width, int height) {
+	if (width <= 0 || height <= 0)
 		return;
 
-	if (buffer_manager->viewport_texture && buffer_manager->viewport_w == w
-		&& buffer_manager->viewport_h == h)
+	auto& viewport_target = buffer_manager->viewport_target;
+
+	if (viewport_target.valid () && viewport_target.width == width
+		&& viewport_target.height == height)
 		return;
 
-	// TODO: Time bomb! We must use a texture buffer here
-	static int frame_counter = 0;
-	frame_counter++;
-	if (frame_counter > 200) {
-		SDL_ReleaseGPUTexture (device, buffer_manager->viewport_texture);
+	for (auto& texture : viewport_target.textures) {
+		if (texture) {
+			SDL_ReleaseGPUTexture (device, texture);
+			texture = nullptr;
+		}
 	}
 
 	SDL_GPUTextureCreateInfo info{};
 	info.type = SDL_GPU_TEXTURETYPE_2D;
-	info.width = w;
-	info.height = h;
+	info.width = width;
+	info.height = height;
 	info.layer_count_or_depth = 1;
 	info.num_levels = 1;
 	info.sample_count = SDL_GPU_SAMPLECOUNT_1;
@@ -209,10 +211,13 @@ void RenderManager::create_viewport_texture (int w, int h) {
 	info.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
 				 | SDL_GPU_TEXTUREUSAGE_SAMPLER;
 
-	buffer_manager->viewport_texture = SDL_CreateGPUTexture (device, &info);
-	buffer_manager->viewport_w = w;
-	buffer_manager->viewport_h = h;
-	assert (buffer_manager->viewport_texture);
+	for (int i = 0; i < Target::BufferCount; ++i) {
+		viewport_target.textures[i] = SDL_CreateGPUTexture (device, &info);
+		assert (viewport_target.textures[i]);
+	}
+
+	viewport_target.width = width;
+	viewport_target.height = height;
 }
 
 void RenderManager::setup_render_graph () {
@@ -369,13 +374,10 @@ void RenderManager::render (
 
 	editor_manager->create_ui (*buffer_manager, render_state);
 
-	if (editor_manager->viewport_state.width > 0
-		&& editor_manager->viewport_state.height > 0) {
-		create_viewport_texture (
-			editor_manager->viewport_state.width,
-			editor_manager->viewport_state.height
-		);
-	}
+	buffer_manager->ensure_viewport_target (
+		editor_manager->viewport_state.width,
+		editor_manager->viewport_state.height
+	);
 
 	const ImGuiIO& io = ImGui::GetIO ();
 

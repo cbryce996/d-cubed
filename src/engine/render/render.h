@@ -72,7 +72,7 @@ class RenderManager {
 	);
 
 	void create_depth_texture () const;
-	void create_viewport_texture (int w, int h);
+	void create_viewport_texture (int width, int height);
 	void create_gbuffer_textures (int width, int height) const;
 	void destroy_gbuffer_textures () const;
 
