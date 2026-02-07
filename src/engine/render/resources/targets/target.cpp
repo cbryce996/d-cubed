@@ -3,6 +3,8 @@
 #include <SDL3/SDL.h>
 #include <cassert>
 #include <future>
+Target::Target (const int height, const int width)
+	: width (width), height (height) {}
 
 bool Target::valid () const {
 	return textures[0] && textures[1] && width > 0 && height > 0;
@@ -34,10 +36,8 @@ void Target::destroy (SDL_GPUDevice* device) {
 
 void Target::create (
 	SDL_GPUDevice* device, int in_width, int in_height,
-	SDL_GPUTextureFormat format, SDL_GPUTextureUsageFlags usage
+	const SDL_GPUTextureFormat format, const SDL_GPUTextureUsageFlags usage
 ) {
-	destroy (device);
-
 	SDL_GPUTextureCreateInfo info{};
 	info.type = SDL_GPU_TEXTURETYPE_2D;
 	info.width = in_width;

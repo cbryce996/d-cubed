@@ -70,7 +70,6 @@ endif()
 # Game library
 # ------------------------------------------------------------------------------
 set(GAME_LIB_SOURCES
-        src/engine/editor/scene_graph.cpp
         src/engine/engine.cpp
         src/engine/runtime/tasks/tasks.cpp
         src/engine/inputs/input.cpp
@@ -91,7 +90,8 @@ set(GAME_LIB_SOURCES
         src/engine/render/pipelines/pipeline.cpp
         src/engine/render/pipelines/sdl/factory.cpp
         src/engine/render/buffers/buffer.cpp
-        src/engine/render/targets/target.cpp
+        src/engine/render/resources/targets/target.cpp
+        src/engine/render/resources/resources.cpp
         src/engine/cameras/camera.cpp
         src/engine/render/shaders/shader.cpp
         src/engine/assets/asset.cpp

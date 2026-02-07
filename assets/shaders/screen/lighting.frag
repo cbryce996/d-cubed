@@ -6,11 +6,9 @@ layout(set=0, binding=0) uniform GlobalUniform {
     vec4 camera_pos;
 } g_u;
 
-
 layout(set=1, binding = 0) uniform sampler2D inPosition;
 layout(set=3, binding = 1) uniform sampler2D inNormal;
 layout(set=2, binding = 2) uniform sampler2D inColor;
-
 
 layout(location = 0) in vec2 inUV;
 
@@ -32,7 +30,7 @@ vec3 applyCameraLight(vec3 color, vec3 normal, vec3 fragPosition, vec3 lightPosi
     float distance = length(L);
     vec3 lightDir = L / max(distance, 1e-6);
 
-    float diff = max(dot(normal, lightDir), 0.0) * 30.0;
+    float diff = max(dot(normal, lightDir), 0.0) * 50.0;
     float atten = 1.0 / (distance * 0.5 + 10.0);
 
     float range    = 100.0;

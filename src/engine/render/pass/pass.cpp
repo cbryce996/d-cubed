@@ -7,6 +7,7 @@
 #include "render/frame/frame.h"
 #include "render/pipelines/pipeline.h"
 #include "render/render.h"
+#include "render/resources/resources.h"
 #include "utils.h"
 
 namespace RenderPasses {
@@ -137,15 +138,15 @@ RenderPassInstance DeferredPass = {
 									RenderContext& render_context,
 									RenderPassInstance& render_pass_instance
 								) {
-			if (!render_context.buffer_manager->viewport_target.valid())
+			if (!render_context.resource_manager->viewport_target.valid())
 				return;
 
 			render_pass_instance.color_targets = {
-				render_context.buffer_manager->viewport_target.write()
+				render_context.resource_manager->viewport_target.write()
 			};
 
 			render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, *render_context.buffer_manager);
-			render_context.frame_manager->set_viewport (render_context.render_pass, render_context.buffer_manager->viewport_target.width, render_context.buffer_manager->viewport_target.height);
+			render_context.frame_manager->set_viewport (render_context.render_pass, render_context.resource_manager->viewport_target.width, render_context.resource_manager->viewport_target.height);
 
 			const PipelineState pipeline_state{
 				.render_pass_state = render_pass_instance.state,
@@ -158,8 +159,6 @@ RenderPassInstance DeferredPass = {
 			render_context.frame_manager->draw_screen (*pipeline, *render_context.buffer_manager, *render_context.render_pass);
 
 			SDL_EndGPURenderPass (render_context.render_pass);
-
-			render_context.buffer_manager->viewport_target.swap();
 		}
 	}
 };

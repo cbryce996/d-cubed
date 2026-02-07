@@ -1,6 +1,8 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+#include "render/resources/resources.h"
+
 #include <glm/glm.hpp>
 #include <imgui.h>
 #include <unordered_map>
@@ -10,8 +12,8 @@ class BufferManager;
 class IEntity;
 
 struct ViewportState {
-	int width = 0;
-	int height = 0;
+	int width;
+	int height;
 };
 
 struct EditorState {
@@ -27,6 +29,8 @@ enum EditorMode { Editing, Running };
 
 class EditorManager {
   public:
+	EditorManager (ViewportState viewport_state);
+
 	void draw_hierarchy (
 		const ImGuiWindowClass& window_class, const RenderState& render_state,
 		EditorState& editor_state
@@ -40,12 +44,13 @@ class EditorManager {
 
 	void draw_main_menu ();
 	void draw_viewport (
-		const BufferManager& buffer_manager,
+		const ResourceManager& resource_manager,
 		const ImGuiWindowClass& window_class
 	);
 
-	void
-	create_ui (const BufferManager& buffer_manager, RenderState& render_state);
+	void create_ui (
+		const ResourceManager& resource_manager, RenderState& render_state
+	);
 	void layout_ui (ImGuiID dock_main);
 
 	EditorMode editor_mode = Editing;

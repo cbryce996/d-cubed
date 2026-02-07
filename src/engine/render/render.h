@@ -11,6 +11,7 @@
 #include <imgui.h>
 #include <vector>
 
+class ResourceManager;
 class FrameManager;
 class EditorManager;
 class AssetManager;
@@ -47,16 +48,14 @@ class RenderManager {
 		std::shared_ptr<BufferManager> buffer_manager,
 		std::shared_ptr<AssetManager> asset_manager,
 		std::shared_ptr<EditorManager> editor_manager,
-		std::shared_ptr<FrameManager> frame_manager
+		std::shared_ptr<FrameManager> frame_manager,
+		std::shared_ptr<ResourceManager> resource_manager
 	);
 	~RenderManager ();
 	void setup_render_graph ();
 	void resize (int new_width, int new_height);
 	void acquire_swap_chain ();
 	void load_shaders () const;
-
-	int width = 1920;
-	int height = 1080;
 
 	std::shared_ptr<EditorManager> editor_manager;
 	std::shared_ptr<ShaderManager> shader_manager;
@@ -65,6 +64,7 @@ class RenderManager {
 	std::shared_ptr<CameraManager> camera_manager;
 	std::shared_ptr<AssetManager> asset_manager;
 	std::shared_ptr<FrameManager> frame_manager;
+	std::shared_ptr<ResourceManager> resource_manager;
 
 	void render (
 		RenderState& render_state, const KeyboardInput& key_board_input,

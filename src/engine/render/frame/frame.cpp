@@ -97,7 +97,6 @@ void FrameManager::set_viewport (
 	viewport.h = static_cast<float> (height);
 	viewport.min_depth = 0.0f;
 	viewport.max_depth = 1.0f;
-
 	SDL_SetGPUViewport (current_render_pass, &viewport);
 
 	SDL_Rect scissor{};

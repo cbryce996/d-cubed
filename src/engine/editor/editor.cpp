@@ -1,10 +1,14 @@
 #include "editor.h"
 
 #include "render/buffers/buffer.h"
+#include "render/resources/resources.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <ranges>
+
+EditorManager::EditorManager (const ViewportState viewport_state)
+	: viewport_state (viewport_state) {}
 
 void EditorManager::draw_entity_node (IEntity* entity, EditorState& state) {
 	const bool is_leaf = entity->children.empty ();
@@ -156,54 +160,95 @@ void EditorManager::draw_main_menu () {
 }
 
 void EditorManager::draw_viewport (
-	const BufferManager& buffer_manager, const ImGuiWindowClass& window_class
+	const ResourceManager& resource_manager,
+	const ImGuiWindowClass& window_class
 ) {
-	constexpr float TOOLBAR_HEIGHT = 32.0f;
-
 	ImGui::SetNextWindowClass (&window_class);
 
 	ImGui::PushStyleVar (ImGuiStyleVar_WindowPadding, ImVec2 (0, 0));
 	ImGui::PushStyleVar (ImGuiStyleVar_ItemSpacing, ImVec2 (0, 0));
 
-	ImGui::Begin (
+	const bool open = ImGui::Begin (
 		"Viewport", nullptr,
 		ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
 			| ImGuiWindowFlags_NoCollapse
 	);
 
-	ImGui::TextColored (
-		editor_mode == Editing ? ImVec4 (0, 1, 0, 1) : ImVec4 (1, 0.5f, 0, 1),
-		editor_mode == Editing ? "EDITOR MODE" : "PLAY MODE"
+	auto end_scope = [&] {
+		ImGui::End ();
+		ImGui::PopStyleVar (2);
+	};
+
+	if (!open) {
+		end_scope ();
+		return;
+	}
+
+	ImVec2 viewport_origin = ImGui::GetCursorScreenPos ();
+	ImVec2 available = ImGui::GetContentRegionAvail ();
+
+	if (available.x <= 1.0f || available.y <= 1.0f) {
+		end_scope ();
+		return;
+	}
+
+	SDL_GPUTexture* tex = resource_manager.viewport_target.read ();
+	if (!tex) {
+		ImGui::Text ("Viewport texture not ready...");
+		end_scope ();
+		return;
+	}
+
+	const auto tex_w = static_cast<float> (
+		resource_manager.viewport_target.width
+	);
+	const auto tex_h = static_cast<float> (
+		resource_manager.viewport_target.height
 	);
 
-	const ImVec2 avail = ImGui::GetContentRegionAvail ();
-	const int vw = static_cast<int> (avail.x);
-	const int vh = static_cast<int> (avail.y);
+	constexpr float zoom = 1.0f;
+	const ImVec2 draw_size = {tex_w * zoom, tex_h * zoom};
 
-	viewport_state.width = vw > 0 ? vw : 0;
-	viewport_state.height = vh > 0 ? vh : 0;
+	const ImVec2 image_pos = {
+		viewport_origin.x + (available.x - draw_size.x) * 0.5f,
+		viewport_origin.y + (available.y - draw_size.y) * 0.5f
+	};
 
-	if (SDL_GPUTexture* texture = buffer_manager.viewport_target.read ();
-		texture && vw > 0 && vh > 0) {
-		ImGui::Image (texture, avail, ImVec2 (0, 0), ImVec2 (1, 1));
-	} else {
-		ImGui::Text ("Viewport texture not ready...");
-	}
+	ImDrawList* dl = ImGui::GetWindowDrawList ();
+
+	const ImVec2 clip_min = viewport_origin;
+	const ImVec2 clip_max = {
+		viewport_origin.x + available.x, viewport_origin.y + available.y
+	};
+	dl->PushClipRect (clip_min, clip_max, true);
+
+	dl->AddRectFilled (clip_min, clip_max, IM_COL32 (10, 10, 10, 255));
+
+	dl->AddImage (
+		tex, image_pos,
+		ImVec2 (image_pos.x + draw_size.x, image_pos.y + draw_size.y),
+		ImVec2 (0, 0), ImVec2 (1, 1)
+	);
+
+	dl->PopClipRect ();
+
+	dl->AddText (
+		ImVec2 (clip_min.x + 10, clip_min.y + 10), IM_COL32 (0, 255, 0, 255),
+		(editor_mode == Editing) ? "EDITOR MODE" : "PLAY MODE"
+	);
 
 	editor_state.viewport_hovered = ImGui::IsWindowHovered (
 		ImGuiHoveredFlags_AllowWhenBlockedByPopup
 	);
-
 	editor_state.viewport_focused = ImGui::IsWindowFocused (
 		ImGuiFocusedFlags_RootAndChildWindows
 	);
 
-	ImGui::End ();
-	ImGui::PopStyleVar (2);
+	end_scope ();
 }
 
 void EditorManager::create_ui (
-	const BufferManager& buffer_manager, RenderState& render_state
+	const ResourceManager& resource_manager, RenderState& render_state
 ) {
 	constexpr ImGuiDockNodeFlags dock_flags
 		= ImGuiDockNodeFlags_PassthruCentralNode;
@@ -223,12 +268,12 @@ void EditorManager::create_ui (
 	docked_panel_class.DockNodeFlagsOverrideSet
 		= ImGuiDockNodeFlags_NoWindowMenuButton;
 
-	draw_viewport (buffer_manager, docked_panel_class);
 	draw_main_menu ();
 	draw_hierarchy (docked_panel_class, render_state, editor_state);
 	draw_inspector (docked_panel_class, editor_state);
 	draw_console (docked_panel_class);
 	draw_stats (docked_panel_class);
+	draw_viewport (resource_manager, docked_panel_class);
 }
 
 void EditorManager::layout_ui (ImGuiID dock_base) {

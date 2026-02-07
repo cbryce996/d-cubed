@@ -23,6 +23,9 @@
 #include <iostream>
 
 Engine::Engine () {
+	constexpr int VIEWPORT_HEIGHT = 1080;
+	constexpr int VIEWPORT_WIDTH = 1920;
+
 	if (!SDL_Init (SDL_INIT_VIDEO)) {
 		std::cerr << "SDL Init failed: " << SDL_GetError () << "\n";
 		return;
@@ -30,7 +33,9 @@ Engine::Engine () {
 
 	SDL_SetLogPriority (SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_TRACE);
 
-	window = SDL_CreateWindow ("Game", 1280, 720, SDL_WINDOW_RESIZABLE);
+	window = SDL_CreateWindow (
+		"Game", VIEWPORT_WIDTH, VIEWPORT_HEIGHT, SDL_WINDOW_RESIZABLE
+	);
 
 	// SDL_SetWindowFullscreen (window, true);
 
@@ -65,13 +70,19 @@ Engine::Engine () {
 	std::shared_ptr<AssetManager> asset_manager
 		= std::make_shared<AssetManager> ();
 	std::shared_ptr<EditorManager> editor_manager
-		= std::make_shared<EditorManager> ();
+		= std::make_shared<EditorManager> (
+			ViewportState{VIEWPORT_WIDTH, VIEWPORT_HEIGHT}
+		);
 	std::shared_ptr<FrameManager> frame_manager
 		= std::make_shared<FrameManager> ();
 
+	Target viewport_target = {VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
+	std::shared_ptr<ResourceManager> resource_manager
+		= std::make_shared<ResourceManager> (viewport_target);
+
 	render = std::make_unique<RenderManager> (
 		gpu_device, window, shader_manager, pipeline_manager, buffer_manager,
-		asset_manager, editor_manager, frame_manager
+		asset_manager, editor_manager, frame_manager, resource_manager
 	);
 
 	runtime = std::make_unique<Runtime> ();
