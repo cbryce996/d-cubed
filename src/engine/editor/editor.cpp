@@ -11,11 +11,14 @@ void EditorManager::draw_entity_node (IEntity* entity, EditorState& state) {
 	const bool is_leaf = entity->children.empty ();
 
 	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow
-							   | ImGuiTreeNodeFlags_SpanAvailWidth;
+							   | ImGuiTreeNodeFlags_SpanFullWidth
+							   | ImGuiTreeNodeFlags_FramePadding;
 
 	if (is_leaf) {
 		flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 	}
+
+	ImGui::PushStyleVar (ImGuiStyleVar_IndentSpacing, 8.0f);
 
 	if (state.selected_entity == entity)
 		flags |= ImGuiTreeNodeFlags_Selected;
@@ -50,6 +53,8 @@ void EditorManager::draw_entity_node (IEntity* entity, EditorState& state) {
 		}
 		ImGui::TreePop ();
 	}
+
+	ImGui::PopStyleVar ();
 }
 
 void EditorManager::draw_hierarchy (
@@ -128,15 +133,59 @@ void EditorManager::draw_inspector (
 
 void EditorManager::draw_console (const ImGuiWindowClass& window_class) {
 	ImGui::SetNextWindowClass (&window_class);
+
+	// Tighter look just for this window
+	ImGui::PushStyleVar (ImGuiStyleVar_FramePadding, ImVec2 (6, 3));
+	ImGui::PushStyleVar (ImGuiStyleVar_ItemSpacing, ImVec2 (6, 4));
+
 	ImGui::Begin ("Console", nullptr, ImGuiWindowFlags_NoCollapse);
-	ImGui::Text ("Logs...");
+
+	// Pull SDL errors into console (one-shot)
+	if (const char* err = SDL_GetError (); err && err[0] != '\0') {
+		console_entries.push_back (
+			{IM_COL32 (255, 90, 90, 255), std::string ("[sdl] ") + err}
+		);
+		SDL_ClearError ();
+	}
+
+	// No border: use false for the "border" arg
+	ImGui::BeginChild (
+		"##console_scroller", ImVec2 (0, 0), false, ImGuiWindowFlags_NoScrollbar
+	);
+
+	// Slightly tighter line spacing
+	ImGui::PushStyleVar (ImGuiStyleVar_ItemSpacing, ImVec2 (4, 2));
+
+	for (const auto& e : console_entries) {
+		ImGui::PushStyleColor (ImGuiCol_Text, e.color);
+		ImGui::TextUnformatted (e.text.c_str ());
+		ImGui::PopStyleColor ();
+	}
+
+	ImGui::PopStyleVar ();
+
+	if (console_autoscroll
+		&& ImGui::GetScrollY () >= ImGui::GetScrollMaxY () - 2.0f) {
+		ImGui::SetScrollHereY (1.0f);
+	}
+
+	ImGui::EndChild ();
 	ImGui::End ();
+
+	ImGui::PopStyleVar (2);
 }
 
 void EditorManager::draw_stats (const ImGuiWindowClass& window_class) {
 	ImGui::SetNextWindowClass (&window_class);
 	ImGui::Begin ("Stats", nullptr, ImGuiWindowFlags_NoCollapse);
-	ImGui::Text ("FPS...");
+
+	const ImGuiIO& io = ImGui::GetIO ();
+
+	const float fps = io.Framerate;
+	const float ms = (fps > 0.0f) ? (1000.0f / fps) : 0.0f;
+
+	ImGui::Text ("FPS: %.1f", fps);
+	ImGui::Text ("Frame: %.2f ms", ms);
 	ImGui::End ();
 }
 
@@ -235,11 +284,28 @@ void EditorManager::draw_viewport (
 
 	dl->AddImage (tex, panel_min, panel_max, uv0, uv1);
 
-	dl->AddText (
-		ImVec2 (panel_min.x + 10.0f, panel_min.y + 10.0f),
-		IM_COL32 (0, 255, 0, 255),
-		(editor_mode == Editing) ? "EDITOR MODE" : "PLAY MODE"
-	);
+	{
+		constexpr float pad = 10.0f;
+		constexpr float box_pad = 6.0f;
+
+		const char* mode_text = (editor_mode == Editing) ? "EDITOR MODE"
+														 : "PLAY MODE";
+		const ImU32 mode_col = (editor_mode == Editing)
+								   ? IM_COL32 (0, 255, 0, 255)	  // green
+								   : IM_COL32 (255, 165, 0, 255); // orange
+
+		const ImVec2 text_size = ImGui::CalcTextSize (mode_text);
+		const ImVec2 text_pos (panel_min.x + pad, panel_min.y + pad);
+
+		const ImVec2 box_min (text_pos.x - box_pad, text_pos.y - box_pad);
+		const ImVec2 box_max (
+			text_pos.x + text_size.x + box_pad,
+			text_pos.y + text_size.y + box_pad
+		);
+
+		dl->AddRectFilled (box_min, box_max, IM_COL32 (30, 30, 30, 80), 4.0f);
+		dl->AddText (text_pos, mode_col, mode_text);
+	}
 
 	{
 		constexpr float pad = 10.0f;
@@ -269,7 +335,7 @@ void EditorManager::draw_viewport (
 			text_pos.y + text_size.y + box_pad
 		);
 
-		dl->AddRectFilled (box_min, box_max, IM_COL32 (0, 0, 0, 140), 4.0f);
+		dl->AddRectFilled (box_min, box_max, IM_COL32 (30, 30, 30, 80), 4.0f);
 		dl->AddText (text_pos, IM_COL32 (255, 255, 0, 255), buf);
 	}
 

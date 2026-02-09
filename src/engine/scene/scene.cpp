@@ -11,9 +11,9 @@
 Scene::Scene () {
 	Camera camera{};
 	camera.name = "main";
-	camera.transform.position = glm::vec3 (0.0f, -50.0f, 20.0f);
+	camera.transform.position = glm::vec3 (0.0f, -20.0f, 20.0f);
 	camera.transform.rotation = glm::quat (
-		glm::vec3 (glm::radians (70.0f), 0.0f, 0.0f)
+		glm::vec3 (glm::radians (30.0f), 0.0f, 0.0f)
 	);
 	camera.transform.scale = glm::vec3 (1.0f);
 	camera.lens.fov = 100.0f;

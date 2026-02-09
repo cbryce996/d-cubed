@@ -27,6 +27,11 @@ struct EditorState {
 
 enum EditorMode { Editing, Running };
 
+struct ConsoleEntry {
+	ImU32 color;
+	std::string text;
+};
+
 class EditorManager {
   public:
 	void draw_hierarchy (
@@ -50,6 +55,10 @@ class EditorManager {
 		const ResourceManager& resource_manager, RenderState& render_state
 	);
 	void layout_ui (ImGuiID dock_main);
+
+	std::vector<ConsoleEntry> console_entries;
+	ImGuiTextFilter console_filter;
+	bool console_autoscroll = true;
 
 	EditorMode editor_mode = Editing;
 	EditorState editor_state;

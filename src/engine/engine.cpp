@@ -115,14 +115,14 @@ void Engine::run () {
 	ImFontConfig cfg{};
 	cfg.SizePixels = 14.0f * dpi;
 	// optional knobs:
-	// cfg.OversampleH = 2;
-	// cfg.OversampleV = 2;
-	// cfg.PixelSnapH = true;
+	cfg.OversampleH = 2;
+	cfg.OversampleV = 2;
+	cfg.PixelSnapH = true;
 
 	io.Fonts->AddFontDefault (&cfg);
 
 	// Keep “visual size” the same in UI points, but crisp
-	io.FontGlobalScale = 1.0f / dpi;
+	io.FontGlobalScale = 0.9f / dpi;
 
 	ImGui::StyleColorsDark ();
 
