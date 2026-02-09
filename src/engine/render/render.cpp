@@ -368,10 +368,32 @@ void RenderManager::render (
 ) {
 	assert (&render_state);
 
-	resource_manager->resize_viewport (
-		device, editor_manager->viewport_state.width,
-		editor_manager->viewport_state.height
+	int ww, wh;
+	int dw, dh;
+	SDL_GetWindowSize (window, &ww, &wh);
+	SDL_GetWindowSizeInPixels (window, &dw, &dh);
+
+	const float scale_x = (ww > 0) ? static_cast<float> (dw)
+										 / static_cast<float> (ww)
+								   : 1.0f;
+	const float scale_y = (wh > 0) ? static_cast<float> (dh)
+										 / static_cast<float> (wh)
+								   : 1.0f;
+
+	const int vp_w_px = std::max (
+		1, static_cast<int> (
+			   std::lround (editor_manager->viewport_state.width * scale_x)
+		   )
 	);
+	const int vp_h_px = std::max (
+		1, static_cast<int> (
+			   std::lround (editor_manager->viewport_state.height * scale_y)
+		   )
+	);
+
+	if (vp_w_px > 1 && vp_h_px > 1) {
+		resource_manager->resize_viewport (device, vp_w_px, vp_h_px);
+	}
 
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
 	assert (buffer_manager->command_buffer);

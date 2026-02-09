@@ -184,14 +184,6 @@ void EditorManager::draw_viewport (
 		return;
 	}
 
-	ImVec2 viewport_origin = ImGui::GetCursorScreenPos ();
-	ImVec2 available = ImGui::GetContentRegionAvail ();
-
-	if (available.x <= 1.0f || available.y <= 1.0f) {
-		end_scope ();
-		return;
-	}
-
 	SDL_GPUTexture* tex = resource_manager.viewport_target.read ();
 	if (!tex) {
 		ImGui::Text ("Viewport texture not ready...");
@@ -199,43 +191,67 @@ void EditorManager::draw_viewport (
 		return;
 	}
 
-	const auto tex_w = static_cast<float> (
-		resource_manager.viewport_target.width
+	const ImVec2 win_pos = ImGui::GetWindowPos ();
+	const ImVec2 cr_min = ImGui::GetWindowContentRegionMin ();
+	const ImVec2 cr_max = ImGui::GetWindowContentRegionMax ();
+
+	const ImVec2 inner_min = ImVec2 (
+		win_pos.x + cr_min.x, win_pos.y + cr_min.y
 	);
-	const auto tex_h = static_cast<float> (
-		resource_manager.viewport_target.height
+	const ImVec2 inner_max = ImVec2 (
+		win_pos.x + cr_max.x, win_pos.y + cr_max.y
+	);
+	const ImVec2 inner_size = ImVec2 (
+		inner_max.x - inner_min.x, inner_max.y - inner_min.y
 	);
 
-	constexpr float zoom = 1.0f;
-	const ImVec2 draw_size = {tex_w * zoom, tex_h * zoom};
+	if (inner_size.x <= 1.0f || inner_size.y <= 1.0f) {
+		end_scope ();
+		return;
+	}
 
-	const ImVec2 image_pos = {
-		viewport_origin.x + (available.x - draw_size.x) * 0.5f,
-		viewport_origin.y + (available.y - draw_size.y) * 0.5f
-	};
+	const float tex_w = (float)resource_manager.viewport_target.width;
+	const float tex_h = (float)resource_manager.viewport_target.height;
+	const float tex_aspect = tex_w / tex_h;
+	const float panel_aspect = inner_size.x / inner_size.y;
+
+	// UV crop (centered)
+	ImVec2 uv0 (0.0f, 0.0f);
+	ImVec2 uv1 (1.0f, 1.0f);
+
+	if (panel_aspect < tex_aspect) {
+		// panel is narrower -> crop horizontally
+		const float frac = panel_aspect
+						   / tex_aspect; // visible fraction of width
+		const float u0 = (1.0f - frac) * 0.5f;
+		uv0.x = u0;
+		uv1.x = u0 + frac;
+	} else if (panel_aspect > tex_aspect) {
+		// panel is wider -> crop vertically (rare if you always "fill Y", but
+		// keeps it robust)
+		const float frac = tex_aspect
+						   / panel_aspect; // visible fraction of height
+		const float v0 = (1.0f - frac) * 0.5f;
+		uv0.y = v0;
+		uv1.y = v0 + frac;
+	}
 
 	ImDrawList* dl = ImGui::GetWindowDrawList ();
+	dl->PushClipRect (inner_min, inner_max, true);
 
-	const ImVec2 clip_min = viewport_origin;
-	const ImVec2 clip_max = {
-		viewport_origin.x + available.x, viewport_origin.y + available.y
-	};
-	dl->PushClipRect (clip_min, clip_max, true);
+	dl->AddRectFilled (inner_min, inner_max, IM_COL32 (10, 10, 10, 255));
 
-	dl->AddRectFilled (clip_min, clip_max, IM_COL32 (10, 10, 10, 255));
+	// Draw EXACTLY in the panel rect, aligned, and crop via UVs
+	dl->AddImage ((ImTextureID)tex, inner_min, inner_max, uv0, uv1);
 
-	dl->AddImage (
-		tex, image_pos,
-		ImVec2 (image_pos.x + draw_size.x, image_pos.y + draw_size.y),
-		ImVec2 (0, 0), ImVec2 (1, 1)
+	// Overlay anchored to the visible panel
+	dl->AddText (
+		ImVec2 (inner_min.x + 10.0f, inner_min.y + 10.0f),
+		IM_COL32 (0, 255, 0, 255),
+		(editor_mode == Editing) ? "EDITOR MODE" : "PLAY MODE"
 	);
 
 	dl->PopClipRect ();
-
-	dl->AddText (
-		ImVec2 (clip_min.x + 10, clip_min.y + 10), IM_COL32 (0, 255, 0, 255),
-		(editor_mode == Editing) ? "EDITOR MODE" : "PLAY MODE"
-	);
 
 	editor_state.viewport_hovered = ImGui::IsWindowHovered (
 		ImGuiHoveredFlags_AllowWhenBlockedByPopup

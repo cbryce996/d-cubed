@@ -1,18 +1,21 @@
 #include "target.h"
 
 #include <SDL3/SDL.h>
+#include <algorithm>
 #include <cassert>
-#include <future>
-Target::Target (const int height, const int width)
-	: width (width), height (height) {}
 
 bool Target::valid () const {
 	return textures[0] && textures[1] && width > 0 && height > 0;
 }
 
 SDL_GPUTexture* Target::write () const { return textures[write_index]; }
-
 SDL_GPUTexture* Target::read () const { return textures[read_index]; }
+
+float Target::aspect_ratio () const {
+	return (height > 0)
+			   ? (static_cast<float> (width) / static_cast<float> (height))
+			   : 1.0f;
+}
 
 void Target::swap () { std::swap (write_index, read_index); }
 

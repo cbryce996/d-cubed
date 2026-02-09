@@ -23,9 +23,6 @@
 #include <iostream>
 
 Engine::Engine () {
-	constexpr int VIEWPORT_HEIGHT = 1080;
-	constexpr int VIEWPORT_WIDTH = 1920;
-
 	if (!SDL_Init (SDL_INIT_VIDEO)) {
 		std::cerr << "SDL Init failed: " << SDL_GetError () << "\n";
 		return;
@@ -34,7 +31,7 @@ Engine::Engine () {
 	SDL_SetLogPriority (SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_TRACE);
 
 	window = SDL_CreateWindow (
-		"Game", VIEWPORT_WIDTH, VIEWPORT_HEIGHT, SDL_WINDOW_RESIZABLE
+		"Game", 2560, 1600, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY
 	);
 
 	// SDL_SetWindowFullscreen (window, true);
@@ -70,15 +67,12 @@ Engine::Engine () {
 	std::shared_ptr<AssetManager> asset_manager
 		= std::make_shared<AssetManager> ();
 	std::shared_ptr<EditorManager> editor_manager
-		= std::make_shared<EditorManager> (
-			ViewportState{VIEWPORT_WIDTH, VIEWPORT_HEIGHT}
-		);
+		= std::make_shared<EditorManager> (ViewportState{});
 	std::shared_ptr<FrameManager> frame_manager
 		= std::make_shared<FrameManager> ();
 
-	Target viewport_target = {VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
 	std::shared_ptr<ResourceManager> resource_manager
-		= std::make_shared<ResourceManager> (viewport_target);
+		= std::make_shared<ResourceManager> (Target{});
 
 	render = std::make_unique<RenderManager> (
 		gpu_device, window, shader_manager, pipeline_manager, buffer_manager,
@@ -104,6 +98,31 @@ void Engine::run () {
 	ImGui::CreateContext ();
 	ImGuiIO& io = ImGui::GetIO ();
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	int ww, wh;
+	SDL_GetWindowSize (window, &ww, &wh);
+	int dw, dh;
+	SDL_GetWindowSizeInPixels (window, &dw, &dh);
+
+	io.DisplaySize = ImVec2 (static_cast<float> (ww), static_cast<float> (wh));
+	io.DisplayFramebufferScale = ImVec2 (
+		static_cast<float> (dw) / static_cast<float> (ww),
+		static_cast<float> (dh) / static_cast<float> (wh)
+	);
+
+	float dpi = io.DisplayFramebufferScale.x;
+
+	ImFontConfig cfg{};
+	cfg.SizePixels = 14.0f * dpi;
+	// optional knobs:
+	// cfg.OversampleH = 2;
+	// cfg.OversampleV = 2;
+	// cfg.PixelSnapH = true;
+
+	io.Fonts->AddFontDefault (&cfg);
+
+	// Keep “visual size” the same in UI points, but crisp
+	io.FontGlobalScale = 1.0f / dpi;
 
 	ImGui::StyleColorsDark ();
 
