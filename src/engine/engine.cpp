@@ -67,7 +67,7 @@ Engine::Engine () {
 	std::shared_ptr<AssetManager> asset_manager
 		= std::make_shared<AssetManager> ();
 	std::shared_ptr<EditorManager> editor_manager
-		= std::make_shared<EditorManager> (ViewportState{});
+		= std::make_shared<EditorManager> ();
 	std::shared_ptr<FrameManager> frame_manager
 		= std::make_shared<FrameManager> ();
 
@@ -151,8 +151,6 @@ void Engine::run () {
 			ImGui_ImplSDL3_ProcessEvent (&e);
 			if (e.type == SDL_EVENT_QUIT)
 				running = false;
-			if (e.type == SDL_EVENT_WINDOW_RESIZED)
-				render->resize (e.window.data1, e.window.data2);
 			if (e.type == SDL_EVENT_KEY_DOWN && !e.key.repeat) {
 				if (e.key.key == SDL_GetKeyFromName ("I")) {
 					auto& editor = *render->editor_manager;

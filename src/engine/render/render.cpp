@@ -20,6 +20,8 @@
 #include <imgui_impl_sdlgpu3.h>
 #include <imgui_internal.h>
 
+#include "frame/frame.h"
+
 RenderManager::RenderManager (
 	SDL_GPUDevice* device, SDL_Window* window,
 	std::shared_ptr<ShaderManager> shader_manager,
@@ -46,20 +48,16 @@ RenderManager::RenderManager (
 	assert (this->buffer_manager);
 	assert (this->asset_manager);
 
-	int width = this->resource_manager->viewport_target.width;
-	int height = this->resource_manager->viewport_target.height;
+	int window_width = 0, window_height = 0;
+	SDL_GetWindowSizeInPixels (window, &window_width, &window_height);
 
-	SDL_GetWindowSize (window, &width, &height);
-	assert (width > 0 && height > 0);
+	render_width = window_width;
+	render_height = window_height;
+
+	resize (render_width, render_height);
+	setup_render_graph ();
 
 	load_shaders ();
-	create_gbuffer_textures (width, height);
-	create_depth_texture ();
-	create_viewport_texture (
-		this->resource_manager->viewport_target.width,
-		this->resource_manager->viewport_target.height
-	);
-	setup_render_graph ();
 }
 
 RenderManager::~RenderManager () = default;
@@ -367,33 +365,6 @@ void RenderManager::render (
 	MouseInput& mouse_input, float delta_time
 ) {
 	assert (&render_state);
-
-	int ww, wh;
-	int dw, dh;
-	SDL_GetWindowSize (window, &ww, &wh);
-	SDL_GetWindowSizeInPixels (window, &dw, &dh);
-
-	const float scale_x = (ww > 0) ? static_cast<float> (dw)
-										 / static_cast<float> (ww)
-								   : 1.0f;
-	const float scale_y = (wh > 0) ? static_cast<float> (dh)
-										 / static_cast<float> (wh)
-								   : 1.0f;
-
-	const int vp_w_px = std::max (
-		1, static_cast<int> (
-			   std::lround (editor_manager->viewport_state.width * scale_x)
-		   )
-	);
-	const int vp_h_px = std::max (
-		1, static_cast<int> (
-			   std::lround (editor_manager->viewport_state.height * scale_y)
-		   )
-	);
-
-	if (vp_w_px > 1 && vp_h_px > 1) {
-		resource_manager->resize_viewport (device, vp_w_px, vp_h_px);
-	}
 
 	buffer_manager->command_buffer = SDL_AcquireGPUCommandBuffer (device);
 	assert (buffer_manager->command_buffer);

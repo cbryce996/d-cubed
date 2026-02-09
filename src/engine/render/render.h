@@ -57,6 +57,9 @@ class RenderManager {
 	void acquire_swap_chain ();
 	void load_shaders () const;
 
+	int render_width = 0;
+	int render_height = 0;
+
 	std::shared_ptr<EditorManager> editor_manager;
 	std::shared_ptr<ShaderManager> shader_manager;
 	std::shared_ptr<PipelineManager> pipeline_manager;

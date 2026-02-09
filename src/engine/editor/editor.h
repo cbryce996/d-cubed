@@ -12,8 +12,8 @@ class BufferManager;
 class IEntity;
 
 struct ViewportState {
-	int width;
-	int height;
+	int width = 0;
+	int height = 0;
 };
 
 struct EditorState {
@@ -29,8 +29,6 @@ enum EditorMode { Editing, Running };
 
 class EditorManager {
   public:
-	EditorManager (ViewportState viewport_state);
-
 	void draw_hierarchy (
 		const ImGuiWindowClass& window_class, const RenderState& render_state,
 		EditorState& editor_state
@@ -55,7 +53,6 @@ class EditorManager {
 
 	EditorMode editor_mode = Editing;
 	EditorState editor_state;
-	ViewportState viewport_state;
 };
 
 #endif // EDITOR_H

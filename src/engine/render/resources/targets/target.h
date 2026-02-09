@@ -9,8 +9,8 @@ class Target {
 
 	SDL_GPUTexture* textures[BufferCount] = {nullptr, nullptr};
 
-	int width = 1920;
-	int height = 1080;
+	int width = 0;
+	int height = 0;
 
 	int write_index = 0;
 	int read_index = 1;

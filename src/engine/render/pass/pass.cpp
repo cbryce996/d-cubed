@@ -100,7 +100,6 @@ RenderPassInstance GeometryPass = {
 		};
 
 		render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, *render_context.buffer_manager);
-		render_context.frame_manager->set_viewport (render_context.render_pass, render_context.width, render_context.height);
 
 		for (Drawable& drawable : *render_context.drawables) {
 			const PipelineState pipeline_state{
@@ -146,7 +145,6 @@ RenderPassInstance DeferredPass = {
 			};
 
 			render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, *render_context.buffer_manager);
-			render_context.frame_manager->set_viewport (render_context.render_pass, render_context.resource_manager->viewport_target.width, render_context.resource_manager->viewport_target.height);
 
 			const PipelineState pipeline_state{
 				.render_pass_state = render_pass_instance.state,
@@ -193,12 +191,6 @@ RenderPassInstance UIPass = {
 					render_pass_instance,
 					*render_context.buffer_manager
 				);
-
-			render_context.frame_manager->set_viewport(
-				render_context.render_pass,
-				render_context.width,
-				render_context.height
-			);
 
 			render_context.frame_manager->draw_ui (
 				*render_context.buffer_manager, *render_context.render_pass

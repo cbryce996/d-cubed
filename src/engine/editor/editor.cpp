@@ -7,9 +7,6 @@
 #include <imgui_internal.h>
 #include <ranges>
 
-EditorManager::EditorManager (const ViewportState viewport_state)
-	: viewport_state (viewport_state) {}
-
 void EditorManager::draw_entity_node (IEntity* entity, EditorState& state) {
 	const bool is_leaf = entity->children.empty ();
 
@@ -191,65 +188,90 @@ void EditorManager::draw_viewport (
 		return;
 	}
 
-	const ImVec2 win_pos = ImGui::GetWindowPos ();
-	const ImVec2 cr_min = ImGui::GetWindowContentRegionMin ();
-	const ImVec2 cr_max = ImGui::GetWindowContentRegionMax ();
+	const ImVec2 window_pos = ImGui::GetWindowPos ();
+	const ImVec2 content_region_min = ImGui::GetWindowContentRegionMin ();
+	const ImVec2 content_region_max = ImGui::GetWindowContentRegionMax ();
 
-	const ImVec2 inner_min = ImVec2 (
-		win_pos.x + cr_min.x, win_pos.y + cr_min.y
+	const auto panel_min = ImVec2 (
+		window_pos.x + content_region_min.x, window_pos.y + content_region_min.y
 	);
-	const ImVec2 inner_max = ImVec2 (
-		win_pos.x + cr_max.x, win_pos.y + cr_max.y
+	const auto panel_max = ImVec2 (
+		window_pos.x + content_region_max.x, window_pos.y + content_region_max.y
 	);
-	const ImVec2 inner_size = ImVec2 (
-		inner_max.x - inner_min.x, inner_max.y - inner_min.y
+	const auto panel_size = ImVec2 (
+		panel_max.x - panel_min.x, panel_max.y - panel_min.y
 	);
 
-	if (inner_size.x <= 1.0f || inner_size.y <= 1.0f) {
+	if (panel_size.x <= 1.0f || panel_size.y <= 1.0f) {
 		end_scope ();
 		return;
 	}
 
-	const float tex_w = (float)resource_manager.viewport_target.width;
-	const float tex_h = (float)resource_manager.viewport_target.height;
-	const float tex_aspect = tex_w / tex_h;
-	const float panel_aspect = inner_size.x / inner_size.y;
+	const float texture_ratio
+		= static_cast<float> (resource_manager.viewport_target.width)
+		  / static_cast<float> (resource_manager.viewport_target.height);
 
-	// UV crop (centered)
+	const float panel_ratio = panel_size.x / panel_size.y;
+
 	ImVec2 uv0 (0.0f, 0.0f);
 	ImVec2 uv1 (1.0f, 1.0f);
 
-	if (panel_aspect < tex_aspect) {
-		// panel is narrower -> crop horizontally
-		const float frac = panel_aspect
-						   / tex_aspect; // visible fraction of width
+	if (panel_ratio < texture_ratio) {
+		const float frac = panel_ratio / texture_ratio;
 		const float u0 = (1.0f - frac) * 0.5f;
 		uv0.x = u0;
 		uv1.x = u0 + frac;
-	} else if (panel_aspect > tex_aspect) {
-		// panel is wider -> crop vertically (rare if you always "fill Y", but
-		// keeps it robust)
-		const float frac = tex_aspect
-						   / panel_aspect; // visible fraction of height
+	} else if (panel_ratio > texture_ratio) {
+		const float frac = texture_ratio / panel_ratio;
 		const float v0 = (1.0f - frac) * 0.5f;
 		uv0.y = v0;
 		uv1.y = v0 + frac;
 	}
 
 	ImDrawList* dl = ImGui::GetWindowDrawList ();
-	dl->PushClipRect (inner_min, inner_max, true);
+	dl->PushClipRect (panel_min, panel_max, true);
 
-	dl->AddRectFilled (inner_min, inner_max, IM_COL32 (10, 10, 10, 255));
+	dl->AddRectFilled (panel_min, panel_max, IM_COL32 (10, 10, 10, 255));
 
-	// Draw EXACTLY in the panel rect, aligned, and crop via UVs
-	dl->AddImage ((ImTextureID)tex, inner_min, inner_max, uv0, uv1);
+	dl->AddImage (tex, panel_min, panel_max, uv0, uv1);
 
-	// Overlay anchored to the visible panel
 	dl->AddText (
-		ImVec2 (inner_min.x + 10.0f, inner_min.y + 10.0f),
+		ImVec2 (panel_min.x + 10.0f, panel_min.y + 10.0f),
 		IM_COL32 (0, 255, 0, 255),
 		(editor_mode == Editing) ? "EDITOR MODE" : "PLAY MODE"
 	);
+
+	{
+		constexpr float pad = 10.0f;
+		constexpr float box_pad = 6.0f;
+
+		const ImGuiIO& io = ImGui::GetIO ();
+		const ImVec2 fb = io.DisplayFramebufferScale;
+
+		const int tex_w = resource_manager.viewport_target.width;
+		const int tex_h = resource_manager.viewport_target.height;
+
+		char buf[256];
+		std::snprintf (
+			buf, sizeof (buf),
+			"Render: %dx%d\nPanel:  %.0fx%.0f\nFB:     %.2fx%.2f", tex_w, tex_h,
+			panel_size.x, panel_size.y, fb.x, fb.y
+		);
+
+		const ImVec2 text_size = ImGui::CalcTextSize (buf);
+		const ImVec2 text_pos (
+			panel_max.x - pad - text_size.x, panel_min.y + pad
+		);
+
+		const ImVec2 box_min (text_pos.x - box_pad, text_pos.y - box_pad);
+		const ImVec2 box_max (
+			text_pos.x + text_size.x + box_pad,
+			text_pos.y + text_size.y + box_pad
+		);
+
+		dl->AddRectFilled (box_min, box_max, IM_COL32 (0, 0, 0, 140), 4.0f);
+		dl->AddText (text_pos, IM_COL32 (255, 255, 0, 255), buf);
+	}
 
 	dl->PopClipRect ();
 
