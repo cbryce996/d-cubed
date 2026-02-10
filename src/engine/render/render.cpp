@@ -396,8 +396,8 @@ void RenderManager::render (
 	const ImGuiIO& io = ImGui::GetIO ();
 
 	const bool allow_camera_input
-		= (editor_manager->editor_mode == Running)
-		  || (editor_manager->editor_mode == Editing
+		= (editor_manager->editor_state.editor_mode == Running)
+		  || (editor_manager->editor_state.editor_mode == Editing
 			  && editor_manager->editor_state.viewport_hovered
 			  && !io.WantCaptureMouse);
 

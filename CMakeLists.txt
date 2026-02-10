@@ -73,6 +73,13 @@ set(GAME_LIB_SOURCES
         src/engine/engine.cpp
         src/engine/runtime/tasks/tasks.cpp
         src/engine/inputs/input.cpp
+        src/engine/editor/panels/viewport/viewport.cpp
+        src/engine/editor/panels/inspector/inspector.cpp
+        src/engine/editor/panels/hierarchy/hierarchy.cpp
+        src/engine/editor/panels/stats/stats.cpp
+        src/engine/editor/panels/console/console.cpp
+        src/engine/editor/panels/menu/menu.cpp
+        src/engine/editor/panels/panel.cpp
         src/engine/editor/editor.cpp
         src/engine/scene/entity/components/prefabs/instancing.cpp
         src/engine/scene/entity/components/prefabs/wave.cpp
