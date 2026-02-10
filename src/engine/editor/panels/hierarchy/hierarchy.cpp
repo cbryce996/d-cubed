@@ -8,6 +8,14 @@
 
 #include <ranges>
 
+static void refresh_world_from_root (IEntity* entity) {
+	if (!entity)
+		return;
+	if (IEntity* root = root_of (entity)) {
+		root->update_world_transform ();
+	}
+}
+
 void Hierarchy::draw_entity_node (IEntity& entity, EditorState& editor_state) {
 	const bool is_leaf = entity.children.empty ();
 
@@ -42,9 +50,11 @@ void Hierarchy::draw_entity_node (IEntity& entity, EditorState& editor_state) {
 	if (ImGui::IsItemClicked ()) {
 		if (editor_state.selected_entity != &entity) {
 			editor_state.selected_entity = &entity;
-			editor_state.cached_rotation_euler[&entity] = glm::degrees (
-				glm::eulerAngles (entity.transform.rotation)
-			);
+
+			editor_state.cached_rotation_euler[&entity]
+				= entity.transform.rotation;
+
+			refresh_world_from_root (&entity);
 		}
 	}
 
@@ -60,35 +70,30 @@ void Hierarchy::draw_entity_node (IEntity& entity, EditorState& editor_state) {
 
 void Hierarchy::draw (EditorContext& editor_context) {
 	ImGui::SetNextWindowClass (editor_context.window);
-
-	ImGui::PushStyleVar (ImGuiStyleVar_WindowPadding, ImVec2 (8, 6));
-	ImGui::PushStyleVar (ImGuiStyleVar_FramePadding, ImVec2 (6, 2));
-	ImGui::PushStyleVar (ImGuiStyleVar_ItemSpacing, ImVec2 (6, 2));
-	ImGui::PushStyleVar (ImGuiStyleVar_IndentSpacing, 14.0f);
-
 	ImGui::Begin ("Hierarchy", nullptr, ImGuiWindowFlags_NoCollapse);
 
-	ImGui::PushStyleVar (ImGuiStyleVar_ItemSpacing, ImVec2 (6, 1));
-
 	Scene& scene = *editor_context.render_state.scene;
+	auto& state = editor_context.editor_state;
 
-	if (!editor_context.editor_state.selected_entity) {
-		for (const auto& entity : scene.scene_entities | std::views::values) {
-			if (!entity->parent) {
-				editor_context.editor_state.selected_entity = entity.get ();
+	if (!state.selected_entity) {
+		for (const auto& e : scene.scene_entities | std::views::values) {
+			if (!e->parent) {
+				state.selected_entity = e.get ();
+
+				state.cached_rotation_euler[state.selected_entity]
+					= state.selected_entity->transform.rotation;
+
+				refresh_world_from_root (state.selected_entity);
 				break;
 			}
 		}
 	}
 
-	for (const auto& entity : scene.scene_entities | std::views::values) {
-		if (!entity->parent) {
-			draw_entity_node (*entity.get (), editor_context.editor_state);
+	for (const auto& e : scene.scene_entities | std::views::values) {
+		if (!e->parent) {
+			draw_entity_node (*e.get (), state);
 		}
 	}
 
-	ImGui::PopStyleVar ();
-
 	ImGui::End ();
-	ImGui::PopStyleVar (4);
 }

@@ -4,7 +4,6 @@
 #include <gtest/gtest.h>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
 
 #include "inputs/input.h"
 
@@ -13,7 +12,9 @@ class CameraTest : public ::testing::Test {
 	void SetUp () override {
 		camera->name = "test_cam";
 		camera->transform.position = glm::vec3 (0.0f);
-		camera->transform.rotation = glm::quat (1, 0, 0, 0);
+		camera->transform.rotation = glm::vec3 (0.0f);
+		camera->transform.scale = glm::vec3 (1.0f);
+
 		camera->move_speed = 1.0f;
 		camera->look_sensitivity = 1.0f;
 	}
@@ -24,6 +25,7 @@ class CameraTest : public ::testing::Test {
 TEST_F (CameraTest, RetrieveCamera) {
 	auto* camera_manager = new CameraManager (*camera);
 	camera_manager->add_camera (*camera);
+
 	Camera* retrieved_camera = camera_manager->get_camera ("test_cam");
 	ASSERT_NE (retrieved_camera, nullptr);
 	EXPECT_EQ (retrieved_camera->name, "test_cam");
@@ -39,6 +41,7 @@ TEST_F (CameraTest, GetActiveCamera) {
 	auto* camera_manager = new CameraManager (*camera);
 	camera_manager->add_camera (*camera);
 	camera_manager->set_active_camera (camera->name);
+
 	Camera* active_camera = camera_manager->get_active_camera ();
 	ASSERT_NE (active_camera, nullptr);
 	EXPECT_EQ (active_camera->name, "test_cam");
@@ -114,12 +117,12 @@ TEST_F (CameraTest, UpdateLookChangesRotation) {
 	camera_manager->set_active_camera (camera->name);
 	const Camera* active_camera = camera_manager->get_active_camera ();
 
-	const glm::quat before = active_camera->transform.rotation;
+	const glm::vec3 before = active_camera->transform.rotation;
 
-	const MouseInput mouse{10.0f, -5.0f};
-
+	constexpr MouseInput mouse{10.0f, -5.0f};
 	camera_manager->update_camera_look (&mouse);
-	const glm::quat after = active_camera->transform.rotation;
+
+	const glm::vec3 after = active_camera->transform.rotation;
 
 	EXPECT_FALSE (glm::all (glm::equal (before, after)));
 }

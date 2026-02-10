@@ -46,70 +46,105 @@ void CameraManager::update_camera_position (
 	const float delta_time, const bool* keys
 ) {
 	Camera* camera = get_active_camera ();
-
 	if (!camera)
 		return;
 
-	const glm::vec3 forward = camera->transform.rotation
-							  * glm::vec3 (0.0f, 0.0f, -1.0f);
-	const glm::vec3 right = camera->transform.rotation
-							* glm::vec3 (1.0f, 0.0f, 0.0f);
-
 	constexpr float max_speed = 0.2f;
-	constexpr float min_speed = 0.0f;
+	const float speed = glm::clamp (
+		camera->move_speed * delta_time, 0.0f, max_speed
+	);
 
-	const float unclamped_speed = camera->move_speed * delta_time;
-	const float speed = glm::clamp (unclamped_speed, min_speed, max_speed);
+	const float yaw = glm::radians (camera->transform.rotation.y);
+	const float pitch = glm::radians (camera->transform.rotation.x);
+
+	glm::mat4 R (1.0f);
+	R = glm::rotate (R, yaw, glm::vec3 (0.0f, 1.0f, 0.0f));
+	R = glm::rotate (R, pitch, glm::vec3 (1.0f, 0.0f, 0.0f));
+
+	glm::vec3 forward = glm::normalize (
+		glm::vec3 (R * glm::vec4 (0.0f, 0.0f, -1.0f, 0.0f))
+	);
+
+	constexpr glm::vec3 worldUp (0.0f, 1.0f, 0.0f);
+
+	glm::vec3 right = glm::cross (forward, worldUp);
+	if (glm::length2 (right) < 1e-6f) {
+		right = glm::vec3 (1.0f, 0.0f, 0.0f);
+	} else {
+		right = glm::normalize (right);
+	}
+
+	glm::vec3 up = glm::normalize (glm::cross (right, forward));
+
+	glm::vec3 delta (0.0f);
 
 	if (keys[SDL_SCANCODE_W])
-		camera->transform.position += forward * speed;
+		delta += forward;
 	if (keys[SDL_SCANCODE_S])
-		camera->transform.position -= forward * speed;
-	if (keys[SDL_SCANCODE_A])
-		camera->transform.position -= right * speed;
+		delta -= forward;
 	if (keys[SDL_SCANCODE_D])
-		camera->transform.position += right * speed;
+		delta += right;
+	if (keys[SDL_SCANCODE_A])
+		delta -= right;
+
+	if (keys[SDL_SCANCODE_E])
+		delta += up;
+	if (keys[SDL_SCANCODE_Q])
+		delta -= up;
+
+	if (glm::length2 (delta) > 0.0f) {
+		delta = glm::normalize (delta);
+		camera->transform.position += delta * speed;
+	}
 }
 
 void CameraManager::update_camera_look (const MouseInput* mouse_input) {
 	Camera* camera = get_active_camera ();
-
 	if (!camera)
 		return;
 
-	const float yaw_delta = glm::radians (
-		-mouse_input->dx * camera->look_sensitivity
-	);
-	const float pitch_delta = glm::radians (
-		mouse_input->dy * camera->look_sensitivity
+	const float yaw_delta = -mouse_input->dx * camera->look_sensitivity;
+	const float pitch_delta = mouse_input->dy * camera->look_sensitivity;
+
+	camera->transform.rotation.y += yaw_delta;
+	camera->transform.rotation.x += pitch_delta;
+
+	camera->transform.rotation.x = glm::clamp (
+		camera->transform.rotation.x, -89.0f, 89.0f
 	);
 
-	const glm::quat yaw_rotation = glm::angleAxis (
-		yaw_delta, glm::vec3 (0, 1, 0)
-	);
-	const glm::quat pitch_rotation = glm::angleAxis (
-		pitch_delta, glm::vec3 (1, 0, 0)
-	);
+	if (camera->transform.rotation.y > 180.0f)
+		camera->transform.rotation.y -= 360.0f;
+	if (camera->transform.rotation.y < -180.0f)
+		camera->transform.rotation.y += 360.0f;
 
-	camera->transform.rotation = yaw_rotation * camera->transform.rotation;
-	camera->transform.rotation = camera->transform.rotation * pitch_rotation;
-	camera->transform.rotation = glm::normalize (camera->transform.rotation);
+	camera->transform.rotation.z = 0.0f;
 }
 
 glm::mat4 CameraManager::compute_view_projection (
 	const Camera& camera, float aspect_ratio
 ) {
-	glm::mat4 view = glm::lookAt (
-		camera.transform.position,
-		camera.transform.position
-			+ camera.transform.rotation * glm::vec3 (0.0f, 0.0f, -1.0f),
-		glm::vec3 (0.0f, 1.0f, 0.0f)
+	const glm::vec3 r = glm::radians (camera.transform.rotation);
+
+	glm::mat4 R (1.0f);
+	R = glm::rotate (R, r.y, glm::vec3 (0, 1, 0));
+	R = glm::rotate (R, r.x, glm::vec3 (1, 0, 0));
+
+	const glm::vec3 forward = glm::normalize (
+		glm::vec3 (R * glm::vec4 (0, 0, -1, 0))
+	);
+	const glm::vec3 up = glm::normalize (
+		glm::vec3 (R * glm::vec4 (0, 1, 0, 0))
 	);
 
-	glm::mat4 projection = glm::perspective (
+	const glm::mat4 view = glm::lookAt (
+		camera.transform.position, camera.transform.position + forward, up
+	);
+
+	const glm::mat4 projection = glm::perspective (
 		glm::radians (camera.lens.fov), aspect_ratio, camera.lens.near_clip,
 		camera.lens.far_clip
 	);
-	glm::mat4 view_projection = projection * view;
-	return view_projection;
+
+	return projection * view;
 }

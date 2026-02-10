@@ -1,18 +1,20 @@
 #include "entity/entity.h"
 #include "utils.h"
 
+#include <glm/glm.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+
+static glm::vec3 extract_translation (const glm::mat4& m) {
+	return glm::vec3 (m[3]);
+}
 
 class TestEntity final : public IEntity {
   public:
 	bool updated = false;
 
-	explicit TestEntity (
-		const std::string& name, const Transform& local = {},
-		const Transform& world = {}
-	)
-		: IEntity (name, nullptr, nullptr, local, world) {}
+	explicit TestEntity (const std::string& name, const Transform& local = {})
+		: IEntity (name, nullptr, nullptr, local, Transform{}) {}
 
 	void update (float, float) override { updated = true; }
 };
@@ -38,7 +40,6 @@ TEST_F (EntityTest, ConstructorInitializesFieldsCorrectly) {
 
 TEST_F (EntityTest, SetParentAssignsParentPointer) {
 	child->set_parent (parent.get ());
-
 	EXPECT_EQ (child->parent, parent.get ());
 }
 
@@ -51,7 +52,6 @@ TEST_F (EntityTest, SetParentAddsChildToParentChildrenList) {
 
 TEST_F (EntityTest, AddChildSetsChildParent) {
 	parent->add_child (child.get ());
-
 	EXPECT_EQ (child->parent, parent.get ());
 }
 
@@ -70,14 +70,17 @@ TEST_F (EntityTest, SetParentAndAddChildProduceSameRelationship) {
 	EXPECT_EQ (parent->children[0], child.get ());
 }
 
-TEST_F (EntityTest, UpdateWorldTransformWithoutParentCopiesLocalTransform) {
+TEST_F (EntityTest, UpdateWorldTransformWithoutParentMatchesLocal) {
 	parent->transform.position = {3, 4, 5};
+	parent->transform.rotation = {0, 0, 0};
+	parent->transform.scale = {1, 1, 1};
 
 	parent->update_world_transform ();
 
-	EXPECT_EQ (parent->world_transform.position.x, 3);
-	EXPECT_EQ (parent->world_transform.position.y, 4);
-	EXPECT_EQ (parent->world_transform.position.z, 5);
+	const glm::vec3 world_pos = extract_translation (parent->world_matrix);
+	EXPECT_FLOAT_EQ (world_pos.x, 3.0f);
+	EXPECT_FLOAT_EQ (world_pos.y, 4.0f);
+	EXPECT_FLOAT_EQ (world_pos.z, 5.0f);
 }
 
 TEST_F (EntityTest, UpdateWorldTransformWithParentCombinesTransforms) {
@@ -87,11 +90,11 @@ TEST_F (EntityTest, UpdateWorldTransformWithParentCombinesTransforms) {
 	child->set_parent (parent.get ());
 
 	parent->update_world_transform ();
-	child->update_world_transform ();
 
-	EXPECT_EQ (child->world_transform.position.x, 15);
-	EXPECT_EQ (child->world_transform.position.y, 0);
-	EXPECT_EQ (child->world_transform.position.z, 0);
+	const glm::vec3 child_world = extract_translation (child->world_matrix);
+	EXPECT_FLOAT_EQ (child_world.x, 15.0f);
+	EXPECT_FLOAT_EQ (child_world.y, 0.0f);
+	EXPECT_FLOAT_EQ (child_world.z, 0.0f);
 }
 
 TEST_F (EntityTest, MultiLevelHierarchyWorldTransformPropagation) {
@@ -103,42 +106,41 @@ TEST_F (EntityTest, MultiLevelHierarchyWorldTransformPropagation) {
 	grandchild->set_parent (child.get ());
 
 	parent->update_world_transform ();
-	child->update_world_transform ();
-	grandchild->update_world_transform ();
 
-	EXPECT_EQ (grandchild->world_transform.position.x, 17);
-	EXPECT_EQ (grandchild->world_transform.position.y, 0);
-	EXPECT_EQ (grandchild->world_transform.position.z, 0);
+	const glm::vec3 g_world = extract_translation (grandchild->world_matrix);
+	EXPECT_FLOAT_EQ (g_world.x, 17.0f);
+	EXPECT_FLOAT_EQ (g_world.y, 0.0f);
+	EXPECT_FLOAT_EQ (g_world.z, 0.0f);
 }
 
 TEST_F (EntityTest, UpdateWorldTransformIsDeterministic) {
 	parent->transform.position = {1, 2, 3};
 
 	parent->update_world_transform ();
-	const auto first = parent->world_transform.position;
+	const glm::vec3 first = extract_translation (parent->world_matrix);
 
 	parent->update_world_transform ();
-	const auto second = parent->world_transform.position;
+	const glm::vec3 second = extract_translation (parent->world_matrix);
 
-	EXPECT_EQ (first.x, second.x);
-	EXPECT_EQ (first.y, second.y);
-	EXPECT_EQ (first.z, second.z);
+	EXPECT_FLOAT_EQ (first.x, second.x);
+	EXPECT_FLOAT_EQ (first.y, second.y);
+	EXPECT_FLOAT_EQ (first.z, second.z);
 }
 
-TEST_F (EntityTest, ChildUpdateDoesNotMutateParentWorldTransform) {
+TEST_F (EntityTest, ChildUpdateDoesNotMutateParentWorldMatrix) {
 	parent->transform.position = {10, 0, 0};
 	child->transform.position = {5, 0, 0};
 
 	child->set_parent (parent.get ());
 
 	parent->update_world_transform ();
-	const auto parent_before = parent->world_transform.position;
+	const glm::vec3 parent_before = extract_translation (parent->world_matrix);
 
 	child->update_world_transform ();
 
-	const auto parent_after = parent->world_transform.position;
+	const glm::vec3 parent_after = extract_translation (parent->world_matrix);
 
-	EXPECT_EQ (parent_before.x, parent_after.x);
-	EXPECT_EQ (parent_before.y, parent_after.y);
-	EXPECT_EQ (parent_before.z, parent_after.z);
+	EXPECT_FLOAT_EQ (parent_before.x, parent_after.x);
+	EXPECT_FLOAT_EQ (parent_before.y, parent_after.y);
+	EXPECT_FLOAT_EQ (parent_before.z, parent_after.z);
 }

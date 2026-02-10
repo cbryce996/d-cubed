@@ -3,14 +3,17 @@
 #include "editor/editor.h"
 #include "entity/entity.h"
 #include "imgui.h"
-#include "render/render.h"
-#include "scene.h"
+#include "utils.h"
+
+#include <cstdio>
+#include <unordered_map>
 
 void Inspector::draw (EditorContext& editor_context) {
 	ImGui::SetNextWindowClass (editor_context.window);
 	ImGui::Begin ("Inspector", nullptr, ImGuiWindowFlags_NoCollapse);
 
-	IEntity* entity = editor_context.editor_state.selected_entity;
+	auto& state = editor_context.editor_state;
+	IEntity* entity = state.selected_entity;
 
 	if (!entity) {
 		ImGui::TextDisabled ("No entity selected");
@@ -27,6 +30,8 @@ void Inspector::draw (EditorContext& editor_context) {
 	);
 	if (ImGui::InputText ("Name", name_buffer, sizeof (name_buffer))) {
 		entity->name = name_buffer;
+		// NOTE: if your scene_entities map is keyed by name, renaming here can
+		// desync the map key.
 	}
 
 	ImGui::Spacing ();
@@ -35,15 +40,22 @@ void Inspector::draw (EditorContext& editor_context) {
 	ImGui::Separator ();
 
 	Transform& transform = entity->transform;
+	bool changed = false;
 
-	ImGui::DragFloat3 ("Position", glm::value_ptr (transform.position), 0.05f);
-	ImGui::DragFloat3 ("Scale", glm::value_ptr (transform.scale), 0.05f);
+	changed |= ImGui::DragFloat3 (
+		"Position", glm::value_ptr (transform.position), 0.05f
+	);
+	changed |= ImGui::DragFloat3 (
+		"Scale", glm::value_ptr (transform.scale), 0.05f
+	);
+	changed |= ImGui::DragFloat3 (
+		"Rotation", glm::value_ptr (transform.rotation), 0.15f
+	);
 
-	glm::vec3& euler
-		= editor_context.editor_state.cached_rotation_euler[entity];
-
-	if (ImGui::DragFloat3 ("Rotation", glm::value_ptr (euler), 0.05f)) {
-		transform.rotation = glm::quat (glm::radians (euler));
+	if (changed) {
+		if (IEntity* root = root_of (entity)) {
+			root->update_world_transform ();
+		}
 	}
 
 	ImGui::End ();

@@ -15,7 +15,7 @@ struct Drawable {
 	MeshInstance* mesh = nullptr;
 	MaterialInstance* material = nullptr;
 	std::vector<Block> instance_blocks;
-	Transform transform;
+	glm::mat4 model = {1.0f};
 
 	Buffer* instance_buffer = nullptr;
 	Buffer* index_buffer = nullptr;

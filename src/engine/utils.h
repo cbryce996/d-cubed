@@ -46,16 +46,6 @@ inline glm::vec3 normal_to_view (
 	);
 }
 
-inline glm::mat4 compute_model_matrix (const Transform& transform) {
-	glm::mat4 translation = glm::translate (
-		glm::mat4 (1.0f), transform.position
-	);
-	glm::mat4 rotation = glm::toMat4 (transform.rotation);
-	glm::mat4 scale = glm::scale (glm::mat4 (1.0f), transform.scale);
-
-	return translation * rotation * scale;
-}
-
 inline uint64_t generate_uuid64 () {
 	static std::mt19937_64 rng{std::random_device{}()};
 	static std::uniform_int_distribution<uint64_t> dist;
@@ -71,13 +61,28 @@ inline void write_vec4 (Block& block, size_t slot, const glm::vec4& v) {
 	std::memcpy (&block.data[slot * 4], glm::value_ptr (v), sizeof (glm::vec4));
 }
 
-inline Transform combine (const Transform& parent, const Transform& local) {
-	Transform out;
-	out.scale = parent.scale * local.scale;
-	out.rotation = parent.rotation * local.rotation;
-	out.position = parent.position
-				   + (parent.rotation * (local.position * parent.scale));
-	return out;
+inline void write_mat4 (Block& block, const glm::mat4& m) {
+	write_vec4 (block, 0, m[0]);
+	write_vec4 (block, 1, m[1]);
+	write_vec4 (block, 2, m[2]);
+	write_vec4 (block, 3, m[3]);
+}
+
+inline IEntity* root_of (IEntity* e) {
+	while (e && e->parent)
+		e = e->parent;
+	return e;
+}
+
+static glm::mat3 camera_rotation_mat3 (const Transform& t) {
+	const glm::vec3 r = glm::radians (t.rotation);
+
+	glm::mat4 R (1.0f);
+	R = R * glm::rotate (glm::mat4 (1.0f), r.x, glm::vec3 (1, 0, 0));
+	R = R * glm::rotate (glm::mat4 (1.0f), r.y, glm::vec3 (0, 1, 0));
+	R = R * glm::rotate (glm::mat4 (1.0f), r.z, glm::vec3 (0, 0, 1));
+
+	return glm::mat3 (R);
 }
 
 #endif // UTILS_H

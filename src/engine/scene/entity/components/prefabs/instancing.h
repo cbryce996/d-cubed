@@ -10,7 +10,7 @@
 class InstancingComponent final : public IEntityComponent {
   public:
 	std::vector<Transform> instances;
-	void pack (std::vector<Block>& out) const;
+	void pack (const glm::mat4& base_world, std::vector<Block>& out) const;
 };
 
 #endif // INSTANCING_H

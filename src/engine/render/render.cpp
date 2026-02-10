@@ -300,32 +300,24 @@ void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 		assert (&drawable.instance_blocks);
 
 		// --- Instance buffer ---
-		if (!drawable.instance_blocks.empty ()) {
-			drawable.instance_buffer
-				= buffer_manager->get_or_create_instance_buffer (drawable);
-		} else {
+		if (drawable.instance_blocks.empty ()) {
+			// Non-instanced draw: create a single instance with the drawable's
+			// model matrix
 			std::vector<Block> instance_blocks;
+			instance_blocks.reserve (1);
 
 			Block block{};
-			write_vec4 (
-				block, 0, glm::vec4 (drawable.transform.position, 1.0f)
-			);
-			write_vec4 (
-				block, 1,
-				glm::vec4 (
-					drawable.transform.rotation.x,
-					drawable.transform.rotation.y,
-					drawable.transform.rotation.z, drawable.transform.rotation.w
-				)
-			);
-			write_vec4 (block, 2, glm::vec4 (drawable.transform.scale, 0.0f));
-			write_vec4 (block, 3, glm::vec4 (0.0f));
+			write_mat4 (block, drawable.model); // <-- packed mat4
 
 			instance_blocks.push_back (block);
-			drawable.instance_blocks = instance_blocks;
-			drawable.instance_buffer
-				= buffer_manager->get_or_create_instance_buffer (drawable);
+			drawable.instance_blocks = std::move (instance_blocks);
+		} else {
+			// Instanced draw: instance_blocks already contains packed matrices.
+			// (InstancingComponent::pack should have written mat4 per instance)
 		}
+
+		drawable.instance_buffer
+			= buffer_manager->get_or_create_instance_buffer (drawable);
 
 		buffer_manager->write (
 			drawable.instance_blocks.data (),
