@@ -92,23 +92,21 @@ void setup_graphite_theme () {
 	ImGuiStyle& style = ImGui::GetStyle ();
 	ImVec4* colors = style.Colors;
 
-	// --- Graphite palette (neutral, pro) ---
-	const ImVec4 bg0 = ImVec4 (0.07f, 0.07f, 0.08f, 1.0f); // window bg
-	const ImVec4 bg1 = ImVec4 (0.10f, 0.10f, 0.11f, 1.0f); // frames
-	const ImVec4 bg2 = ImVec4 (0.13f, 0.13f, 0.15f, 1.0f); // hovered/child
-	const ImVec4 bg3 = ImVec4 (0.17f, 0.17f, 0.20f, 1.0f); // active
+	const ImVec4 bg0 = ImVec4 (0.07f, 0.07f, 0.08f, 1.0f);
+	const ImVec4 bg1 = ImVec4 (0.10f, 0.10f, 0.11f, 1.0f);
+	const ImVec4 bg2 = ImVec4 (0.13f, 0.13f, 0.15f, 1.0f);
+	const ImVec4 bg3 = ImVec4 (0.17f, 0.17f, 0.20f, 1.0f);
 	const ImVec4 border = ImVec4 (0.20f, 0.20f, 0.24f, 1.0f);
 	const ImVec4 border2 = ImVec4 (0.28f, 0.28f, 0.33f, 1.0f);
 
 	const ImVec4 text = ImVec4 (0.86f, 0.86f, 0.88f, 1.0f);
 	const ImVec4 textDim = ImVec4 (0.60f, 0.60f, 0.64f, 1.0f);
 
-	const ImVec4 accent = ImVec4 (0.33f, 0.60f, 0.98f, 1.0f);  // blue
-	const ImVec4 accent2 = ImVec4 (0.35f, 0.85f, 0.78f, 1.0f); // teal
+	const ImVec4 accent = ImVec4 (0.33f, 0.60f, 0.98f, 1.0f);
+	const ImVec4 accent2 = ImVec4 (0.35f, 0.85f, 0.78f, 1.0f);
 	const ImVec4 warn = ImVec4 (0.98f, 0.78f, 0.33f, 1.0f);
 	const ImVec4 err = ImVec4 (0.96f, 0.36f, 0.36f, 1.0f);
 
-	// --- Style (professional density) ---
 	style.WindowRounding = 6.0f;
 	style.ChildRounding = 6.0f;
 	style.FrameRounding = 5.0f;
@@ -131,7 +129,6 @@ void setup_graphite_theme () {
 	style.FrameBorderSize = 0.0f;
 	style.TabBorderSize = 0.0f;
 
-	// --- Colors ---
 	colors[ImGuiCol_Text] = text;
 	colors[ImGuiCol_TextDisabled] = textDim;
 
@@ -222,23 +219,17 @@ void setup_graphite_theme () {
 	colors[ImGuiCol_NavWindowingDimBg] = ImVec4 (0.8f, 0.8f, 0.8f, 0.18f);
 	colors[ImGuiCol_ModalWindowDimBg] = ImVec4 (0, 0, 0, 0.45f);
 
-	// Optional: make the plot colors coherent (if you use plots later)
 	colors[ImGuiCol_PlotLines] = accent;
 	colors[ImGuiCol_PlotLinesHovered] = accent2;
 	colors[ImGuiCol_PlotHistogram] = accent2;
 	colors[ImGuiCol_PlotHistogramHovered] = accent;
 
-	// Optional: reduce the harshness of hovered text on some items
 	colors[ImGuiCol_TextDisabled] = textDim;
 
-	// --- Blue accent (clean, modern) ---
-	const ImVec4 blue = ImVec4 (0.33f, 0.60f, 0.98f, 1.0f);		 // primary
-	const ImVec4 blueHover = ImVec4 (0.45f, 0.70f, 1.00f, 1.0f); // hover
-	const ImVec4 blueSoft = ImVec4 (
-		0.33f, 0.60f, 0.98f, 0.35f
-	); // translucent fill
+	const ImVec4 blue = ImVec4 (0.33f, 0.60f, 0.98f, 1.0f);
+	const ImVec4 blueHover = ImVec4 (0.45f, 0.70f, 1.00f, 1.0f);
+	const ImVec4 blueSoft = ImVec4 (0.33f, 0.60f, 0.98f, 0.35f);
 
-	// Selection / highlights
 	colors[ImGuiCol_Header] = ImVec4 (blue.x, blue.y, blue.z, 0.18f);
 	colors[ImGuiCol_HeaderHovered] = ImVec4 (
 		blueHover.x, blueHover.y, blueHover.z, 0.22f
@@ -248,10 +239,7 @@ void setup_graphite_theme () {
 	colors[ImGuiCol_NavHighlight] = ImVec4 (blue.x, blue.y, blue.z, 0.65f);
 	colors[ImGuiCol_DockingPreview] = ImVec4 (blue.x, blue.y, blue.z, 0.30f);
 
-	// Tabs: make them clearly blue when active/hovered
-	colors[ImGuiCol_Tab] = ImVec4 (
-		0.10f, 0.10f, 0.11f, 1.0f
-	); // keep base for inactive
+	colors[ImGuiCol_Tab] = ImVec4 (0.10f, 0.10f, 0.11f, 1.0f);
 	colors[ImGuiCol_TabUnfocused] = colors[ImGuiCol_Tab];
 	colors[ImGuiCol_TabHovered] = ImVec4 (
 		blueHover.x, blueHover.y, blueHover.z, 0.35f
@@ -261,14 +249,12 @@ void setup_graphite_theme () {
 		blue.x, blue.y, blue.z, 0.30f
 	);
 
-	// Sliders / checks / grabs: coherent blue accents
 	colors[ImGuiCol_CheckMark] = blue;
 	colors[ImGuiCol_SliderGrab] = ImVec4 (blue.x, blue.y, blue.z, 0.85f);
 	colors[ImGuiCol_SliderGrabActive] = blueHover;
 	colors[ImGuiCol_ResizeGripHovered] = ImVec4 (blue.x, blue.y, blue.z, 0.45f);
 	colors[ImGuiCol_ResizeGripActive] = ImVec4 (blue.x, blue.y, blue.z, 0.75f);
 
-	// Separators: subtle blue on hover/active
 	colors[ImGuiCol_SeparatorHovered] = ImVec4 (blue.x, blue.y, blue.z, 0.55f);
 	colors[ImGuiCol_SeparatorActive] = ImVec4 (blue.x, blue.y, blue.z, 0.85f);
 }
@@ -301,14 +287,12 @@ void Engine::run () {
 
 	ImFontConfig cfg{};
 	cfg.SizePixels = 14.0f * dpi;
-	// optional knobs:
 	cfg.OversampleH = 2;
 	cfg.OversampleV = 2;
 	cfg.PixelSnapH = true;
 
 	io.Fonts->AddFontDefault (&cfg);
 
-	// Keep “visual size” the same in UI points, but crisp
 	io.FontGlobalScale = 0.9f / dpi;
 
 	ImGui_ImplSDL3_InitForSDLGPU (window);

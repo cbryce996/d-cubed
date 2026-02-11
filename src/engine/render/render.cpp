@@ -301,19 +301,14 @@ void RenderManager::prepare_drawables (std::vector<Drawable>& drawables) const {
 
 		// --- Instance buffer ---
 		if (drawable.instance_blocks.empty ()) {
-			// Non-instanced draw: create a single instance with the drawable's
-			// model matrix
 			std::vector<Block> instance_blocks;
 			instance_blocks.reserve (1);
 
 			Block block{};
-			write_mat4 (block, drawable.model); // <-- packed mat4
+			write_mat4 (block, drawable.model);
 
 			instance_blocks.push_back (block);
 			drawable.instance_blocks = std::move (instance_blocks);
-		} else {
-			// Instanced draw: instance_blocks already contains packed matrices.
-			// (InstancingComponent::pack should have written mat4 per instance)
 		}
 
 		drawable.instance_buffer

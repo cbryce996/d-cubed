@@ -94,8 +94,8 @@ void Viewport::draw (EditorContext& editor_context) {
 									: "PLAY MODE";
 		const ImU32 mode_col = (editor_context.editor_state.editor_mode
 								== Editing)
-								   ? IM_COL32 (0, 255, 0, 255)	  // green
-								   : IM_COL32 (255, 165, 0, 255); // orange
+								   ? IM_COL32 (0, 255, 0, 255)
+								   : IM_COL32 (255, 165, 0, 255);
 
 		const ImVec2 text_size = ImGui::CalcTextSize (mode_text);
 		const ImVec2 text_pos (panel_min.x + pad, panel_min.y + pad);

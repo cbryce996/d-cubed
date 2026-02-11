@@ -30,8 +30,6 @@ void Inspector::draw (EditorContext& editor_context) {
 	);
 	if (ImGui::InputText ("Name", name_buffer, sizeof (name_buffer))) {
 		entity->name = name_buffer;
-		// NOTE: if your scene_entities map is keyed by name, renaming here can
-		// desync the map key.
 	}
 
 	ImGui::Spacing ();
