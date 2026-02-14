@@ -26,29 +26,21 @@ jobs:
     needs: format
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Install build tools
         run: |
           brew update
           brew install cmake ninja
 
-      - name: Cache vcpkg
-        uses: actions/cache@v4
+      - name: Setup vcpkg (with cache)
+        uses: friendlyanon/setup-vcpkg@v1
         with:
-          path: |
-            ~/.cache/vcpkg
-            ~/vcpkg
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
-
-      - name: Setup vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git $HOME/vcpkg || true
-          $HOME/vcpkg/bootstrap-vcpkg.sh
+          committish: master
+          path: vcpkg
+          cache-key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
 
       - name: Build project
-        env:
-          VCPKG_ROOT: $HOME/vcpkg
         run: |
           COVERAGE=1 make build
 
@@ -62,19 +54,25 @@ jobs:
   test:
     runs-on: macos-latest
     needs: build
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Install build tools
         run: |
           brew update
-          brew install cmake ninja
+          brew install cmake ninja llvm
 
-      - name: Setup vcpkg
+      - name: Add LLVM tools to PATH
         run: |
-          git clone https://github.com/microsoft/vcpkg.git $HOME/vcpkg || true
-          $HOME/vcpkg/bootstrap-vcpkg.sh
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      - name: Setup vcpkg (restore-only)
+        uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: master
+          path: vcpkg
+          cache-key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+          skip-save: "true"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -83,25 +81,17 @@ jobs:
           path: build
 
       - name: Run unit tests
-        env:
-          VCPKG_ROOT: $HOME/vcpkg
         run: |
           COVERAGE=1 make tests
-
-      - name: Upload updated artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-folder
-          path: build
-          overwrite: true
-
+    
+    
 
   coverage:
     runs-on: macos-latest
     needs: test
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Install LLVM for coverage tools
         run: |
@@ -110,6 +100,14 @@ jobs:
 
       - name: Add LLVM to PATH
         run: echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Setup vcpkg (restore-only)
+        uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: master
+          path: vcpkg
+          cache-key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+          skip-save: "true"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
