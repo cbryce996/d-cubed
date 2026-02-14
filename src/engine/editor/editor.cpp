@@ -12,6 +12,7 @@
 #include "panels/menu/menu.h"
 #include "panels/stats/stats.h"
 #include "panels/viewport/viewport.h"
+#include "themes/theme.h"
 
 EditorManager::EditorManager () {
 	panels.reserve (6);
@@ -24,9 +25,47 @@ EditorManager::EditorManager () {
 	panels.emplace_back (std::make_unique<Menu> ());
 }
 
+void EditorManager::apply_theme (const Theme& theme) {
+	ImGuiStyle& style = ImGui::GetStyle ();
+
+	ImGui::StyleColorsDark (&style);
+
+	style.WindowRounding = theme.metrics.WindowRounding;
+	style.ChildRounding = theme.metrics.ChildRounding;
+	style.FrameRounding = theme.metrics.FrameRounding;
+	style.PopupRounding = theme.metrics.PopupRounding;
+	style.ScrollbarRounding = theme.metrics.ScrollbarRounding;
+	style.GrabRounding = theme.metrics.GrabRounding;
+	style.TabRounding = theme.metrics.TabRounding;
+
+	style.WindowPadding = theme.metrics.WindowPadding;
+	style.FramePadding = theme.metrics.FramePadding;
+	style.ItemSpacing = theme.metrics.ItemSpacing;
+	style.ItemInnerSpacing = theme.metrics.ItemInnerSpacing;
+	style.IndentSpacing = theme.metrics.IndentSpacing;
+	style.ScrollbarSize = theme.metrics.ScrollbarSize;
+	style.GrabMinSize = theme.metrics.GrabMinSize;
+
+	style.WindowBorderSize = theme.metrics.WindowBorderSize;
+	style.ChildBorderSize = theme.metrics.ChildBorderSize;
+	style.PopupBorderSize = theme.metrics.PopupBorderSize;
+	style.FrameBorderSize = theme.metrics.FrameBorderSize;
+	style.TabBorderSize = theme.metrics.TabBorderSize;
+
+	for (int i = 0; i < ImGuiCol_COUNT; ++i) {
+		style.Colors[i] = theme.colors[i];
+	}
+}
+
 void EditorManager::create_ui (
 	ResourceManager& resource_manager, RenderState& render_state
 ) {
+	static bool theme_applied = false;
+	if (!theme_applied) {
+		apply_theme (Themes::GraphiteBlue ());
+		theme_applied = true;
+	}
+
 	constexpr ImGuiDockNodeFlags dock_flags
 		= ImGuiDockNodeFlags_PassthruCentralNode;
 

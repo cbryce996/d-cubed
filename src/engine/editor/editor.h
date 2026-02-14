@@ -10,6 +10,7 @@
 
 #include "panels/panel.h"
 
+struct Theme;
 struct RenderState;
 class BufferManager;
 class IEntity;
@@ -44,6 +45,7 @@ class EditorManager {
 	void
 	create_ui (ResourceManager& resource_manager, RenderState& render_state);
 	void layout_ui (ImGuiID dock_main);
+	void apply_theme (const Theme& theme);
 
 	std::vector<std::unique_ptr<IEditorPanel>> panels;
 	EditorState editor_state;
