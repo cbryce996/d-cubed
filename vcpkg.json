@@ -1,0 +1,21 @@
+{
+  "name": "game-project",
+  "version": "0.1.0",
+  "dependencies": [
+    "sdl3",
+    "glm",
+    "nlohmann-json",
+    "tinyobjloader",
+    "gtest",
+    {
+      "name": "imgui",
+      "default-features": false,
+      "features": [
+        "docking-experimental",
+        "sdl3-binding",
+        "sdlgpu3-binding"
+      ]
+    }
+  ],
+  "builtin-baseline": "e5a1490e1409d175932ef6014519e9ae149ddb7c"
+}

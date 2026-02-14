@@ -157,7 +157,6 @@ void BufferManager::write (
 	assert (size > 0);
 	assert (size <= buffer.size);
 	// assert (size % ALIGNMENT == 0); TODO: Compare LCM for all alignment
-	// asserts
 	assert (buffer.size % ALIGNMENT == 0);
 
 	void* mapped_buffer = SDL_MapGPUTransferBuffer (
@@ -186,11 +185,11 @@ void BufferManager::push_uniforms (
 		assert (size % BLOCK_BYTES == 0);
 		assert (reinterpret_cast<uintptr_t> (data) % ALIGNMENT == 0);
 
-		if (stage == ShaderStage::Vertex || stage == ShaderStage::Both) {
+		if (stage == ShaderStage::Vertex) {
 			SDL_PushGPUVertexUniformData (command_buffer, slot, data, size);
 		}
 
-		if (stage == ShaderStage::Fragment || stage == ShaderStage::Both) {
+		if (stage == ShaderStage::Fragment) {
 			SDL_PushGPUFragmentUniformData (command_buffer, slot, data, size);
 		}
 	}

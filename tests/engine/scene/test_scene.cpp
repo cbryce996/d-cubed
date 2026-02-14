@@ -2,7 +2,13 @@
 #include "render/render.h"
 #include "scene.h"
 
+#include <glm/glm.hpp>
 #include <gtest/gtest.h>
+
+static glm::vec3 world_pos (const IEntity& e) {
+	// GLM column-major; translation is in column 3 for T*R*S matrices
+	return glm::vec3 (e.world_matrix[3]);
+}
 
 class TestEntity final : public IEntity {
   public:
@@ -14,9 +20,7 @@ class TestEntity final : public IEntity {
 		: IEntity (name, nullptr, nullptr, Transform{}, Transform{}) {}
 
 	void on_load () override { loaded = true; }
-
 	void on_unload () override { unloaded = true; }
-
 	void update (float, float) override { updated = true; }
 };
 
@@ -80,7 +84,11 @@ TEST_F (SceneTest, UpdateCallsWorldTransformUpdate) {
 
 	scene.update (16.0f, 0.0f);
 
-	EXPECT_EQ (raw->world_transform.position.x, 5);
+	// NEW: matrix-based world transform lives in world_matrix
+	const glm::vec3 p = world_pos (*raw);
+	EXPECT_FLOAT_EQ (p.x, 5.0f);
+	EXPECT_FLOAT_EQ (p.y, 0.0f);
+	EXPECT_FLOAT_EQ (p.z, 0.0f);
 }
 
 TEST_F (SceneTest, DuplicateEntityNamesAreRejected) {

@@ -22,6 +22,7 @@ compile() {
     # 2. SPIR-V to Metal Source (.metal)
     spirv-cross "$OUTPUT_DIR/$NAME.$STAGE.spv" \
         --msl \
+        --msl-decoration-binding \
         --output "$OUTPUT_DIR/$NAME.$STAGE.metal"
 
     # 3. SPIR-V to Reflection Metadata (.json)

@@ -3,11 +3,17 @@
 
 #include "drawable.h"
 #include "graph/graph.h"
+#include "inputs/input.h"
+#include "scene.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
+#include <imgui.h>
 #include <vector>
 
+class ResourceManager;
+class FrameManager;
+class EditorManager;
 class AssetManager;
 class CameraManager;
 class BufferManager;
@@ -30,6 +36,7 @@ struct UniformBinding {
 
 struct RenderState {
 	std::vector<Drawable> drawables;
+	Scene* scene;
 };
 
 class RenderManager {
@@ -39,8 +46,10 @@ class RenderManager {
 		std::shared_ptr<ShaderManager> shader_manager,
 		std::shared_ptr<PipelineManager> pipeline_manager,
 		std::shared_ptr<BufferManager> buffer_manager,
-		std::shared_ptr<CameraManager> camera_manager,
-		std::shared_ptr<AssetManager> asset_manager
+		std::shared_ptr<AssetManager> asset_manager,
+		std::shared_ptr<EditorManager> editor_manager,
+		std::shared_ptr<FrameManager> frame_manager,
+		std::shared_ptr<ResourceManager> resource_manager
 	);
 	~RenderManager ();
 	void setup_render_graph ();
@@ -48,18 +57,25 @@ class RenderManager {
 	void acquire_swap_chain ();
 	void load_shaders () const;
 
-	int width = 1920;
-	int height = 1080;
+	int render_width = 0;
+	int render_height = 0;
 
+	std::shared_ptr<EditorManager> editor_manager;
 	std::shared_ptr<ShaderManager> shader_manager;
 	std::shared_ptr<PipelineManager> pipeline_manager;
 	std::shared_ptr<BufferManager> buffer_manager;
 	std::shared_ptr<CameraManager> camera_manager;
 	std::shared_ptr<AssetManager> asset_manager;
+	std::shared_ptr<FrameManager> frame_manager;
+	std::shared_ptr<ResourceManager> resource_manager;
 
-	void render (RenderState* render_state, float time);
+	void render (
+		RenderState& render_state, const KeyboardInput& key_board_input,
+		MouseInput& mouse_input, float delta_time
+	);
 
 	void create_depth_texture () const;
+	void create_viewport_texture (int width, int height);
 	void create_gbuffer_textures (int width, int height) const;
 	void destroy_gbuffer_textures () const;
 

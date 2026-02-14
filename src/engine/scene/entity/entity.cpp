@@ -26,9 +26,15 @@ void IEntity::add_child (IEntity* in_entity) {
 }
 
 void IEntity::update_world_transform () {
+	const glm::mat4 local = transform.to_mat4 ();
+
 	if (parent) {
-		world_transform = combine (parent->world_transform, transform);
+		world_matrix = parent->world_matrix * local;
 	} else {
-		world_transform = transform;
+		world_matrix = local;
+	}
+
+	for (IEntity* child : children) {
+		child->update_world_transform ();
 	}
 }

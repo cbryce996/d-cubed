@@ -55,6 +55,10 @@ class BufferManager {
 	explicit BufferManager (SDL_GPUDevice* device);
 	~BufferManager ();
 
+	// TODO: Move these out of here
+	int viewport_w = 0;
+	int viewport_h = 0;
+
 	SDL_GPUCommandBuffer* command_buffer = nullptr;
 	SDL_GPUTexture* depth_texture = nullptr;
 	SDL_GPUTexture* swap_chain_texture = nullptr;
@@ -69,8 +73,6 @@ class BufferManager {
 	Buffer* get_or_create_vertex_buffer (const MeshInstance& mesh);
 	Buffer* get_or_create_index_buffer (const MeshInstance& mesh);
 	Buffer* get_or_create_instance_buffer (const Drawable& drawable);
-
-	void add_buffer (Buffer& buffer);
 
 	[[nodiscard]] SDL_GPUBuffer*
 	create_buffer (BufferConfig buffer_config) const;

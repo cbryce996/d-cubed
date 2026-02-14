@@ -1,6 +1,5 @@
 /build
 /cmake-build-debug
 /.idea
-/external
 /assets/shaders/bin
 .DS_Store

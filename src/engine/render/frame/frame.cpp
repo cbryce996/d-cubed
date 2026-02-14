@@ -6,6 +6,9 @@
 #include "render/pass/pass.h"
 #include "render/pipelines/pipeline.h"
 
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlgpu3.h"
+
 SDL_GPURenderPass* FrameManager::begin_render_pass (
 	const RenderPassInstance& render_pass_instance,
 	const BufferManager& buffer_manager
@@ -35,10 +38,10 @@ SDL_GPURenderPass* FrameManager::begin_render_pass (
 		info.mip_level = 0;
 		info.layer_or_depth_plane = 0;
 		info.clear_color = render_pass_instance.clear_color;
-		info.load_op = SDL_GPU_LOADOP_CLEAR;
+		info.load_op = render_pass_instance.load_op;
 		info.store_op = SDL_GPU_STOREOP_STORE;
 		info.resolve_texture = nullptr;
-		info.cycle = true;
+		info.cycle = (info.load_op == SDL_GPU_LOADOP_CLEAR);
 		info.cycle_resolve_texture = false;
 
 		color_target_infos.push_back (info);
@@ -94,8 +97,14 @@ void FrameManager::set_viewport (
 	viewport.h = static_cast<float> (height);
 	viewport.min_depth = 0.0f;
 	viewport.max_depth = 1.0f;
-
 	SDL_SetGPUViewport (current_render_pass, &viewport);
+
+	SDL_Rect scissor{};
+	scissor.x = 0;
+	scissor.y = 0;
+	scissor.w = width;
+	scissor.h = height;
+	SDL_SetGPUScissor (current_render_pass, &scissor);
 }
 
 void FrameManager::draw_mesh (
@@ -189,4 +198,28 @@ void FrameManager::draw_screen (
 	SDL_BindGPUFragmentSamplers (&render_pass, 0, samplers, 3);
 
 	SDL_DrawGPUPrimitives (&render_pass, 3, 1, 0, 0);
+}
+
+void FrameManager::draw_ui (
+	const BufferManager& buffer_manager, SDL_GPURenderPass& render_pass
+) {
+	ImDrawData* draw_data = ImGui::GetDrawData ();
+	if (!draw_data || draw_data->TotalVtxCount == 0)
+		return;
+
+	ImGui_ImplSDLGPU3_RenderDrawData (
+		draw_data, buffer_manager.command_buffer, &render_pass
+	);
+}
+
+void FrameManager::prepare_ui (const BufferManager& buffer_manager) {
+	assert (buffer_manager.command_buffer);
+
+	ImDrawData* draw_data = ImGui::GetDrawData ();
+	if (!draw_data || draw_data->TotalVtxCount == 0)
+		return;
+
+	ImGui_ImplSDLGPU3_PrepareDrawData (
+		draw_data, buffer_manager.command_buffer
+	);
 }

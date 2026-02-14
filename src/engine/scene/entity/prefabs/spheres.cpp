@@ -51,7 +51,6 @@ void Spheres::on_load () {
 	mesh = mesh_inst.get ();
 	material = &Materials::Geometry;
 
-	// Components
 	auto& instancing = add_component<InstancingComponent> ();
 	auto& wave = add_component<WaveComponent> (offset, phase_offset);
 

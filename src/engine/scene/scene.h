@@ -1,6 +1,9 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include "cameras/camera.h"
+#include "entity/prefabs/static.h"
+
 #include <glm/glm.hpp>
 #include <string>
 
@@ -15,17 +18,20 @@ struct SceneLighting {
 
 class Scene {
   public:
+	Scene ();
 	void on_load ();
 	void on_unload ();
 
 	void update (float dt_ms, float sim_time_ms);
 	void collect_drawables (RenderState& out_render_state);
 
-	void add_entity (std::unique_ptr<IEntity> object);
+	void add_entity (std::unique_ptr<IEntity> entity);
+
+	std::unordered_map<std::string, std::unique_ptr<IEntity>> scene_entities;
+	std::unique_ptr<CameraManager> camera_manager;
 
   private:
 	bool loaded = false;
-	std::unordered_map<std::string, std::unique_ptr<IEntity>> scene_entities;
 };
 
 #endif // SCENE_H
