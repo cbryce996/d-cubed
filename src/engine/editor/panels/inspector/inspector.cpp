@@ -5,9 +5,6 @@
 #include "imgui.h"
 #include "utils.h"
 
-#include <cstdio>
-#include <unordered_map>
-
 void Inspector::draw (EditorContext& editor_context) {
 	ImGui::SetNextWindowClass (editor_context.window);
 	ImGui::Begin ("Inspector", nullptr, ImGuiWindowFlags_NoCollapse);

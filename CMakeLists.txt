@@ -8,11 +8,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_OSX_ARCHITECTURES arm64)
-
-add_definitions(
-        -DSHADERS_DIR="${CMAKE_SOURCE_DIR}/assets/shaders/"
-)
+if(APPLE)
+    set(CMAKE_OSX_ARCHITECTURES arm64)
+endif()
 
 # ------------------------------------------------------------------------------
 # Coverage
@@ -26,45 +24,13 @@ if(ENABLE_COVERAGE)
 endif()
 
 # ------------------------------------------------------------------------------
-# Dependencies
+# Dependencies (provided by vcpkg)
 # ------------------------------------------------------------------------------
 find_package(SDL3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(nlohmann_json REQUIRED)
-
-# ------------------------------------------------------------------------------
-# ImGui
-# ------------------------------------------------------------------------------
-set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/external/imgui)
-
-set(IMGUI_SOURCES
-        ${IMGUI_DIR}/imgui.cpp
-        ${IMGUI_DIR}/imgui_draw.cpp
-        ${IMGUI_DIR}/imgui_tables.cpp
-        ${IMGUI_DIR}/imgui_widgets.cpp
-        ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
-        ${IMGUI_DIR}/backends/imgui_impl_sdlgpu3.cpp
-)
-
-add_library(imgui STATIC ${IMGUI_SOURCES})
-
-target_include_directories(imgui PUBLIC
-        ${IMGUI_DIR}
-        ${IMGUI_DIR}/backends
-)
-
-target_link_libraries(imgui PUBLIC
-        SDL3::SDL3
-)
-
-# macOS Metal frameworks
-if(APPLE)
-    target_link_libraries(imgui PUBLIC
-            "-framework Metal"
-            "-framework QuartzCore"
-            "-framework Foundation"
-    )
-endif()
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 # ------------------------------------------------------------------------------
 # Game library
@@ -106,43 +72,50 @@ set(GAME_LIB_SOURCES
 )
 
 add_library(game_lib STATIC ${GAME_LIB_SOURCES})
-
 target_compile_features(game_lib PUBLIC cxx_std_20)
 
 target_include_directories(game_lib PUBLIC
         src
         src/engine
         src/engine/scene
-        external/tinyobjloader
+)
+
+target_compile_definitions(game_lib PUBLIC
+        SHADERS_DIR="${CMAKE_SOURCE_DIR}/assets/shaders/"
 )
 
 target_link_libraries(game_lib PUBLIC
         SDL3::SDL3
         glm::glm
         nlohmann_json::nlohmann_json
-        imgui
+        tinyobjloader::tinyobjloader
+        imgui::imgui
 )
+
+# If you still need the Metal frameworks on macOS for your SDL GPU path,
+# link them on YOUR target(s) (safe even when imgui comes from vcpkg).
+if(APPLE)
+    target_link_libraries(game_lib PUBLIC
+            "-framework Metal"
+            "-framework QuartzCore"
+            "-framework Foundation"
+    )
+endif()
 
 # ------------------------------------------------------------------------------
 # Game executable
 # ------------------------------------------------------------------------------
 add_executable(game src/main.cpp)
-
 target_compile_features(game PRIVATE cxx_std_20)
-
-target_link_libraries(game PRIVATE
-        game_lib
-)
+target_link_libraries(game PRIVATE game_lib)
 
 # ------------------------------------------------------------------------------
-# Tests (GoogleTest via Homebrew)
+# Tests (GoogleTest via vcpkg)
 # ------------------------------------------------------------------------------
-find_path(GTEST_INCLUDE_DIR gtest/gtest.h PATHS /opt/homebrew/include)
-find_library(GTEST_LIBRARY gtest PATHS /opt/homebrew/lib)
-find_library(GTEST_MAIN_LIBRARY gtest_main PATHS /opt/homebrew/lib)
-
 enable_testing()
 include(CTest)
+
+find_package(GTest CONFIG REQUIRED)
 
 add_executable(engine_tests
         tests/engine/test_main.cpp
@@ -162,18 +135,14 @@ target_compile_features(engine_tests PRIVATE cxx_std_20)
 
 target_include_directories(engine_tests PRIVATE
         src
-        ${GTEST_INCLUDE_DIR}
 )
 
 target_link_libraries(engine_tests PRIVATE
         game_lib
-        ${GTEST_LIBRARY}
-        ${GTEST_MAIN_LIBRARY}
+        GTest::gtest
+        GTest::gtest_main
 )
 
-# ------------------------------------------------------------------------------
-# Test helpers
-# ------------------------------------------------------------------------------
 add_custom_target(check
         COMMAND ${CMAKE_COMMAND} -E echo "Running unit tests..."
         COMMAND engine_tests
@@ -181,7 +150,4 @@ add_custom_target(check
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
-add_test(
-        NAME EngineTests
-        COMMAND engine_tests
-)
+add_test(NAME EngineTests COMMAND engine_tests)

@@ -11,62 +11,84 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install dependencies for formatting
+
+      - name: Install formatting tools
         run: |
-          if ! command -v brew &> /dev/null; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          fi
           brew update
           brew install clang-format cppcheck
+
       - name: Check code format
         run: make check_format
+
 
   build:
     runs-on: macos-latest
     needs: format
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Fetch tinyobjloader
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
         run: |
-          mkdir -p external
-          git clone https://github.com/tinyobjloader/tinyobjloader.git external/tinyobjloader
-      - name: Install build dependencies
-        run: |
-          if ! command -v brew &> /dev/null; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          fi
           brew update
-          brew install cmake ninja llvm glm sdl3 googletest nlohmann-json
+          brew install cmake ninja
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/vcpkg
+            ~/vcpkg
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+
+      - name: Setup vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git $HOME/vcpkg || true
+          $HOME/vcpkg/bootstrap-vcpkg.sh
+
       - name: Build project
+        env:
+          VCPKG_ROOT: $HOME/vcpkg
         run: |
           COVERAGE=1 make build
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-folder
           path: build
 
+
   test:
     runs-on: macos-latest
     needs: build
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Install build dependencies
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
         run: |
-          if ! command -v brew &> /dev/null; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          fi
           brew update
-          brew install cmake ninja llvm glm sdl3 googletest nlohmann-json
+          brew install cmake ninja
+
+      - name: Setup vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git $HOME/vcpkg || true
+          $HOME/vcpkg/bootstrap-vcpkg.sh
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-folder
           path: build
-      - name: Run unit tests (with coverage)
+
+      - name: Run unit tests
+        env:
+          VCPKG_ROOT: $HOME/vcpkg
         run: |
           COVERAGE=1 make tests
-      - name: Upload build artifacts
+
+      - name: Upload updated artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-folder
@@ -77,16 +99,14 @@ jobs:
   coverage:
     runs-on: macos-latest
     needs: test
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Install coverage tools
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM for coverage tools
         run: |
-          if ! command -v brew &> /dev/null; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          fi
           brew update
           brew install llvm
-          
 
       - name: Add LLVM to PATH
         run: echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH

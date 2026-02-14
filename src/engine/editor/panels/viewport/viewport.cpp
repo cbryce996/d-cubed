@@ -82,7 +82,9 @@ void Viewport::draw (EditorContext& editor_context) {
 
 	dl->AddRectFilled (panel_min, panel_max, IM_COL32 (10, 10, 10, 255));
 
-	dl->AddImage (tex, panel_min, panel_max, uv0, uv1);
+	dl->AddImage (
+		reinterpret_cast<ImTextureID> (tex), panel_min, panel_max, uv0, uv1
+	);
 
 	{
 		constexpr float pad = 10.0f;

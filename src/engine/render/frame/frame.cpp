@@ -6,8 +6,8 @@
 #include "render/pass/pass.h"
 #include "render/pipelines/pipeline.h"
 
-#include <imgui_impl_sdl3.h>
-#include <imgui_impl_sdlgpu3.h>
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlgpu3.h"
 
 SDL_GPURenderPass* FrameManager::begin_render_pass (
 	const RenderPassInstance& render_pass_instance,
