@@ -8,126 +8,95 @@
 
 #include "SDL3/SDL_gpu.h"
 
-#include <map>
+enum class DataTypes : uint8_t { None = 0, Float, Vec2, Vec3, Vec4, Mat4, Int };
 
-enum class ShaderDataType : uint32_t {
-	None = 0,
-	Float = 4,
-	Vec2 = 8,
-	Vec3 = 12,
-	Vec4 = 16,
-	Mat4 = 64,
-	Int = 4
-};
+enum class InputRate { PerVertex, PerInstance };
 
-static const std::unordered_map<std::string, ShaderDataType> SHADER_TYPE_LOOKUP
-	= {{"float", ShaderDataType::Float}, {"vec2", ShaderDataType::Vec2},
-	   {"vec3", ShaderDataType::Vec3},	 {"vec4", ShaderDataType::Vec4},
-	   {"mat4", ShaderDataType::Mat4},	 {"int", ShaderDataType::Int}};
-
-namespace ShaderTypeUtils {
-inline uint32_t get_size (ShaderDataType type) {
-	return static_cast<uint32_t> (type);
-}
-
-inline SDL_GPUVertexElementFormat get_sdl_format (ShaderDataType type) {
-	switch (type) {
-	case ShaderDataType::Float:
-		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT;
-	case ShaderDataType::Vec2:
-		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2;
-	case ShaderDataType::Vec3:
-		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-	case ShaderDataType::Vec4:
-		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
-	default:
-		return SDL_GPU_VERTEXELEMENTFORMAT_INVALID;
-	}
-}
-}
-
-struct UniformMember {
-	std::string name;
-	uint32_t offset;
-	uint32_t size;
-	ShaderDataType type;
-};
-
-struct UniformBlock {
-	std::string name;
-	uint32_t binding;
-	uint32_t total_size;
-	std::unordered_map<std::string, UniformMember> members;
-};
-
-struct ShaderConfig {
-	uint32_t num_samplers = 0;
-	uint32_t num_storage_textures = 0;
-	uint32_t num_storage_buffers = 0;
-	uint32_t num_uniform_buffers = 2;
-
-	uint32_t props = 0;
-	SDL_GPUShaderFormat format;
-	SDL_GPUShaderStage stage;
-	std::string entrypoint;
-	std::string path;
-};
-
-struct ShaderSampler {
+struct StorageTexture {
 	std::string name;
 	uint32_t set;
 	uint32_t binding;
 };
 
-struct VertexAttribute {
+struct SampledTexture {
 	std::string name;
-	uint32_t location;
-	ShaderDataType type;
+	uint32_t set;
+	uint32_t binding;
 };
 
-struct VertexBufferLayout {
-	uint32_t stride = 0;
-	SDL_GPUVertexInputRate input_rate;
+struct UniformBufferField {
+	std::string name;
+	uint32_t offset;
+	uint32_t size;
+	DataTypes type;
+};
 
-	std::vector<VertexAttribute> attributes;
-	std::vector<SDL_GPUVertexAttribute> sdl_attributes;
+struct UniformBuffer {
+	std::string name;
+	uint32_t set;
+	uint32_t binding;
+	uint32_t total_size;
+	std::unordered_map<std::string, UniformBufferField> fields;
+};
+
+struct VertexBufferField {
+	std::string name;
+	uint32_t location;
+	DataTypes type;
+	uint32_t offset = 0;
+};
+
+struct VertexBuffer {
+	uint32_t stride = 0;
+	InputRate input_rate;
+	std::vector<VertexBufferField> fields;
 };
 
 struct Shader {
 	std::string name;
+	std::string entrypoint;
+	std::string path;
 
-	SDL_GPUShader* vertex_shader = nullptr;
-	SDL_GPUShader* fragment_shader = nullptr;
+	SDL_GPUShaderFormat format;
+	SDL_GPUShaderStage stage;
 
-	std::unordered_map<uint32_t, VertexBufferLayout> vertex_buffer_layouts;
-	std::unordered_map<std::string, UniformBlock> uniform_blocks;
+	SDL_GPUShader* shader = nullptr;
 
-	std::vector<ShaderSampler> samplers;
+	std::unordered_map<uint32_t, VertexBuffer> vertex_buffers;
+	std::unordered_map<std::string, UniformBuffer> uniform_buffers;
+	std::vector<SampledTexture> sampled_textures;
+	std::vector<StorageTexture> storage_textures;
+
+	[[nodiscard]] std::string json_path () const {
+		std::string p = path;
+		size_t last_dot = p.find_last_of ('.');
+		if (last_dot != std::string::npos) {
+			p = p.substr (0, last_dot) + ".json";
+		}
+		return p;
+	}
 };
 
 class ShaderManager {
   public:
 	explicit ShaderManager (SDL_GPUDevice* device);
 	~ShaderManager ();
-	std::vector<ShaderSampler> load_samplers (const std::string& json_path);
 
-	bool load_shader (
-		const ShaderConfig& vertex_config, const ShaderConfig& fragment_config,
-		const std::string& name
-	);
+	std::optional<DataTypes> from_string (std::string_view string);
+	uint32_t size_bytes (DataTypes t);
+
+	bool load_shader (Shader& vertex_shader, Shader& fragment_shader);
 
 	Shader* get_shader (const std::string& name);
 
 	void add_shader (const Shader& shader);
 
-	static std::vector<VertexAttribute>
-	load_vertex_attributes (const std::string& json_path);
-	static std::unordered_map<std::string, UniformBlock>
-	load_uniform_blocks (const std::string& json_path);
+	void load_vertex_buffers (Shader& shader);
+	void load_uniform_buffers (Shader& shader);
+	void load_sampled_textures (Shader& shader);
 
   private:
-	[[nodiscard]] SDL_GPUShader*
-	compile_shader (const ShaderConfig& config) const;
+	void compile_shader (Shader& shader) const;
 
 	SDL_GPUDevice* device = nullptr;
 	std::unordered_map<std::string, Shader> shaders;

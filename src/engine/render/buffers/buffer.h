@@ -9,6 +9,7 @@
 
 struct Drawable;
 struct MeshInstance;
+
 struct BufferConfig {
 	size_t size;
 	SDL_GPUBufferUsageFlags usage;
@@ -19,17 +20,7 @@ struct TransferBufferConfig {
 	SDL_GPUTransferBufferUsage usage;
 };
 
-enum class BufferType {
-	Vertex,
-	Index,
-	Uniform,
-	TransferUpload,
-	TransferDownload
-};
-
 struct CPUBuffer {
-	BufferType type;
-
 	SDL_GPUTransferBuffer* buffer = nullptr;
 
 	bool mapped = false;
@@ -37,8 +28,6 @@ struct CPUBuffer {
 };
 
 struct GPUBuffer {
-	BufferType type;
-
 	SDL_GPUBuffer* buffer = nullptr;
 };
 
