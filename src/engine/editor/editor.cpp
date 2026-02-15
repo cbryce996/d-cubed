@@ -12,7 +12,7 @@
 #include "panels/menu/menu.h"
 #include "panels/stats/stats.h"
 #include "panels/viewport/viewport.h"
-#include "themes/theme.h"
+#include "theme.h"
 
 EditorManager::EditorManager () {
 	panels.reserve (6);
