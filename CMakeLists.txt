@@ -69,6 +69,7 @@ set(GAME_LIB_SOURCES
         src/engine/render/shaders/shader.cpp
         src/engine/assets/asset.cpp
         src/engine/assets/loader.cpp
+        src/engine/resources/storage/maps/slot.cpp
 )
 
 add_library(game_lib STATIC ${GAME_LIB_SOURCES})
@@ -129,6 +130,7 @@ add_executable(engine_tests
         tests/engine/render/test_pass.cpp
         tests/engine/scene/test_scene.cpp
         tests/engine/scene/test_entity.cpp
+        tests/engine/resources/storage/test_dense_slot_map.cpp
 )
 
 target_compile_features(engine_tests PRIVATE cxx_std_20)
