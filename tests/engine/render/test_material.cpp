@@ -8,7 +8,8 @@ class MaterialStateTest : public ::testing::Test {
 
 	void SetUp () override {
 		base_state = {
-			.shader = "test_shader",
+			.vertex_shader = "vertex_shader",
+			.fragment_shader = "fragement_shader",
 			.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 			.cull_mode = SDL_GPU_CULLMODE_BACK,
 			.compare_op = SDL_GPU_COMPAREOP_LESS,
@@ -25,7 +26,8 @@ TEST_F (MaterialStateTest, EqualityOperatorTrueForSameState) {
 
 TEST_F (MaterialStateTest, EqualityOperatorFalseForDifferentShader) {
 	MaterialState other = base_state;
-	other.shader = "other_shader";
+	other.vertex_shader = "other_vertex_shader";
+	other.fragment_shader = "other_vertex_shader";
 
 	EXPECT_FALSE (base_state == other);
 }
@@ -72,7 +74,8 @@ TEST_F (MaterialStateTest, DifferentShaderProducesDifferentHash) {
 	constexpr std::hash<MaterialState> hasher;
 
 	MaterialState other = base_state;
-	other.shader = "other_shader";
+	other.vertex_shader = "other_vertex_shader";
+	other.fragment_shader = "other_vertex_shader";
 
 	EXPECT_NE (hasher (base_state), hasher (other));
 }

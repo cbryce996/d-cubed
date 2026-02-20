@@ -12,30 +12,81 @@ SDLPipelineFactory::SDLPipelineFactory (
 
 SDLPipelineFactory::~SDLPipelineFactory () = default;
 
+SDL_GPUVertexInputRate
+SDLPipelineFactory::to_sdl_input_rate (const InputRate input_rate) {
+	switch (input_rate) {
+	case InputRate::PerVertex:
+		return SDL_GPU_VERTEXINPUTRATE_VERTEX;
+	case InputRate::PerInstance:
+		return SDL_GPU_VERTEXINPUTRATE_INSTANCE;
+	}
+	return SDL_GPU_VERTEXINPUTRATE_VERTEX;
+}
+
+SDL_GPUVertexElementFormat
+SDLPipelineFactory::to_sdl_vertex_format (const DataTypes data_type) {
+	switch (data_type) {
+	case DataTypes::Float:
+		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT;
+	case DataTypes::Vec2:
+		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2;
+	case DataTypes::Vec3:
+		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
+	case DataTypes::Vec4:
+		return SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
+	default:
+		return SDL_GPU_VERTEXELEMENTFORMAT_INVALID;
+	}
+}
+
 Pipeline*
 SDLPipelineFactory::create_pipeline (const PipelineState& pipeline_state) {
-	assert (shader_manager->get_shader (pipeline_state.material_state.shader));
+	assert (
+		shader_manager->get_shader (pipeline_state.material_state.vertex_shader)
+	);
+	assert (shader_manager->get_shader (
+		pipeline_state.material_state.fragment_shader
+	));
 
-	const Shader* shader = shader_manager->get_shader (
-		pipeline_state.material_state.shader
+	const Shader* vertex_shader = shader_manager->get_shader (
+		pipeline_state.material_state.vertex_shader
+	);
+	const Shader* fragment_shader = shader_manager->get_shader (
+		pipeline_state.material_state.fragment_shader
 	);
 
 	std::vector<SDL_GPUVertexBufferDescription> buffer_descriptions;
-	for (auto const& [slot, layout] : shader->vertex_buffer_layouts) {
+	for (auto const& [slot, vertex_buffer] : vertex_shader->vertex_buffers) {
 		SDL_GPUVertexBufferDescription description = {
 			.slot = slot,
-			.pitch = layout.stride,
-			.input_rate = layout.input_rate,
+			.pitch = vertex_buffer.stride,
+			.input_rate = to_sdl_input_rate (vertex_buffer.input_rate),
 			.instance_step_rate = 0
 		};
 		buffer_descriptions.push_back (description);
 	}
 
 	std::vector<SDL_GPUVertexAttribute> sdl_attributes;
-	for (const auto& layout :
-		 shader->vertex_buffer_layouts | std::views::values) {
-		for (const auto& sdl_attr : layout.sdl_attributes) {
-			sdl_attributes.push_back (sdl_attr);
+	for (auto const& [slot, vertex_buffer] : vertex_shader->vertex_buffers) {
+		for (const auto& [name, location, type, offset] :
+			 vertex_buffer.fields) {
+			SDL_GPUVertexAttribute attribute{};
+			attribute.location = location;
+			attribute.buffer_slot = slot;
+			attribute.format = to_sdl_vertex_format (type);
+			attribute.offset = offset;
+
+			if (attribute.format == SDL_GPU_VERTEXELEMENTFORMAT_INVALID) {
+				SDL_LogError (
+					SDL_LOG_CATEGORY_ERROR,
+					"Invalid vertex format for attribute '%s' (loc %u) in "
+					"shader '%s'",
+					name.c_str (), location, vertex_shader->name.c_str ()
+				);
+				return nullptr;
+			}
+
+			sdl_attributes.push_back (attribute);
 		}
 	}
 
@@ -81,8 +132,8 @@ SDLPipelineFactory::create_pipeline (const PipelineState& pipeline_state) {
 	};
 
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
-		.vertex_shader = shader->vertex_shader,
-		.fragment_shader = shader->fragment_shader,
+		.vertex_shader = vertex_shader->shader,
+		.fragment_shader = fragment_shader->shader,
 		.vertex_input_state = vertex_input_state,
 		.primitive_type = pipeline_state.material_state.primitive_type,
 		.rasterizer_state = rasterizer_state,
@@ -92,7 +143,7 @@ SDLPipelineFactory::create_pipeline (const PipelineState& pipeline_state) {
 		.props = 0
 	};
 
-	Pipeline* pipeline = new Pipeline{
+	auto* pipeline = new Pipeline{
 		SDL_CreateGPUGraphicsPipeline (device, &pipeline_info)
 	};
 

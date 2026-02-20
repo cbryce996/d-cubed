@@ -16,7 +16,8 @@ class FakePipelineFactory final : public IPipelineFactory {
 			0xDEADBEEF
 		);
 
-		pipeline->name = state.material_state.shader;
+		pipeline->name = state.material_state.vertex_shader + "_"
+						 + state.material_state.fragment_shader;
 
 		return pipeline;
 	}
@@ -38,7 +39,8 @@ class PipelineManagerTest : public ::testing::Test {
 		};
 
 		material_state = {
-			.shader = "test_shader",
+			.vertex_shader = "vertex_shader",
+			.fragment_shader = "fragment_shader",
 			.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 			.cull_mode = SDL_GPU_CULLMODE_BACK,
 			.compare_op = SDL_GPU_COMPAREOP_LESS,
@@ -100,7 +102,8 @@ TEST_F (PipelineManagerTest, EquivalentStatesProduceSameHash) {
 
 TEST_F (PipelineManagerTest, DifferentMaterialStateIsNotEqual) {
 	MaterialState different = material_state;
-	different.shader = "other_shader";
+	different.vertex_shader = "other_vertex_shader";
+	different.fragment_shader = "other_fragment_shader";
 
 	const PipelineState other{
 		.render_pass_state = render_pass_state,
@@ -117,7 +120,8 @@ TEST_F (PipelineManagerTest, DifferentStateCreatesDifferentPipeline) {
 	Pipeline* first = pipeline_manager.get_or_create (pipeline_state);
 
 	MaterialState different = material_state;
-	different.shader = "other_shader";
+	different.vertex_shader = "other_vertex_shader";
+	different.fragment_shader = "other_fragment_shader";
 
 	const PipelineState other{
 		.render_pass_state = render_pass_state,

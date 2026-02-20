@@ -7,7 +7,8 @@
 #include <string>
 
 struct MaterialState {
-	std::string shader;
+	std::string vertex_shader;
+	std::string fragment_shader;
 	SDL_GPUPrimitiveType primitive_type;
 	SDL_GPUCullMode cull_mode;
 	SDL_GPUCompareOp compare_op;
@@ -15,7 +16,9 @@ struct MaterialState {
 	bool enable_depth_write;
 
 	bool operator== (const MaterialState& other) const {
-		return shader == other.shader && primitive_type == other.primitive_type
+		return vertex_shader == other.vertex_shader
+			   && fragment_shader == other.fragment_shader
+			   && primitive_type == other.primitive_type
 			   && cull_mode == other.cull_mode && compare_op
 			   && enable_depth_test == other.enable_depth_test
 			   && enable_depth_write == other.enable_depth_write
@@ -33,7 +36,8 @@ template <> struct std::hash<MaterialState> {
 	size_t operator() (const MaterialState& material) const noexcept {
 		size_t h = 0;
 
-		hash_combine (h, std::hash<std::string> () (material.shader));
+		hash_combine (h, std::hash<std::string> () (material.vertex_shader));
+		hash_combine (h, std::hash<std::string> () (material.fragment_shader));
 		hash_combine (h, std::hash<int> () (material.primitive_type));
 		hash_combine (h, std::hash<int> () (material.cull_mode));
 
@@ -52,7 +56,8 @@ namespace Materials {
 inline static MaterialInstance Geometry{
 	.name = "geometry",
 	.state
-	= {.shader = "geometry",
+	= {.vertex_shader = "geometry",
+	   .fragment_shader = "gbuffer",
 	   .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 	   .cull_mode = SDL_GPU_CULLMODE_BACK,
 	   .compare_op = SDL_GPU_COMPAREOP_LESS,
@@ -64,7 +69,8 @@ inline static MaterialInstance Geometry{
 inline static MaterialInstance Deferred{
 	.name = "deferred",
 	.state
-	= {.shader = "lighting",
+	= {.vertex_shader = "screen",
+	   .fragment_shader = "lighting",
 	   .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 	   .cull_mode = SDL_GPU_CULLMODE_BACK,
 	   .compare_op = SDL_GPU_COMPAREOP_LESS,

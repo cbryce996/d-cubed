@@ -5,6 +5,8 @@
 
 #include <SDL3/SDL.h>
 
+#include "render/shaders/shader.h"
+
 struct Pipeline;
 struct PipelineState;
 class ShaderManager;
@@ -17,6 +19,8 @@ class SDLPipelineFactory : public IPipelineFactory {
 	);
 	~SDLPipelineFactory () override;
 
+	SDL_GPUVertexInputRate to_sdl_input_rate (InputRate input_rate);
+	SDL_GPUVertexElementFormat to_sdl_vertex_format (DataTypes data_type);
 	Pipeline* create_pipeline (const PipelineState& pipeline_state) override;
 
   private:

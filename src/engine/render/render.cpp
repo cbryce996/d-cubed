@@ -69,41 +69,44 @@ void RenderManager::load_shaders () const {
 		SDL_LOG_CATEGORY_RENDER, "Loading shaders.", shader_base.c_str ()
 	);
 
-	shader_manager->load_shader (
-		ShaderConfig{
-			.path = shader_base + "bin/geometry.vert.metallib",
-			.entrypoint = "main0",
-			.format = SDL_GPU_SHADERFORMAT_METALLIB,
-			.stage = SDL_GPU_SHADERSTAGE_VERTEX,
-			.num_uniform_buffers = 1
-		},
-		ShaderConfig{
-			.path = shader_base + "bin/gbuffer.frag.metallib",
-			.entrypoint = "main0",
-			.format = SDL_GPU_SHADERFORMAT_METALLIB,
-			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-			.num_uniform_buffers = 1
-		},
-		"geometry"
-	);
+	auto geometry_vertex_shader = Shader{
+		.name = "geometry",
+		.path = shader_base + "bin/geometry.vert.metallib",
+		.entrypoint = "main0",
+		.format = SDL_GPU_SHADERFORMAT_METALLIB,
+		.stage = SDL_GPU_SHADERSTAGE_VERTEX,
+	};
+
+	auto geometry_fragment_shader = Shader{
+		.name = "gbuffer",
+		.path = shader_base + "bin/gbuffer.frag.metallib",
+		.entrypoint = "main0",
+		.format = SDL_GPU_SHADERFORMAT_METALLIB,
+		.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
+	};
 
 	shader_manager->load_shader (
-		ShaderConfig{
-			.path = shader_base + "bin/screen.vert.metallib",
-			.entrypoint = "main0",
-			.format = SDL_GPU_SHADERFORMAT_METALLIB,
-			.stage = SDL_GPU_SHADERSTAGE_VERTEX,
-			.num_uniform_buffers = 1
-		},
-		ShaderConfig{
-			.path = shader_base + "bin/lighting.frag.metallib",
-			.entrypoint = "main0",
-			.format = SDL_GPU_SHADERFORMAT_METALLIB,
-			.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-			.num_uniform_buffers = 1,
-			.num_samplers = 3
-		},
-		"lighting"
+		geometry_vertex_shader, geometry_fragment_shader
+	);
+
+	auto lighting_vertex_shader = Shader{
+		.name = "screen",
+		.path = shader_base + "bin/screen.vert.metallib",
+		.entrypoint = "main0",
+		.format = SDL_GPU_SHADERFORMAT_METALLIB,
+		.stage = SDL_GPU_SHADERSTAGE_VERTEX,
+	};
+
+	auto lighting_fragment_shader = Shader{
+		.name = "lighting",
+		.path = shader_base + "bin/lighting.frag.metallib",
+		.entrypoint = "main0",
+		.format = SDL_GPU_SHADERFORMAT_METALLIB,
+		.stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
+	};
+
+	shader_manager->load_shader (
+		lighting_vertex_shader, lighting_fragment_shader
 	);
 
 	assert (shader_manager->get_shader ("geometry"));
