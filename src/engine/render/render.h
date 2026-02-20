@@ -3,7 +3,6 @@
 
 #include "drawable.h"
 #include "graph/graph.h"
-#include "inputs/input.h"
 #include "scene.h"
 
 #include <SDL3/SDL.h>
@@ -11,6 +10,8 @@
 #include <imgui.h>
 #include <vector>
 
+struct MouseInput;
+struct KeyboardInput;
 class ResourceManager;
 class FrameManager;
 class EditorManager;

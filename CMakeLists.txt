@@ -38,7 +38,7 @@ find_package(imgui CONFIG REQUIRED)
 set(GAME_LIB_SOURCES
         src/engine/engine.cpp
         src/engine/runtime/tasks/tasks.cpp
-        src/engine/inputs/input.cpp
+        src/engine/core/input/input.cpp
         src/engine/editor/panels/viewport/viewport.cpp
         src/engine/editor/panels/inspector/inspector.cpp
         src/engine/editor/panels/hierarchy/hierarchy.cpp
@@ -47,15 +47,15 @@ set(GAME_LIB_SOURCES
         src/engine/editor/panels/menu/menu.cpp
         src/engine/editor/panels/panel.cpp
         src/engine/editor/editor.cpp
-        src/engine/scene/entity/components/prefabs/instancing.cpp
-        src/engine/scene/entity/components/prefabs/wave.cpp
-        src/engine/scene/entity/prefabs/spheres.cpp
-        src/engine/scene/entity/prefabs/static.cpp
-        src/engine/scene/entity/entity.cpp
-        src/engine/scene/scene.cpp
+        src/engine/core/scene/entity/components/prefabs/instancing.cpp
+        src/engine/core/scene/entity/components/prefabs/wave.cpp
+        src/engine/core/scene/entity/prefabs/spheres.cpp
+        src/engine/core/scene/entity/prefabs/static.cpp
+        src/engine/core/scene/entity/entity.cpp
+        src/engine/core/scene/scene.cpp
         src/engine/runtime/schedule/schedule.cpp
         src/engine/runtime/runtime.cpp
-        src/engine/mesh/mesh.cpp
+        src/engine/assets/mesh/mesh.cpp
         src/engine/render/render.cpp
         src/engine/render/graph/graph.cpp
         src/engine/render/pass/pass.cpp
@@ -65,11 +65,11 @@ set(GAME_LIB_SOURCES
         src/engine/render/buffers/buffer.cpp
         src/engine/render/resources/targets/target.cpp
         src/engine/render/resources/resources.cpp
-        src/engine/cameras/camera.cpp
+        src/engine/core/camera/camera.cpp
         src/engine/render/shaders/shader.cpp
         src/engine/assets/asset.cpp
         src/engine/assets/loader.cpp
-        src/engine/resources/storage/maps/slot.cpp
+        src/engine/core/storage/maps/slot.cpp
 )
 
 add_library(game_lib STATIC ${GAME_LIB_SOURCES})
@@ -78,7 +78,7 @@ target_compile_features(game_lib PUBLIC cxx_std_20)
 target_include_directories(game_lib PUBLIC
         src
         src/engine
-        src/engine/scene
+        src/engine/core/scene
 )
 
 target_compile_definitions(game_lib PUBLIC
@@ -130,7 +130,10 @@ add_executable(engine_tests
         tests/engine/render/test_pass.cpp
         tests/engine/scene/test_scene.cpp
         tests/engine/scene/test_entity.cpp
-        tests/engine/resources/storage/test_dense_slot_map.cpp
+        tests/engine/core/storage/test_dense_slot_map.cpp
+        tests/engine/core/storage/test_state.cpp
+        tests/engine/core/storage/policies/test_cache.cpp
+        tests/engine/core/storage/policies/test_pool.cpp
 )
 
 target_compile_features(engine_tests PRIVATE cxx_std_20)

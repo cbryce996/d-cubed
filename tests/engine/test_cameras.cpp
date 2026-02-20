@@ -1,11 +1,10 @@
-#include "cameras/camera.h"
-
 #include <SDL3/SDL.h>
 #include <gtest/gtest.h>
 
 #include <glm/glm.hpp>
 
-#include "inputs/input.h"
+#include "core/camera/camera.h"
+#include "core/input/input.h"
 
 class CameraTest : public ::testing::Test {
   protected:

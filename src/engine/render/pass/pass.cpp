@@ -1,6 +1,6 @@
 
 #include "pass.h"
-#include "cameras/camera.h"
+#include "core/camera/camera.h"
 #include "render/buffers/buffer.h"
 #include "render/context.h"
 #include "render/drawable.h"

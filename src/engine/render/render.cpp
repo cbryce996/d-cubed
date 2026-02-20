@@ -8,11 +8,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 
-#include <glm/glm.hpp>
-
-#include "cameras/camera.h"
 #include "editor/editor.h"
-#include "inputs/input.h"
 #include "pipelines/pipeline.h"
 #include "shaders/shader.h"
 
@@ -20,6 +16,9 @@
 #include <imgui_impl_sdlgpu3.h>
 #include <imgui_internal.h>
 
+#include "assets/mesh/mesh.h"
+#include "core/camera/camera.h"
+#include "core/input/input.h"
 #include "frame/frame.h"
 
 RenderManager::RenderManager (

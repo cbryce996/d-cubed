@@ -2,14 +2,16 @@
 #include "engine.h"
 #include "entity/prefabs/spheres.h"
 #include "entity/prefabs/static.h"
-#include "maths/geometry/cube.h"
-#include "maths/geometry/plane.h"
-#include "maths/geometry/sphere.h"
-#include "mesh/mesh.h"
 #include "render/material.h"
 #include "scene.h"
 
+#include "core/math/geometry/cube.h"
+#include "core/math/geometry/plane.h"
+#include "core/math/geometry/sphere.h"
+
 #include <memory>
+
+#include "assets/mesh/mesh.h"
 
 int main () {
 	std::unique_ptr<Engine> engine = std::make_unique<Engine> ();

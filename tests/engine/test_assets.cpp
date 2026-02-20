@@ -5,7 +5,8 @@
 #include <string>
 #include <thread>
 
-#include "../../src/engine/mesh/mesh.h"
+#include "assets/mesh/mesh.h"
+#include "core/math/vector.h"
 #include "engine/assets/asset.h"
 
 struct FakeLoader : IMeshLoader {

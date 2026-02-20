@@ -1,6 +1,6 @@
-#include "../../../src/engine/render/pass/pass.h"
-
 #include <gtest/gtest.h>
+
+#include "render/pass/pass.h"
 
 class RenderPassStateTest : public ::testing::Test {
   protected:

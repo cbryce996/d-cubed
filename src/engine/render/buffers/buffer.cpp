@@ -2,6 +2,7 @@
 
 #include "SDL3/SDL_gpu.h"
 #include "SDL3/SDL_log.h"
+#include "assets/mesh/mesh.h"
 #include "render/material.h"
 #include "render/render.h"
 
