@@ -14,7 +14,7 @@ class CacheTest : public ::testing::Test {
 
 TEST_F (CacheTest, GetOrCreateReturnsSameHandleForEqualState) {
 	const auto factory = std::make_shared<FakeFactory> ();
-	Cache<FakeStateKey, FakeState, FakeFactory> cache (factory);
+	Cache<FakeState, FakeFactory> cache (factory);
 
 	const FakeState state_1{42};
 	const FakeState state_2{42};
@@ -28,7 +28,7 @@ TEST_F (CacheTest, GetOrCreateReturnsSameHandleForEqualState) {
 
 TEST_F (CacheTest, GetOrCreateCreatesNewHandleForDifferentState) {
 	const auto factory = std::make_shared<FakeFactory> ();
-	Cache<FakeStateKey, FakeState, FakeFactory> cache (factory);
+	Cache<FakeState, FakeFactory> cache (factory);
 
 	const Handle handle_1 = cache.get_or_create (FakeState{1});
 	const Handle handle_2 = cache.get_or_create (FakeState{2});
@@ -39,12 +39,12 @@ TEST_F (CacheTest, GetOrCreateCreatesNewHandleForDifferentState) {
 
 TEST_F (CacheTest, ClearDestroysAllCachedHandles) {
 	const auto factory = std::make_shared<FakeFactory> ();
-	Cache<FakeStateKey, FakeState, FakeFactory> cache (factory);
+	Cache<FakeState, FakeFactory> cache (factory);
 
 	const Handle handle_1 = cache.get_or_create (FakeState{1});
 	const Handle handle_2 = cache.get_or_create (FakeState{2});
 
-	cache.clear (storage);
+	cache.clear ();
 
 	ASSERT_EQ (factory->destroyed_ids.size (), 2u);
 	EXPECT_TRUE (

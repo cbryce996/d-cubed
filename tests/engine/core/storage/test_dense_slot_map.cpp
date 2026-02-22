@@ -11,7 +11,7 @@ struct TestRecord {
 
 class DenseSlotMapTest : public ::testing::Test {
   protected:
-	DenseSlotMap map;
+	DenseSlotMapStorage map;
 };
 
 TEST_F (DenseSlotMapTest, AllocateReturnsValidHandleAndMemory) {

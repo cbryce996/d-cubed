@@ -37,9 +37,7 @@ class FakeFactory {
 		return Handle{static_cast<uint32_t> (++next_id), 0};
 	}
 
-	void destroy (const Handle handle, IStorage&) {
-		destroyed_ids.push_back (handle.id);
-	}
+	void destroy (const Handle handle) { destroyed_ids.push_back (handle.id); }
 
 	int next_id = 0;
 	std::vector<int> created_states;

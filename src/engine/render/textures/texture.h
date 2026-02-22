@@ -5,13 +5,12 @@
 #include <memory>
 #include <string>
 
-#include "../../core/storage/state.h"
-#include "core/interfaces.h"
+#include "core/storage/state.h"
 #include "core/storage/storage.h"
 #include "utils.h"
 
 struct TextureHandle {
-	Uint32 id = 0;
+	uint32_t id = 0;
 };
 
 enum class TextureFormat : uint8_t {

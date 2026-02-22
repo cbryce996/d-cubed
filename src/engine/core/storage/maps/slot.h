@@ -6,10 +6,10 @@
 
 #include "core/storage/storage.h"
 
-class DenseSlotMap final : public IStorage {
+class DenseSlotMapStorage final : public IStorage {
   public:
-	DenseSlotMap () = default;
-	~DenseSlotMap () override = default;
+	DenseSlotMapStorage () = default;
+	~DenseSlotMapStorage () override = default;
 
 	Handle allocate (std::size_t size, std::size_t align) override;
 	bool free (Handle handle) override;
@@ -20,6 +20,10 @@ class DenseSlotMap final : public IStorage {
 	[[nodiscard]] const void* try_get (Handle handle) const override;
 
 	void clear ();
+
+	template <class T, class Function> void for_each (Function&& function) {
+		for_each_impl<T> (*this, std::forward<function> (function));
+	}
 
   private:
 	struct Slot {

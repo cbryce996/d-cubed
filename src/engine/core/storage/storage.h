@@ -2,7 +2,6 @@
 #define STORAGE_H
 
 #include <cstddef>
-#include <cstdint>
 
 struct Handle {
 	uint32_t id = 0;

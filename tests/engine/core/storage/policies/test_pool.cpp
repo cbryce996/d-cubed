@@ -14,7 +14,7 @@ class PoolTest : public ::testing::Test {
 
 TEST_F (PoolTest, AcquireCreatesWhenNoFreeHandle) {
 	const auto factory = std::make_shared<FakeFactory> ();
-	Pool<FakeStateKey, FakeState, FakeFactory> pool (factory);
+	Pool<FakeState, FakeFactory> pool (*factory);
 
 	const Handle handle = pool.acquire (FakeState{7});
 	EXPECT_TRUE (handle.valid ());
@@ -23,7 +23,7 @@ TEST_F (PoolTest, AcquireCreatesWhenNoFreeHandle) {
 
 TEST_F (PoolTest, ReleaseThenAcquireReusesHandleForSameState) {
 	const auto factory = std::make_shared<FakeFactory> ();
-	Pool<FakeStateKey, FakeState, FakeFactory> pool (factory);
+	Pool<FakeState, FakeFactory> pool (*factory);
 
 	const FakeState state{7};
 	const Handle handle_1 = pool.acquire (state);
@@ -36,7 +36,7 @@ TEST_F (PoolTest, ReleaseThenAcquireReusesHandleForSameState) {
 
 TEST_F (PoolTest, DifferentStateDoesNotReuseOtherStatesHandle) {
 	const auto factory = std::make_shared<FakeFactory> ();
-	Pool<FakeStateKey, FakeState, FakeFactory> pool (factory);
+	Pool<FakeState, FakeFactory> pool (*factory);
 
 	const FakeState state_1{1};
 	const FakeState state_2{2};
@@ -52,7 +52,7 @@ TEST_F (PoolTest, DifferentStateDoesNotReuseOtherStatesHandle) {
 
 TEST_F (PoolTest, ClearDestroysAllFreeHandles) {
 	const auto factory = std::make_shared<FakeFactory> ();
-	Pool<FakeStateKey, FakeState, FakeFactory> pool (factory);
+	Pool<FakeState, FakeFactory> pool (*factory);
 
 	const FakeState state{3};
 	const Handle handle_1 = pool.acquire (state);
@@ -61,7 +61,7 @@ TEST_F (PoolTest, ClearDestroysAllFreeHandles) {
 	pool.release (state, handle_1);
 	pool.release (state, handle_2);
 
-	pool.clear (storage);
+	pool.clear ();
 
 	EXPECT_EQ (factory->destroyed_ids.size (), 2u);
 }

@@ -20,6 +20,8 @@
 #include "core/camera/camera.h"
 #include "core/input/input.h"
 #include "frame/frame.h"
+#include "textures/registry.h"
+#include "textures/sdl/target.h"
 
 RenderManager::RenderManager (
 	SDL_GPUDevice* device, SDL_Window* window,
@@ -29,7 +31,7 @@ RenderManager::RenderManager (
 	std::shared_ptr<AssetManager> asset_manager,
 	std::shared_ptr<EditorManager> editor_manager,
 	std::shared_ptr<FrameManager> frame_manager,
-	std::shared_ptr<ResourceManager> resource_manager
+	std::shared_ptr<TextureRegistry> texture_registry
 )
 	: editor_manager (std::move (editor_manager)),
 	  shader_manager (std::move (shader_manager)),
@@ -37,7 +39,7 @@ RenderManager::RenderManager (
 	  buffer_manager (std::move (buffer_manager)),
 	  asset_manager (std::move (asset_manager)),
 	  frame_manager (std::move (frame_manager)),
-	  resource_manager (std::move (resource_manager)), device (device),
+	  texture_registry (std::move (texture_registry)), device (device),
 	  window (window) {
 	assert (device);
 	assert (window);
@@ -152,7 +154,7 @@ void RenderManager::create_gbuffer_textures (
 	}
 
 	SDL_LogInfo (
-		SDL_LOG_CATEGORY_RENDER, "G-buffer textures created (%dx%d)", width,
+		SDL_LOG_CATEGORY_RENDER, "G-buffer buffer created (%dx%d)", width,
 		height
 	);
 }
@@ -174,12 +176,14 @@ void RenderManager::destroy_gbuffer_textures () const {
 	}
 }
 
-void RenderManager::create_depth_texture () const {
+void RenderManager::create_depth_texture (
+	const int new_width, const int new_height
+) const {
 	if (buffer_manager->depth_texture)
 		return;
 
-	int width = resource_manager->viewport_target.width;
-	int height = resource_manager->viewport_target.height;
+	const int width = (new_width > 0) ? new_width : 2;
+	const int height = (new_height > 0) ? new_height : 2;
 
 	SDL_GPUTextureCreateInfo depth_info{};
 	depth_info.type = SDL_GPU_TEXTURETYPE_2D;
@@ -193,42 +197,6 @@ void RenderManager::create_depth_texture () const {
 
 	buffer_manager->depth_texture = SDL_CreateGPUTexture (device, &depth_info);
 	assert (buffer_manager->depth_texture);
-}
-
-void RenderManager::create_viewport_texture (
-	const int width, const int height
-) {
-	if (width <= 0 || height <= 0)
-		return;
-
-	auto& viewport_target = resource_manager->viewport_target;
-
-	if (viewport_target.valid () && viewport_target.width == width
-		&& viewport_target.height == height)
-		return;
-
-	for (auto& texture : viewport_target.textures) {
-		if (texture) {
-			SDL_ReleaseGPUTexture (device, texture);
-			texture = nullptr;
-		}
-	}
-
-	SDL_GPUTextureCreateInfo info{};
-	info.type = SDL_GPU_TEXTURETYPE_2D;
-	info.width = width;
-	info.height = height;
-	info.layer_count_or_depth = 1;
-	info.num_levels = 1;
-	info.sample_count = SDL_GPU_SAMPLECOUNT_1;
-	info.format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM;
-	info.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
-				 | SDL_GPU_TEXTUREUSAGE_SAMPLER;
-
-	for (int i = 0; i < Target::BufferCount; ++i) {
-		viewport_target.textures[i] = SDL_CreateGPUTexture (device, &info);
-		assert (viewport_target.textures[i]);
-	}
 }
 
 void RenderManager::setup_render_graph () {
@@ -250,37 +218,27 @@ void RenderManager::setup_render_graph () {
 }
 
 void RenderManager::resize (const int new_width, const int new_height) {
-	resource_manager->viewport_target.width = new_width;
-	resource_manager->viewport_target.height = new_height;
-
 	SDL_WaitForGPUIdle (device);
+
+	const int width = (new_width > 0) ? new_width : 2;
+	const int height = (new_height > 0) ? new_height : 2;
 
 	if (buffer_manager->depth_texture) {
 		SDL_ReleaseGPUTexture (device, buffer_manager->depth_texture);
 		buffer_manager->depth_texture = nullptr;
-		assert (buffer_manager);
 	}
 
 	destroy_gbuffer_textures ();
-	create_gbuffer_textures (
-		resource_manager->viewport_target.width,
-		resource_manager->viewport_target.height
-	);
-	create_depth_texture ();
-	create_viewport_texture (
-		resource_manager->viewport_target.width,
-		resource_manager->viewport_target.height
-	);
+
+	create_gbuffer_textures (width, height);
+	create_depth_texture (width, height);
+	texture_registry->ensure_viewport_target (width, height);
 }
 
 void RenderManager::acquire_swap_chain () {
 	SDL_GPUTexture* swap_chain_texture = nullptr;
-	Uint32 width = static_cast<Uint32> (
-		resource_manager->viewport_target.width
-	);
-	Uint32 height = static_cast<Uint32> (
-		resource_manager->viewport_target.height
-	);
+	Uint32 width = static_cast<Uint32> (texture_registry->viewport.width);
+	Uint32 height = static_cast<Uint32> (texture_registry->viewport.height);
 
 	if (!SDL_WaitAndAcquireGPUSwapchainTexture (
 			buffer_manager->command_buffer, window, &swap_chain_texture, &width,
@@ -369,10 +327,8 @@ void RenderManager::render (
 		.buffer_manager = buffer_manager.get (),
 		.shader_manager = shader_manager.get (),
 		.frame_manager = frame_manager.get (),
-		.resource_manager = resource_manager.get (),
+		.texture_registry = texture_registry.get (),
 		.drawables = &render_state.drawables,
-		.width = resource_manager->viewport_target.width,
-		.height = resource_manager->viewport_target.height,
 		.time = delta_time
 	};
 
@@ -380,7 +336,7 @@ void RenderManager::render (
 	ImGui_ImplSDL3_NewFrame ();
 	ImGui::NewFrame ();
 
-	editor_manager->create_ui (*render_context.resource_manager, render_state);
+	editor_manager->create_ui (*render_context.texture_registry, render_state);
 
 	const ImGuiIO& io = ImGui::GetIO ();
 
@@ -403,7 +359,7 @@ void RenderManager::render (
 
 	SDL_SubmitGPUCommandBuffer (buffer_manager->command_buffer);
 
-	resource_manager->viewport_target.swap ();
+	texture_registry->viewport.swap ();
 
 	buffer_manager->command_buffer = nullptr;
 }

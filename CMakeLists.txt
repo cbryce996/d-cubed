@@ -62,9 +62,8 @@ set(GAME_LIB_SOURCES
         src/engine/render/frame/frame.cpp
         src/engine/render/pipelines/pipeline.cpp
         src/engine/render/pipelines/sdl/factory.cpp
+        src/engine/render/textures/sdl/factory/factory.cpp
         src/engine/render/buffers/buffer.cpp
-        src/engine/render/resources/targets/target.cpp
-        src/engine/render/resources/resources.cpp
         src/engine/core/camera/camera.cpp
         src/engine/render/shaders/shader.cpp
         src/engine/assets/asset.cpp

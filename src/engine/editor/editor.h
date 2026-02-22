@@ -1,15 +1,15 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include "render/resources/resources.h"
-
-#include <SDL3/SDL.h>
 #include <glm/glm.hpp>
 #include <imgui.h>
 #include <unordered_map>
 
 #include "panels/panel.h"
 
+class TextureRegistry;
+struct Handle;
+class TextureTarget;
 struct RenderState;
 class BufferManager;
 class IEntity;
@@ -33,7 +33,7 @@ struct EditorState {
 struct EditorContext {
 	EditorState& editor_state;
 	RenderState& render_state;
-	ResourceManager& resource_manager;
+	TextureRegistry& texture_registry;
 	ImGuiWindowClass* window = nullptr;
 };
 
@@ -42,8 +42,8 @@ class EditorManager {
 	EditorManager ();
 
 	void
-	create_ui (ResourceManager& resource_manager, RenderState& render_state);
-	void layout_ui (ImGuiID dock_main);
+	create_ui (TextureRegistry& texture_registry, RenderState& render_state);
+	void layout_ui (ImGuiID dock_base);
 
 	std::vector<std::unique_ptr<IEditorPanel>> panels;
 	EditorState editor_state;

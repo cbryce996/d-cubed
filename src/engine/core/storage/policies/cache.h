@@ -5,15 +5,16 @@
 #include <ranges>
 #include <unordered_map>
 
-#include "../storage.h"
+#include "core/storage/state.h"
+#include "core/storage/storage.h"
 
-template <class Key, class State, class Factory> class Cache {
+template <class State, class Factory> class Cache {
   public:
 	explicit Cache (std::shared_ptr<Factory> factory)
 		: factory (std::move (factory)) {}
 
 	Handle get_or_create (const State& state) {
-		Key key (state);
+		IStateKey<State> key (state);
 
 		if (const auto it = instances.find (key); it != instances.end ())
 			return it->second;
@@ -23,16 +24,18 @@ template <class Key, class State, class Factory> class Cache {
 		return created;
 	}
 
-	void clear (IStorage& storage) {
+	void clear () {
 		for (const auto& handle : instances | std::views::values) {
-			factory->destroy (handle, storage);
+			factory->destroy (handle);
 		}
 		instances.clear ();
 	}
 
   private:
 	std::shared_ptr<Factory> factory;
-	std::unordered_map<Key, Handle, typename Key::Hash, typename Key::Equals>
+	std::unordered_map<
+		IStateKey<State>, Handle, typename IStateKey<State>::Hash,
+		typename IStateKey<State>::Equals>
 		instances;
 };
 

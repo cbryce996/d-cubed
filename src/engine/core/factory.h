@@ -1,19 +1,17 @@
-#ifndef FACTORY_H
-#define FACTORY_H
+#ifndef CORE_FACTORY_H
+#define CORE_FACTORY_H
 
-struct Handle;
-class IStorage;
+#include "storage/storage.h"
 
-template <class State, class Storage> class IFactory {
+template <class Record> class IFactory {
   public:
-	explicit IFactory (Storage& storage) : storage (storage) {};
+	explicit IFactory (IStorage& storage) : storage (storage) {}
 	virtual ~IFactory () = default;
 
-	virtual Handle create (const State& state) = 0;
-	virtual void destroy (Handle handle, Storage& storage) = 0;
+	virtual Handle create (const Record& record) = 0;
+	virtual void destroy (Handle handle) = 0;
 
-  private:
-	Storage& storage;
+	IStorage& storage;
 };
 
-#endif // FACTORY_H
+#endif // CORE_FACTORY_H

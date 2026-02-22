@@ -1,5 +1,6 @@
 
 #include "pass.h"
+#include "../textures/sdl/target.h"
 #include "core/camera/camera.h"
 #include "render/buffers/buffer.h"
 #include "render/context.h"
@@ -7,26 +8,25 @@
 #include "render/frame/frame.h"
 #include "render/pipelines/pipeline.h"
 #include "render/render.h"
-#include "render/resources/resources.h"
+#include "render/textures/registry.h"
 #include "utils.h"
 
 namespace RenderPasses {
 RenderPassInstance UniformPass = {
 	.name = "uniform_pass",
 	.type = RenderPassType::Setup,
-	.execute = [] (RenderContext& render_context,
+	.execute = [] (const RenderContext& render_context,
 				   RenderPassInstance& render_pass_instance) {
 		assert (render_context.camera_manager->get_active_camera ());
 
 		const Camera* active_camera
 			= render_context.camera_manager->get_active_camera ();
-		const float aspect_ratio = static_cast<float> (render_context.width)
-								   / static_cast<float> (render_context.height);
 		const glm::vec3 light_pos_world = active_camera->transform.position;
 
 		const glm::mat4 view_projection
 			= CameraManager::compute_view_projection (
-				*active_camera, aspect_ratio
+				*active_camera,
+				render_context.texture_registry->viewport.aspect_ratio ()
 			);
 
 		Block view_uniform_block{};
@@ -137,11 +137,13 @@ RenderPassInstance DeferredPass = {
 									RenderContext& render_context,
 									RenderPassInstance& render_pass_instance
 								) {
-			if (!render_context.resource_manager->viewport_target.valid())
+			if (!render_context.texture_registry->viewport.valid())
 				return;
 
+			const Handle viewport_write_handle = render_context.texture_registry->viewport.write();
+
 			render_pass_instance.color_targets = {
-				render_context.resource_manager->viewport_target.write()
+				render_context.texture_registry->resolve_texture(viewport_write_handle)
 			};
 
 			render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, *render_context.buffer_manager);

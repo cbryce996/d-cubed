@@ -3,18 +3,18 @@
 
 #include <memory>
 
-template <class State> struct IState {
+template <class T> struct IState {
 	virtual ~IState () = default;
 
 	[[nodiscard]] virtual size_t hash () const = 0;
-	[[nodiscard]] virtual bool equals (const State& other) const = 0;
-	[[nodiscard]] virtual std::unique_ptr<State> clone () const = 0;
+	[[nodiscard]] virtual bool equals (const T& other) const = 0;
+	[[nodiscard]] virtual std::unique_ptr<T> clone () const = 0;
 };
 
-template <class StateKey> struct IStateKey {
-	std::unique_ptr<StateKey> state;
+template <class T> struct IStateKey {
+	std::unique_ptr<T> state;
 
-	explicit IStateKey (const StateKey& state) : state (state.clone ()) {}
+	explicit IStateKey (const T& state) : state (state.clone ()) {}
 
 	IStateKey (IStateKey&&) noexcept = default;
 	IStateKey& operator= (IStateKey&&) noexcept = default;

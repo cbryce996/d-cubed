@@ -5,43 +5,44 @@
 #include <ranges>
 #include <unordered_map>
 
-#include "../storage.h"
+#include "core/storage/state.h"
+#include "core/storage/storage.h"
 
-template <class Key, class State, class Factory> class Pool {
+template <class State, class Factory> class Pool {
   public:
-	explicit Pool (std::shared_ptr<Factory> factory)
-		: factory (std::move (factory)) {}
+	explicit Pool (Factory& factory) : factory (factory) {}
 
-	Handle acquire(const State& state) {
-		auto [it, inserted] = free_list.try_emplace(Key(state));
+	Handle acquire (const State& state) {
+		auto [it, inserted] = free_list.try_emplace (IStateKey<State> (state));
 
-		if (auto& list = it->second; !list.empty()) {
-			Handle h = list.back();
-			list.pop_back();
-			return h;
+		if (auto& list = it->second; !list.empty ()) {
+			const Handle handle = list.back ();
+			list.pop_back ();
+			return handle;
 		}
 
-		return factory->create(state);
+		return factory.create (state);
 	}
 
 	void release (const State& state, const Handle handle) {
-		Key key (state);
+		IStateKey<State> key (state);
 		free_list.emplace (std::move (key), std::vector<Handle>{})
 			.first->second.push_back (handle);
 	}
 
-	void clear (IStorage& storage) {
+	void clear () {
 		for (auto& list : free_list | std::views::values) {
 			for (const auto handle : list)
-				factory->destroy (handle, storage);
+				factory.destroy (handle);
 		}
 		free_list.clear ();
 	}
 
   private:
-	std::shared_ptr<Factory> factory;
+	Factory& factory;
 	std::unordered_map<
-		Key, std::vector<Handle>, typename Key::Hash, typename Key::Equals>
+		IStateKey<State>, std::vector<Handle>, typename IStateKey<State>::Hash,
+		typename IStateKey<State>::Equals>
 		free_list;
 };
 

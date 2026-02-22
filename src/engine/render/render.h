@@ -10,6 +10,7 @@
 #include <imgui.h>
 #include <vector>
 
+class TextureRegistry;
 struct MouseInput;
 struct KeyboardInput;
 class ResourceManager;
@@ -50,7 +51,7 @@ class RenderManager {
 		std::shared_ptr<AssetManager> asset_manager,
 		std::shared_ptr<EditorManager> editor_manager,
 		std::shared_ptr<FrameManager> frame_manager,
-		std::shared_ptr<ResourceManager> resource_manager
+		std::shared_ptr<TextureRegistry> texture_registry
 	);
 	~RenderManager ();
 	void setup_render_graph ();
@@ -68,15 +69,15 @@ class RenderManager {
 	std::shared_ptr<CameraManager> camera_manager;
 	std::shared_ptr<AssetManager> asset_manager;
 	std::shared_ptr<FrameManager> frame_manager;
-	std::shared_ptr<ResourceManager> resource_manager;
+
+	std::shared_ptr<TextureRegistry> texture_registry;
 
 	void render (
 		RenderState& render_state, const KeyboardInput& key_board_input,
 		MouseInput& mouse_input, float delta_time
 	);
 
-	void create_depth_texture () const;
-	void create_viewport_texture (int width, int height);
+	void create_depth_texture (int new_width, int new_height) const;
 	void create_gbuffer_textures (int width, int height) const;
 	void destroy_gbuffer_textures () const;
 

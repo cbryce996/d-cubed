@@ -2,7 +2,8 @@
 
 #include "slot.h"
 
-DenseSlotMap::Slot* DenseSlotMap::slot_if_valid (const Handle handle) {
+DenseSlotMapStorage::Slot*
+DenseSlotMapStorage::slot_if_valid (const Handle handle) {
 	if (!handle.valid () || handle.id >= slots.size ())
 		return nullptr;
 	Slot& slot = slots[handle.id];
@@ -11,8 +12,8 @@ DenseSlotMap::Slot* DenseSlotMap::slot_if_valid (const Handle handle) {
 	return &slot;
 }
 
-const DenseSlotMap::Slot*
-DenseSlotMap::slot_if_valid (const Handle handle) const {
+const DenseSlotMapStorage::Slot*
+DenseSlotMapStorage::slot_if_valid (const Handle handle) const {
 	if (!handle.valid () || handle.id >= slots.size ())
 		return nullptr;
 	const Slot& slot = slots[handle.id];
@@ -21,8 +22,9 @@ DenseSlotMap::slot_if_valid (const Handle handle) const {
 	return &slot;
 }
 
-Handle
-DenseSlotMap::allocate (const std::size_t size, const std::size_t align) {
+Handle DenseSlotMapStorage::allocate (
+	const std::size_t size, const std::size_t align
+) {
 	if (record_size == 0) {
 		record_size = size;
 		record_align = align;
@@ -44,7 +46,7 @@ DenseSlotMap::allocate (const std::size_t size, const std::size_t align) {
 	return Handle{id, slot.gen};
 }
 
-bool DenseSlotMap::free (const Handle handle) {
+bool DenseSlotMapStorage::free (const Handle handle) {
 	Slot* slot = slot_if_valid (handle);
 	if (!slot)
 		return false;
@@ -55,23 +57,23 @@ bool DenseSlotMap::free (const Handle handle) {
 	return true;
 }
 
-bool DenseSlotMap::valid (const Handle handle) const {
+bool DenseSlotMapStorage::valid (const Handle handle) const {
 	return slot_if_valid (handle) != nullptr;
 }
 
-void* DenseSlotMap::try_get (const Handle handle) {
+void* DenseSlotMapStorage::try_get (const Handle handle) {
 	if (const Slot* slot = slot_if_valid (handle); !slot)
 		return nullptr;
 	return &data[handle.id * record_size];
 }
 
-const void* DenseSlotMap::try_get (const Handle handle) const {
+const void* DenseSlotMapStorage::try_get (const Handle handle) const {
 	if (const Slot* slot = slot_if_valid (handle); !slot)
 		return nullptr;
 	return &data[handle.id * record_size];
 }
 
-void DenseSlotMap::clear () {
+void DenseSlotMapStorage::clear () {
 	slots.clear ();
 	free_ids.clear ();
 	data.clear ();
