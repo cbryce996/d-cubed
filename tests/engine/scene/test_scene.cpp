@@ -5,9 +5,8 @@
 #include <glm/glm.hpp>
 #include <gtest/gtest.h>
 
-static glm::vec3 world_pos (const IEntity& e) {
-	// GLM column-major; translation is in column 3 for T*R*S matrices
-	return glm::vec3 (e.world_matrix[3]);
+static glm::vec3 world_pos (const IEntity& entity) {
+	return glm::vec3 (entity.world_matrix[3]);
 }
 
 class TestEntity final : public IEntity {
@@ -84,7 +83,6 @@ TEST_F (SceneTest, UpdateCallsWorldTransformUpdate) {
 
 	scene.update (16.0f, 0.0f);
 
-	// NEW: matrix-based world transform lives in world_matrix
 	const glm::vec3 p = world_pos (*raw);
 	EXPECT_FLOAT_EQ (p.x, 5.0f);
 	EXPECT_FLOAT_EQ (p.y, 0.0f);
