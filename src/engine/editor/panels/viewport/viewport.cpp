@@ -34,14 +34,10 @@ static void draw_mode_overlay (
 	dl->AddText (text_pos, mode_col, mode_text);
 }
 
-// Returns the box rect so the caller can stack another box beneath it OR place
-// another beside it.
 static ImRect draw_kv_box_top_right (
 	ImDrawList* dl, const ImVec2& panel_min, const ImVec2& panel_max,
 	float top_pad, const char* title, const char* const* keys,
-	const char* const* vals, int count,
-	float right_edge_x
-	= -1.0f // NEW: anchor box_max.x here (defaults to panel_max.x - pad)
+	const char* const* vals, int count, float right_edge_x = -1.0f
 ) {
 	constexpr float pad = 10.0f;
 	constexpr float box_pad = 8.0f;
@@ -50,12 +46,9 @@ static ImRect draw_kv_box_top_right (
 
 	const ImU32 bg_col = IM_COL32 (30, 30, 30, 100);
 	const ImU32 key_col = IM_COL32 (180, 180, 180, 255);
-	const ImU32 val_col = IM_COL32 (
-		255, 230, 140, 255
-	); // warm highlight for values
+	const ImU32 val_col = IM_COL32 (255, 230, 140, 255);
 	const ImU32 title_col = IM_COL32 (200, 220, 255, 255);
 
-	// Measure widths
 	float max_key_w = 0.0f;
 	float max_val_w = 0.0f;
 	float line_h = ImGui::GetTextLineHeight ();
@@ -71,7 +64,6 @@ static ImRect draw_kv_box_top_right (
 	const float box_h = box_pad * 2.0f + line_h /*title*/ + title_gap
 						+ (line_h * count);
 
-	// Top-right placement (or custom right-edge)
 	const float box_right = (right_edge_x >= 0.0f) ? right_edge_x
 												   : (panel_max.x - pad);
 
@@ -80,14 +72,12 @@ static ImRect draw_kv_box_top_right (
 
 	dl->AddRectFilled (box_min, box_max, bg_col, 4.0f);
 
-	// Title
 	ImVec2 cursor (box_min.x + box_pad, box_min.y + box_pad);
 	dl->AddText (cursor, title_col, title);
 	cursor.y += line_h + title_gap;
 
-	// Columns
 	const float key_x = box_min.x + box_pad;
-	const float val_right_x = box_max.x - box_pad; // values right-anchored here
+	const float val_right_x = box_max.x - box_pad;
 
 	for (int i = 0; i < count; ++i) {
 		dl->AddText (ImVec2 (key_x, cursor.y), key_col, keys[i]);
@@ -237,19 +227,16 @@ void Viewport::draw (EditorContext& editor_context) {
 	dl->AddRectFilled (panel_min, panel_max, IM_COL32 (10, 10, 10, 255));
 	dl->AddImage (viewport_texture, panel_min, panel_max, uv0, uv1);
 
-	// Overlays
 	draw_mode_overlay (dl, panel_min, editor_context.editor_state);
 
 	const int i_tex_w = editor_context.texture_registry.viewport.width;
 	const int i_tex_h = editor_context.texture_registry.viewport.height;
 
-	// Pool on the far right
 	const ImRect pool_box = draw_texture_pool_overlay_top_right (
 		dl, panel_min, panel_max,
 		editor_context.texture_registry.get_pool_stats ()
 	);
 
-	// Stats to the LEFT of pool
 	constexpr float gap = 10.0f;
 	const float stats_right_edge = pool_box.Min.x - gap;
 
