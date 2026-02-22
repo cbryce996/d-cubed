@@ -1,11 +1,12 @@
-#include "render/context.h"
-#include "render/graph/graph.h"
 #include <gtest/gtest.h>
 
 #include <ranges>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "render/context.h"
+#include "render/graph/graph.h"
 
 struct FakeContext : RenderContext {};
 

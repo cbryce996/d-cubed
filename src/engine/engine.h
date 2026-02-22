@@ -1,14 +1,13 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "inputs/input.h"
-
 #include <SDL3/SDL.h>
 #include <memory>
 
+#include "core/input/input.h"
+
 class AssetManager;
 class RenderManager;
-class CameraManager;
 class Runtime;
 class Scene;
 

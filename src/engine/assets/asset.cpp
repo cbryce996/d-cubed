@@ -1,10 +1,8 @@
-#include "engine/assets/asset.h"
-
-#include "../mesh/mesh.h"
-
 #include <SDL3/SDL_log.h>
-
 #include <thread>
+
+#include "engine/assets/asset.h"
+#include "mesh/mesh.h"
 
 AssetManager::AssetManager (std::shared_ptr<IMeshLoader> loader)
 	: loader (std::move (loader)) {}

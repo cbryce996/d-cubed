@@ -1,6 +1,8 @@
-#include "mesh/mesh.h"
 #include <cstdint>
 #include <gtest/gtest.h>
+
+#include "assets/mesh/mesh.h"
+#include "core/math/vector.h"
 
 class MeshTransferAlignedTest : public ::testing::Test {
   protected:

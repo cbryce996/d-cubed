@@ -1,8 +1,8 @@
-#include "mesh/mesh.h"
+#include <gtest/gtest.h>
+
+#include "assets/mesh/mesh.h"
 #include "render/buffers/buffer.h"
 #include "render/drawable.h"
-
-#include <gtest/gtest.h>
 
 class BufferManagerTest : public ::testing::Test {
   protected:

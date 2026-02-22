@@ -1,9 +1,10 @@
 #include "console.h"
 
+#include <SDL3/SDL_error.h>
+
 #include "editor/editor.h"
 #include "entity/entity.h"
 #include "imgui.h"
-#include "scene.h"
 
 void Console::draw (EditorContext& editor_context) {
 	ImGui::SetNextWindowClass (editor_context.window);

@@ -1,7 +1,6 @@
 #include "engine.h"
 
 #include "assets/asset.h"
-#include "cameras/camera.h"
 #include "editor/editor.h"
 #include "entity/prefabs/spheres.h"
 #include "render/buffers/buffer.h"
@@ -21,6 +20,8 @@
 #include <imgui_impl_sdlgpu3.h>
 
 #include <iostream>
+
+#include "render/textures/registry.h"
 
 Engine::Engine () {
 	if (!SDL_Init (SDL_INIT_VIDEO)) {
@@ -71,12 +72,12 @@ Engine::Engine () {
 	std::shared_ptr<FrameManager> frame_manager
 		= std::make_shared<FrameManager> ();
 
-	std::shared_ptr<ResourceManager> resource_manager
-		= std::make_shared<ResourceManager> (Target{});
+	std::shared_ptr<TextureRegistry> texture_registry
+		= std::make_shared<TextureRegistry> (gpu_device);
 
 	render = std::make_unique<RenderManager> (
 		gpu_device, window, shader_manager, pipeline_manager, buffer_manager,
-		asset_manager, editor_manager, frame_manager, resource_manager
+		asset_manager, editor_manager, frame_manager, texture_registry
 	);
 
 	runtime = std::make_unique<Runtime> ();

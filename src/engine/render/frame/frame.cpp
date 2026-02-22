@@ -1,11 +1,11 @@
 #include "frame.h"
 
-#include "mesh/mesh.h"
 #include "render/buffers/buffer.h"
 #include "render/drawable.h"
 #include "render/pass/pass.h"
 #include "render/pipelines/pipeline.h"
 
+#include "assets/mesh/mesh.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlgpu3.h"
 

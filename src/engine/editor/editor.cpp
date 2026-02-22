@@ -1,8 +1,5 @@
 #include "editor.h"
 
-#include "render/buffers/buffer.h"
-#include "render/resources/resources.h"
-
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -12,6 +9,7 @@
 #include "panels/menu/menu.h"
 #include "panels/stats/stats.h"
 #include "panels/viewport/viewport.h"
+#include "render/textures/registry.h"
 
 EditorManager::EditorManager () {
 	panels.reserve (6);
@@ -25,7 +23,7 @@ EditorManager::EditorManager () {
 }
 
 void EditorManager::create_ui (
-	ResourceManager& resource_manager, RenderState& render_state
+	TextureRegistry& texture_registry, RenderState& render_state
 ) {
 	constexpr ImGuiDockNodeFlags dock_flags
 		= ImGuiDockNodeFlags_PassthruCentralNode;
@@ -47,7 +45,7 @@ void EditorManager::create_ui (
 
 	EditorContext editor_context{
 		.window = &docked_panel_class,
-		.resource_manager = resource_manager,
+		.texture_registry = texture_registry,
 		.render_state = render_state,
 		.editor_state = editor_state,
 	};
