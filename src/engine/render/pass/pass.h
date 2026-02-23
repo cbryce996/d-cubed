@@ -34,7 +34,8 @@ struct RenderPassInstance {
 	RenderPassState state = {};
 
 	SDL_GPULoadOp load_op;
-	std::vector<SDL_GPUTexture*> color_targets;
+	std::vector<SDL_GPUTexture*> target_textures;
+	std::vector<SDL_GPUTexture*> sampled_textures;
 	SDL_GPUTexture* depth_target;
 	SDL_FColor clear_color;
 	bool clear_depth;

@@ -86,34 +86,27 @@ RenderPassInstance GeometryPass = {
 				   RenderContext& render_context,
 				   RenderPassInstance& render_pass_instance
 			   ) {
-		assert (render_context.buffer_manager->g_position_texture);
-		assert (render_context.buffer_manager->g_normal_texture);
-		assert (render_context.buffer_manager->g_albedo_texture);
 		assert (render_context.buffer_manager->depth_texture);
 
 		render_pass_instance.depth_target = render_context.buffer_manager->depth_texture;
 
-		render_pass_instance.color_targets = {
-			render_context.buffer_manager->g_position_texture,
-			render_context.buffer_manager->g_normal_texture, render_context.buffer_manager->g_albedo_texture
+		Handle gbuffer_position_handle = render_context.texture_registry->gbuffer_position.read();
+		Handle gbuffer_normal_handle = render_context.texture_registry->gbuffer_normal.read();
+		Handle gbuffer_albedo_handle = render_context.texture_registry->gbuffer_albedo.read();
+
+		render_pass_instance.target_textures = {
+			render_context.texture_registry->resolve_texture(gbuffer_position_handle),
+			render_context.texture_registry->resolve_texture(gbuffer_normal_handle),
+			render_context.texture_registry->resolve_texture(gbuffer_albedo_handle)
 		};
+
+		render_pass_instance.sampled_textures.clear();
 
 		render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, *render_context.buffer_manager);
 
-		for (Drawable& drawable : *render_context.drawables) {
-			const PipelineState pipeline_state{
-				.render_pass_state = render_pass_instance.state,
-				.material_state = drawable.material->state,
-			};
-
-			const Pipeline* pipeline = render_context.pipeline_manager
-										   ->get_or_create (pipeline_state);
-
-			render_context.frame_manager->draw_mesh (
-				*pipeline, *render_context.buffer_manager, drawable,
-				*render_context.render_pass
-			);
-		}
+		render_context.frame_manager->draw_mesh (
+			render_context, render_pass_instance.state
+		);
 
 		SDL_EndGPURenderPass (render_context.render_pass);
 	}
@@ -123,7 +116,7 @@ RenderPassInstance DeferredPass = {
 	RenderPassInstance {
 		.name = "deferred_pass",
 		.type = RenderPassType::Lighting,
-			.state = {
+		.state = {
 			.color_formats = {SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM},
 			.has_depth_stencil_target = false,
 		},
@@ -133,31 +126,66 @@ RenderPassInstance DeferredPass = {
 		.clear_color = {0.0f, 0.0f, 0.0f, 0.0f},
 		.clear_depth = false,
 		.execute = [] (
-									RenderContext& render_context,
-									RenderPassInstance& render_pass_instance
-								) {
-			if (!render_context.texture_registry->viewport.valid())
+			RenderContext& render_context,
+			RenderPassInstance& render_pass_instance
+		) {
+			assert(render_context.texture_registry);
+			assert(render_context.frame_manager);
+			assert(render_context.buffer_manager);
+
+			if (!render_context.texture_registry->viewport.valid()) {
 				return;
+			}
 
-			const Handle viewport_write_handle = render_context.texture_registry->viewport.write();
+			const Handle viewport_write_handle =
+				render_context.texture_registry->viewport.write();
 
-			render_pass_instance.color_targets = {
-				render_context.texture_registry->resolve_texture(viewport_write_handle)
+			SDL_GPUTexture* viewport_output_texture =
+				render_context.texture_registry->resolve_texture(viewport_write_handle);
+
+			assert(viewport_output_texture);
+
+			render_pass_instance.target_textures = {
+				viewport_output_texture
 			};
 
-			render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, *render_context.buffer_manager);
+			const Handle gbuffer_position_handle =
+				render_context.texture_registry->gbuffer_position.read();
+			const Handle gbuffer_normal_handle =
+				render_context.texture_registry->gbuffer_normal.read();
+			const Handle gbuffer_albedo_handle =
+				render_context.texture_registry->gbuffer_albedo.read();
 
-			const PipelineState pipeline_state{
-				.render_pass_state = render_pass_instance.state,
-				.material_state = Materials::Deferred.state,
+			SDL_GPUTexture* gbuffer_position_texture =
+				render_context.texture_registry->resolve_texture(gbuffer_position_handle);
+			SDL_GPUTexture* gbuffer_normal_texture =
+				render_context.texture_registry->resolve_texture(gbuffer_normal_handle);
+			SDL_GPUTexture* gbuffer_albedo_texture =
+				render_context.texture_registry->resolve_texture(gbuffer_albedo_handle);
+
+			assert(gbuffer_position_texture);
+			assert(gbuffer_normal_texture);
+			assert(gbuffer_albedo_texture);
+
+			render_pass_instance.sampled_textures = {
+				gbuffer_position_texture,
+				gbuffer_normal_texture,
+				gbuffer_albedo_texture
 			};
 
-			const Pipeline* pipeline
-				= render_context.pipeline_manager->get_or_create (pipeline_state);
+			render_context.render_pass =
+				render_context.frame_manager->begin_render_pass(
+					render_pass_instance,
+					*render_context.buffer_manager
+				);
 
-			render_context.frame_manager->draw_screen (*pipeline, *render_context.buffer_manager, *render_context.render_pass);
+			render_context.frame_manager->draw_screen(
+				render_context,
+				render_pass_instance,
+				render_pass_instance.state
+			);
 
-			SDL_EndGPURenderPass (render_context.render_pass);
+			SDL_EndGPURenderPass(render_context.render_pass);
 		}
 	}
 };
@@ -181,7 +209,7 @@ RenderPassInstance UIPass = {
 		) {
 			assert(render_context.buffer_manager->swap_chain_texture);
 
-			render_pass_instance.color_targets = {
+			render_pass_instance.target_textures = {
 				render_context.buffer_manager->swap_chain_texture
 			};
 

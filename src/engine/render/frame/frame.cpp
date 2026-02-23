@@ -6,8 +6,11 @@
 #include "render/pipelines/pipeline.h"
 
 #include "assets/mesh/mesh.h"
+#include "core/storage/storage.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlgpu3.h"
+#include "render/context.h"
+#include "render/textures/registry.h"
 
 SDL_GPURenderPass* FrameManager::begin_render_pass (
 	const RenderPassInstance& render_pass_instance,
@@ -19,18 +22,18 @@ SDL_GPURenderPass* FrameManager::begin_render_pass (
 	assert (buffer_manager.depth_texture);
 	assert (buffer_manager.swap_chain_texture);
 
-	assert (!render_pass_instance.color_targets.empty ());
+	assert (!render_pass_instance.target_textures.empty ());
 
-	for (const auto color_target : render_pass_instance.color_targets) {
+	for (const auto color_target : render_pass_instance.target_textures) {
 		assert (color_target);
 	}
 
-	assert (render_pass_instance.color_targets.size () <= 8);
+	assert (render_pass_instance.target_textures.size () <= 8);
 
 	std::vector<SDL_GPUColorTargetInfo> color_target_infos;
-	color_target_infos.reserve (render_pass_instance.color_targets.size ());
+	color_target_infos.reserve (render_pass_instance.target_textures.size ());
 
-	for (SDL_GPUTexture* texture : render_pass_instance.color_targets) {
+	for (SDL_GPUTexture* texture : render_pass_instance.target_textures) {
 		assert (texture);
 
 		SDL_GPUColorTargetInfo info{};
@@ -108,96 +111,144 @@ void FrameManager::set_viewport (
 }
 
 void FrameManager::draw_mesh (
-	const Pipeline& pipeline, BufferManager& buffer_manager, Drawable& drawable,
-	SDL_GPURenderPass& render_pass
+	const RenderContext& render_context,
+	const RenderPassState& render_pass_state
 ) {
-	assert (drawable.mesh);
-	assert (drawable.material);
+	for (Drawable& drawable : *render_context.drawables) {
+		const PipelineState pipeline_state{
+			.render_pass_state = render_pass_state,
+			.material_state = drawable.material->state,
+		};
 
-	assert (pipeline.pipeline);
+		const Pipeline* pipeline
+			= render_context.pipeline_manager->get_or_create (pipeline_state);
+		assert (drawable.mesh);
+		assert (drawable.material);
 
-	assert (!drawable.mesh->gpu_state.vertices.empty ());
-	assert (!drawable.mesh->gpu_state.indices.empty ());
-	assert (!drawable.instance_blocks.empty ());
+		assert (pipeline->pipeline);
 
-	SDL_BindGPUGraphicsPipeline (&render_pass, pipeline.pipeline);
+		assert (!drawable.mesh->gpu_state.vertices.empty ());
+		assert (!drawable.mesh->gpu_state.indices.empty ());
+		assert (!drawable.instance_blocks.empty ());
 
-	const Buffer* vertex_buffer = buffer_manager.get_or_create_vertex_buffer (
-		*drawable.mesh
-	);
-	const Buffer* index_buffer = buffer_manager.get_or_create_index_buffer (
-		*drawable.mesh
-	);
-	const Buffer* instance_buffer
-		= buffer_manager.get_or_create_instance_buffer (drawable);
+		SDL_BindGPUGraphicsPipeline (
+			render_context.render_pass, pipeline->pipeline
+		);
 
-	assert (vertex_buffer);
-	assert (index_buffer);
-	assert (instance_buffer);
+		const Buffer* vertex_buffer
+			= render_context.buffer_manager->get_or_create_vertex_buffer (
+				*drawable.mesh
+			);
+		const Buffer* index_buffer
+			= render_context.buffer_manager->get_or_create_index_buffer (
+				*drawable.mesh
+			);
+		const Buffer* instance_buffer
+			= render_context.buffer_manager->get_or_create_instance_buffer (
+				drawable
+			);
 
-	assert (vertex_buffer->gpu_buffer.buffer);
-	assert (index_buffer->gpu_buffer.buffer);
-	assert (instance_buffer->gpu_buffer.buffer);
+		assert (vertex_buffer);
+		assert (index_buffer);
+		assert (instance_buffer);
 
-	assert (vertex_buffer->size > 0);
-	assert (index_buffer->size > 0);
-	assert (instance_buffer->size > 0);
+		assert (vertex_buffer->gpu_buffer.buffer);
+		assert (index_buffer->gpu_buffer.buffer);
+		assert (instance_buffer->gpu_buffer.buffer);
 
-	assert (vertex_buffer->size % ALIGNMENT == 0);
-	assert (instance_buffer->size % ALIGNMENT == 0);
+		assert (vertex_buffer->size > 0);
+		assert (index_buffer->size > 0);
+		assert (instance_buffer->size > 0);
 
-	const SDL_GPUBufferBinding vertex_bindings[2] = {
-		{vertex_buffer->gpu_buffer.buffer, 0},
-		{instance_buffer->gpu_buffer.buffer, 0},
-	};
+		assert (vertex_buffer->size % ALIGNMENT == 0);
+		assert (instance_buffer->size % ALIGNMENT == 0);
 
-	SDL_BindGPUVertexBuffers (&render_pass, 0, vertex_bindings, 2);
+		const SDL_GPUBufferBinding vertex_bindings[2] = {
+			{vertex_buffer->gpu_buffer.buffer, 0},
+			{instance_buffer->gpu_buffer.buffer, 0},
+		};
 
-	const SDL_GPUBufferBinding index_bindings[1] = {
-		{index_buffer->gpu_buffer.buffer, 0}
-	};
+		SDL_BindGPUVertexBuffers (
+			render_context.render_pass, 0, vertex_bindings, 2
+		);
 
-	SDL_BindGPUIndexBuffer (
-		&render_pass, index_bindings, SDL_GPU_INDEXELEMENTSIZE_32BIT
-	);
+		const SDL_GPUBufferBinding index_bindings[1] = {
+			{index_buffer->gpu_buffer.buffer, 0}
+		};
 
-	assert (drawable.mesh->gpu_state.indices.size () <= UINT32_MAX);
-	assert (drawable.instance_blocks.size () <= UINT32_MAX);
+		SDL_BindGPUIndexBuffer (
+			render_context.render_pass, index_bindings,
+			SDL_GPU_INDEXELEMENTSIZE_32BIT
+		);
 
-	SDL_DrawGPUIndexedPrimitives (
-		&render_pass,
-		static_cast<Uint32> (drawable.mesh->gpu_state.indices.size ()),
-		static_cast<Uint32> (drawable.instance_blocks.size ()), 0, 0, 0
-	);
+		assert (drawable.mesh->gpu_state.indices.size () <= UINT32_MAX);
+		assert (drawable.instance_blocks.size () <= UINT32_MAX);
+
+		SDL_DrawGPUIndexedPrimitives (
+			render_context.render_pass,
+			static_cast<Uint32> (drawable.mesh->gpu_state.indices.size ()),
+			static_cast<Uint32> (drawable.instance_blocks.size ()), 0, 0, 0
+		);
+	}
 }
 
 void FrameManager::draw_screen (
-	const Pipeline& pipeline, BufferManager& buffer_manager,
-	SDL_GPURenderPass& render_pass
+	const RenderContext& render_context,
+	const RenderPassInstance& render_pass_instance,
+	const RenderPassState& render_pass_state
 ) {
-	assert (pipeline.pipeline);
+	const PipelineState pipeline_state{
+		.render_pass_state = render_pass_state,
+		.material_state = Materials::Deferred.state,
+	};
 
-	assert (buffer_manager.g_position_texture);
-	assert (buffer_manager.g_normal_texture);
-	assert (buffer_manager.g_albedo_texture);
-	assert (buffer_manager.linear_sampler);
+	const Pipeline* pipeline = render_context.pipeline_manager->get_or_create (
+		pipeline_state
+	);
 
-	SDL_BindGPUGraphicsPipeline (&render_pass, pipeline.pipeline);
+	assert (pipeline);
+	assert (pipeline->pipeline);
 
-	SDL_GPUTextureSamplerBinding samplers[3];
+	assert (render_context.render_pass);
+	assert (render_context.buffer_manager);
+	assert (render_context.buffer_manager->linear_sampler);
 
-	samplers[0].texture = buffer_manager.g_position_texture;
-	samplers[0].sampler = buffer_manager.linear_sampler;
+	assert (render_pass_instance.sampled_textures.size () == 3);
 
-	samplers[1].texture = buffer_manager.g_normal_texture;
-	samplers[1].sampler = buffer_manager.linear_sampler;
+	SDL_GPUTexture* gbuffer_position_texture
+		= render_pass_instance.sampled_textures[0];
+	SDL_GPUTexture* gbuffer_normal_texture
+		= render_pass_instance.sampled_textures[1];
+	SDL_GPUTexture* gbuffer_albedo_texture
+		= render_pass_instance.sampled_textures[2];
 
-	samplers[2].texture = buffer_manager.g_albedo_texture;
-	samplers[2].sampler = buffer_manager.linear_sampler;
+	assert (gbuffer_position_texture);
+	assert (gbuffer_normal_texture);
+	assert (gbuffer_albedo_texture);
 
-	SDL_BindGPUFragmentSamplers (&render_pass, 0, samplers, 3);
+	SDL_BindGPUGraphicsPipeline (
+		render_context.render_pass, pipeline->pipeline
+	);
 
-	SDL_DrawGPUPrimitives (&render_pass, 3, 1, 0, 0);
+	SDL_GPUTextureSamplerBinding fragment_samplers[3]{};
+
+	fragment_samplers[0].texture = gbuffer_position_texture;
+	fragment_samplers[0].sampler
+		= render_context.buffer_manager->linear_sampler;
+
+	fragment_samplers[1].texture = gbuffer_normal_texture;
+	fragment_samplers[1].sampler
+		= render_context.buffer_manager->linear_sampler;
+
+	fragment_samplers[2].texture = gbuffer_albedo_texture;
+	fragment_samplers[2].sampler
+		= render_context.buffer_manager->linear_sampler;
+
+	SDL_BindGPUFragmentSamplers (
+		render_context.render_pass, 0, fragment_samplers, 3
+	);
+
+	SDL_DrawGPUPrimitives (render_context.render_pass, 3, 1, 0, 0);
 }
 
 void FrameManager::draw_ui (

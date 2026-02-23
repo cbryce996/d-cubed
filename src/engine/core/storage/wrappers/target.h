@@ -5,12 +5,12 @@
 
 struct Handle;
 
-template <class Buffer> class Target {
+template <class Buffer, class Ensurer> class Target {
   public:
-	explicit Target (const IStorage& storage) : storage (storage) {}
+	explicit Target (const IStorage& storage, Ensurer ensurer)
+		: ensurer (std::move (ensurer)), storage (storage) {}
 
 	Buffer buffer;
-
 	int width = 0;
 	int height = 0;
 
@@ -38,6 +38,8 @@ template <class Buffer> class Target {
 
 	Handle& at (std::size_t i) { return buffer.at (i); }
 	const Handle& at (std::size_t i) const { return buffer.at (i); }
+
+	Ensurer ensurer;
 
   private:
 	static constexpr Handle invalid_handle () { return Handle{0xFFFFFFFFu, 0}; }

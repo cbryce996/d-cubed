@@ -302,7 +302,7 @@ static ImRect draw_texture_registry_debug_box_top_right (
 		{"Write", value_viewport_write_valid},
 		{"Bytes", value_viewport_bytes},
 
-		{"", nullptr}, // spacer (section-ish)
+		{"", nullptr},
 		{"Handle Store (CPU)", nullptr},
 		{"Allocs", value_storage_allocations},
 		{"Frees", value_storage_frees},
