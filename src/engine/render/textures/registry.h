@@ -1,46 +1,44 @@
 #ifndef TEXTURE_REGISTRY_H
 #define TEXTURE_REGISTRY_H
 
+#include "core/storage/lifetime/buffers/ring.h"
+#include "core/storage/lifetime/pool.h"
 #include "core/storage/maps/slot.h"
-#include "core/storage/policies/pool.h"
 #include "core/storage/record.h"
-#include "sdl/factory/factory.h"
-#include "sdl/target.h"
+#include "core/storage/wrappers/target.h"
+#include "sdl/factory.h"
 #include "texture.h"
 
-struct TextureRegistryStats {
-	uint32_t live_textures = 0;
-	uint32_t live_targets = 0;
-	uint32_t live_samplers = 0;
+struct TextureDebugSnapshot {
+	DenseSlotMapStats storage{};
+	PoolStats pool{};
 
-	uint64_t approx_bytes = 0;
-	uint64_t peak_approx_bytes = 0;
+	int viewport_width = 0;
+	int viewport_height = 0;
+	bool viewport_read_valid = false;
+	bool viewport_write_valid = false;
 
-	uint32_t creates = 0;
-	uint32_t destroys = 0;
-	uint32_t reuses = 0;
-	uint32_t misses = 0;
-	uint32_t resizes = 0;
+	uint64_t viewport_bytes = 0;
 };
 
 class TextureRegistry {
   public:
 	explicit TextureRegistry (SDL_GPUDevice* device)
-		: viewport (storage), texture_factory (device, storage, &stats),
+		: viewport (storage), texture_factory (device, storage),
 		  texture_pool (texture_factory) {}
 
-	TextureTarget viewport;
+	Target<RingBuffer<Handle, 2>> viewport;
 
 	void ensure_viewport_target (const int new_width, const int new_height) {
 		const int width = (new_width > 0) ? new_width : 2;
 		const int height = (new_height > 0) ? new_height : 2;
 
-		TextureState state{};
-		state.width = width;
-		state.height = height;
-		state.num_samplers = 1;
-		state.format = TextureFormat::RGBA8;
-		state.usage = TextureUsage::ColorTarget | TextureUsage::Sampled;
+		TextureState desired{};
+		desired.width = width;
+		desired.height = height;
+		desired.num_samplers = 1;
+		desired.format = TextureFormat::RGBA8;
+		desired.usage = TextureUsage::ColorTarget | TextureUsage::Sampled;
 
 		const bool had_read = storage.valid (viewport.read ());
 		const bool had_write = storage.valid (viewport.write ());
@@ -48,53 +46,31 @@ class TextureRegistry {
 		const bool same_size
 			= (viewport.width == width && viewport.height == height);
 
-		if (same_size && had_both) {
-			stats.reuses++;
+		if (same_size && had_both)
 			return;
-		}
 
-		if (!had_both)
-			stats.misses++;
-		else
-			stats.resizes++;
-
-		auto unmark_target = [&] (const Handle handle) {
-			if (auto* record
-				= static_cast<TextureRecord*> (storage.try_get (handle));
-				record && record->is_target) {
-				record->is_target = false;
-				if (stats.live_targets > 0)
-					stats.live_targets--;
-			}
+		auto release_handle = [&] (const Handle handle) {
+			if (!storage.valid (handle))
+				return;
+			const auto* record = static_cast<TextureRecord*> (
+				storage.try_get (handle)
+			);
+			if (!record)
+				return;
+			texture_pool.release (record->state, handle);
 		};
 
-		if (had_read) {
-			unmark_target (viewport.read ());
-			texture_pool.release (state, viewport.read ());
-		}
-		if (had_write) {
-			unmark_target (viewport.write ());
-			texture_pool.release (state, viewport.write ());
-		}
+		if (had_read)
+			release_handle (viewport.read ());
+		if (had_write)
+			release_handle (viewport.write ());
 
 		viewport.reset ();
 		viewport.width = width;
 		viewport.height = height;
 
-		viewport.at (0) = texture_pool.acquire (state);
-		viewport.at (1) = texture_pool.acquire (state);
-
-		auto mark_target = [&] (const Handle handle) {
-			if (auto* record
-				= static_cast<TextureRecord*> (storage.try_get (handle));
-				record && !record->is_target) {
-				record->is_target = true;
-				stats.live_targets++;
-			}
-		};
-
-		mark_target (viewport.at (0));
-		mark_target (viewport.at (1));
+		viewport.at (0) = texture_pool.acquire (desired);
+		viewport.at (1) = texture_pool.acquire (desired);
 	}
 
 	SDL_GPUTexture* resolve_texture (const Handle handle) {
@@ -104,16 +80,48 @@ class TextureRegistry {
 		return record ? record->tex : nullptr;
 	}
 
-	[[nodiscard]] const TextureRegistryStats& get_pool_stats () const {
-		return stats;
+	[[nodiscard]] TextureDebugSnapshot get_debug_snapshot () const {
+		TextureDebugSnapshot out{};
+		out.storage = storage.get_stats ();
+		out.pool = texture_pool.get_stats ();
+
+		out.viewport_width = viewport.width;
+		out.viewport_height = viewport.height;
+
+		const Handle read = viewport.read ();
+		const Handle write = viewport.write ();
+
+		out.viewport_read_valid = storage.valid (read);
+		out.viewport_write_valid = storage.valid (write);
+
+		auto add_bytes = [&] (const Handle handle) {
+			if (!storage.valid (handle))
+				return;
+			const auto* record = static_cast<const TextureRecord*> (
+				storage.try_get (handle)
+			);
+			if (!record)
+				return;
+			out.viewport_bytes += record->approx_bytes;
+		};
+
+		add_bytes (read);
+		add_bytes (write);
+
+		return out;
+	}
+
+	[[nodiscard]] const DenseSlotMapStats& storage_stats () const {
+		return storage.get_stats ();
+	}
+	[[nodiscard]] const PoolStats& pool_stats () const {
+		return texture_pool.get_stats ();
 	}
 
   private:
 	DenseSlotMapStorage storage;
 	SDLTextureFactory texture_factory;
 	Pool<TextureState, SDLTextureFactory> texture_pool;
-
-	TextureRegistryStats stats{};
 };
 
 #endif // TEXTURE_REGISTRY_H

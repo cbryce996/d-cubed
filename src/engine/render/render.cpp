@@ -21,7 +21,6 @@
 #include "core/input/input.h"
 #include "frame/frame.h"
 #include "textures/registry.h"
-#include "textures/sdl/target.h"
 
 RenderManager::RenderManager (
 	SDL_GPUDevice* device, SDL_Window* window,

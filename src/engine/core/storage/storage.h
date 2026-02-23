@@ -1,8 +1,6 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
-#include <cstddef>
-
 struct Handle {
 	uint32_t id = 0;
 	uint32_t generation = 0;

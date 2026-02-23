@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "core/storage/policies/cache.h"
+#include "../../../../../src/engine/core/storage/lifetime/cache.h"
 #include "core/storage/storage.h"
 #include "fixtures.h"
 
