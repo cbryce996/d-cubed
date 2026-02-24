@@ -330,6 +330,20 @@ void Engine::run () {
 							  ? Running
 							  : Editing;
 				}
+				if (e.key.key == SDL_GetKeyFromName ("R")) {
+					int window_width = 0, window_height = 0;
+					SDL_GetWindowSizeInPixels (
+						window, &window_width, &window_height
+					);
+					render->resize (window_width, window_height);
+				}
+				if (e.key.key == SDL_GetKeyFromName ("E")) {
+					int window_width = 0, window_height = 0;
+					SDL_GetWindowSizeInPixels (
+						window, &window_width, &window_height
+					);
+					render->resize (window_width * 0.8f, window_height * 0.8f);
+				}
 			}
 		}
 

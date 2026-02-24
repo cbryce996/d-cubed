@@ -6,7 +6,18 @@
 #include "render/material.h"
 #include "render/render.h"
 
-BufferManager::BufferManager (SDL_GPUDevice* device) : device (device) {}
+BufferManager::BufferManager (SDL_GPUDevice* device) : device (device) {
+	SDL_GPUSamplerCreateInfo sampler_info{};
+	sampler_info.min_filter = SDL_GPU_FILTER_LINEAR;
+	sampler_info.mag_filter = SDL_GPU_FILTER_LINEAR;
+	sampler_info.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
+	sampler_info.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+	sampler_info.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+	sampler_info.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+
+	linear_sampler = SDL_CreateGPUSampler (device, &sampler_info);
+	assert (linear_sampler);
+}
 
 BufferManager::~BufferManager () = default;
 

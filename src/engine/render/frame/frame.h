@@ -2,6 +2,10 @@
 #define FRAME_H
 
 #include <SDL3/SDL.h>
+
+#include "render/pass/pass.h"
+struct RenderContext;
+class TextureRegistry;
 struct Drawable;
 struct Buffer;
 struct Pipeline;
@@ -19,12 +23,13 @@ class FrameManager {
 		SDL_GPURenderPass* current_render_pass, int width, int height
 	);
 	void draw_mesh (
-		const Pipeline& pipeline, BufferManager& buffer_manager,
-		Drawable& drawable, SDL_GPURenderPass& render_pass
+		const RenderContext& render_context,
+		const RenderPassState& render_pass_state
 	);
 	void draw_screen (
-		const Pipeline& pipeline, BufferManager& buffer_manager,
-		SDL_GPURenderPass& render_pass
+		const RenderContext& render_context,
+		const RenderPassInstance& render_pass_instance,
+		const RenderPassState& render_pass_state
 	);
 	void draw_ui (
 		const BufferManager& buffer_manager, SDL_GPURenderPass& render_pass

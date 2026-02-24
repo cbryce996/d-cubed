@@ -21,7 +21,6 @@
 #include "core/input/input.h"
 #include "frame/frame.h"
 #include "textures/registry.h"
-#include "textures/sdl/target.h"
 
 RenderManager::RenderManager (
 	SDL_GPUDevice* device, SDL_Window* window,
@@ -114,68 +113,6 @@ void RenderManager::load_shaders () const {
 	assert (shader_manager->get_shader ("lighting"));
 }
 
-void RenderManager::create_gbuffer_textures (
-	const int width, const int height
-) const {
-	SDL_GPUTextureCreateInfo info{};
-	info.type = SDL_GPU_TEXTURETYPE_2D;
-	info.width = width;
-	info.height = height;
-	info.layer_count_or_depth = 1;
-	info.num_levels = 1;
-	info.sample_count = SDL_GPU_SAMPLECOUNT_1;
-	info.usage = info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
-							  | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
-	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
-	buffer_manager->g_position_texture = SDL_CreateGPUTexture (device, &info);
-	assert (buffer_manager->g_position_texture);
-
-	info.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
-	buffer_manager->g_normal_texture = SDL_CreateGPUTexture (device, &info);
-	assert (buffer_manager->g_normal_texture);
-
-	info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-	buffer_manager->g_albedo_texture = SDL_CreateGPUTexture (device, &info);
-	assert (buffer_manager->g_albedo_texture);
-
-	if (!buffer_manager->linear_sampler) {
-		SDL_GPUSamplerCreateInfo sampler_info{};
-		sampler_info.min_filter = SDL_GPU_FILTER_LINEAR;
-		sampler_info.mag_filter = SDL_GPU_FILTER_LINEAR;
-		sampler_info.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
-		sampler_info.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-		sampler_info.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-		sampler_info.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-
-		buffer_manager->linear_sampler = SDL_CreateGPUSampler (
-			device, &sampler_info
-		);
-		assert (buffer_manager->linear_sampler);
-	}
-
-	SDL_LogInfo (
-		SDL_LOG_CATEGORY_RENDER, "G-buffer buffer created (%dx%d)", width,
-		height
-	);
-}
-
-void RenderManager::destroy_gbuffer_textures () const {
-	if (buffer_manager->g_position_texture) {
-		SDL_ReleaseGPUTexture (device, buffer_manager->g_position_texture);
-		buffer_manager->g_position_texture = nullptr;
-	}
-
-	if (buffer_manager->g_normal_texture) {
-		SDL_ReleaseGPUTexture (device, buffer_manager->g_normal_texture);
-		buffer_manager->g_normal_texture = nullptr;
-	}
-
-	if (buffer_manager->g_albedo_texture) {
-		SDL_ReleaseGPUTexture (device, buffer_manager->g_albedo_texture);
-		buffer_manager->g_albedo_texture = nullptr;
-	}
-}
-
 void RenderManager::create_depth_texture (
 	const int new_width, const int new_height
 ) const {
@@ -228,11 +165,9 @@ void RenderManager::resize (const int new_width, const int new_height) {
 		buffer_manager->depth_texture = nullptr;
 	}
 
-	destroy_gbuffer_textures ();
-
-	create_gbuffer_textures (width, height);
 	create_depth_texture (width, height);
 	texture_registry->ensure_viewport_target (width, height);
+	texture_registry->ensure_gbuffer_targets (width, height);
 }
 
 void RenderManager::acquire_swap_chain () {

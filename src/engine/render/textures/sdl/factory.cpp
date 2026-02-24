@@ -2,7 +2,6 @@
 
 #include "core/storage/record.h"
 #include "core/storage/storage.h"
-#include "factory.h"
 
 #include "render/textures/registry.h"
 #include "render/textures/texture.h"
@@ -85,14 +84,6 @@ Handle SDLTextureFactory::create (const TextureState& state) {
 	record->approx_bytes = estimate_bytes (state);
 	record->is_target = false;
 
-	if (stats) {
-		stats->creates++;
-		stats->live_textures++;
-		stats->approx_bytes += record->approx_bytes;
-		if (stats->approx_bytes > stats->peak_approx_bytes)
-			stats->peak_approx_bytes = stats->approx_bytes;
-	}
-
 	return handle;
 }
 
@@ -100,20 +91,6 @@ void SDLTextureFactory::destroy (Handle handle) {
 	auto* record = static_cast<TextureRecord*> (this->storage.try_get (handle));
 	if (!record)
 		return;
-
-	if (stats) {
-		stats->destroys++;
-		if (stats->live_textures > 0)
-			stats->live_textures--;
-
-		if (record->is_target && stats->live_targets > 0)
-			stats->live_targets--;
-
-		if (stats->approx_bytes >= record->approx_bytes)
-			stats->approx_bytes -= record->approx_bytes;
-		else
-			stats->approx_bytes = 0;
-	}
 
 	if (record->tex) {
 		SDL_ReleaseGPUTexture (device, record->tex);

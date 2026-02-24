@@ -38,12 +38,23 @@ Handle DenseSlotMapStorage::allocate (
 	} else {
 		id = static_cast<uint32_t> (slots.size ());
 		slots.push_back (Slot{});
-		data.resize ((slots.size ()) * record_size);
+		data.resize (slots.size () * record_size);
+		stats.bytes_reserved = data.size ();
 	}
 
-	Slot& slot = slots[id];
-	slot.occupied = true;
-	return Handle{id, slot.gen};
+	auto& [gen, occupied] = slots[id];
+	occupied = true;
+
+	stats.allocations++;
+	stats.live++;
+	if (stats.live > stats.peak_live)
+		stats.peak_live = stats.live;
+
+	stats.capacity = static_cast<uint32_t> (slots.size ());
+	stats.free_list = static_cast<uint32_t> (free_ids.size ());
+	stats.bytes_live = static_cast<uint64_t> (stats.live) * record_size;
+
+	return Handle{id, gen};
 }
 
 bool DenseSlotMapStorage::free (const Handle handle) {
@@ -54,6 +65,15 @@ bool DenseSlotMapStorage::free (const Handle handle) {
 	slot->occupied = false;
 	slot->gen += 1;
 	free_ids.push_back (handle.id);
+
+	stats.frees++;
+	if (stats.live > 0)
+		stats.live--;
+
+	stats.capacity = static_cast<uint32_t> (slots.size ());
+	stats.free_list = static_cast<uint32_t> (free_ids.size ());
+	stats.bytes_live = static_cast<uint64_t> (stats.live) * record_size;
+
 	return true;
 }
 
@@ -79,4 +99,6 @@ void DenseSlotMapStorage::clear () {
 	data.clear ();
 	record_size = 0;
 	record_align = 0;
+
+	stats = {};
 }
