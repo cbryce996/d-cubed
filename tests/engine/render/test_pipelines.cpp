@@ -31,19 +31,19 @@ class PipelineManagerTest : public ::testing::Test {
 
 	void SetUp () override {
 		render_pass_state = {
-			.depth_compare = SDL_GPU_COMPAREOP_LESS,
-			.depth_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
-			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
-			.color_formats = {SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM},
+			.depth_compare = CompareOp::Less,
+			.depth_format = TextureFormat::D32F,
+			.depth_stencil_format = TextureFormat::D32F,
+			.color_formats = {TextureFormat::BGRA8},
 			.has_depth_stencil_target = false
 		};
 
 		material_state = {
 			.vertex_shader = "vertex_shader",
 			.fragment_shader = "fragment_shader",
-			.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-			.cull_mode = SDL_GPU_CULLMODE_BACK,
-			.compare_op = SDL_GPU_COMPAREOP_LESS,
+			.primitive_type = PrimitiveType::TriangleList,
+			.cull_mode = CullMode::Back,
+			.compare_op = CompareOp::Less,
 			.enable_depth_test = true,
 			.enable_depth_write = true
 		};

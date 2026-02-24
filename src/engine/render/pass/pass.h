@@ -8,15 +8,19 @@
 #include <string>
 #include <vector>
 
+#include "core/storage/storage.h"
+#include "core/types.h"
+
+enum class LoadOp : uint8_t;
 struct RenderContext;
 
 enum class RenderPassType { Setup, Geometry, Lighting, PostProcess, UI };
 
 struct RenderPassState {
-	SDL_GPUCompareOp depth_compare;
-	SDL_GPUTextureFormat depth_format;
-	SDL_GPUTextureFormat depth_stencil_format;
-	std::vector<SDL_GPUTextureFormat> color_formats;
+	CompareOp depth_compare;
+	TextureFormat depth_format;
+	TextureFormat depth_stencil_format;
+	std::vector<TextureFormat> color_formats;
 	bool has_depth_stencil_target;
 
 	bool operator== (const RenderPassState& other) const {
@@ -33,11 +37,12 @@ struct RenderPassInstance {
 	RenderPassType type;
 	RenderPassState state = {};
 
-	SDL_GPULoadOp load_op;
-	std::vector<SDL_GPUTexture*> target_textures;
-	std::vector<SDL_GPUTexture*> sampled_textures;
-	SDL_GPUTexture* depth_target;
-	SDL_FColor clear_color;
+	LoadOp load_op;
+	std::vector<Handle> target_textures;
+	std::vector<Handle> sampled_textures;
+	Color4 clear_color;
+	bool swap_chain_target;
+	bool depth_target;
 	bool clear_depth;
 
 	std::function<void (RenderContext&, RenderPassInstance&)> execute;
@@ -51,17 +56,29 @@ template <> struct std::hash<RenderPassState> {
 	operator() (const RenderPassState& render_pass_state) const noexcept {
 		size_t h = 0;
 
-		hash_combine (h, std::hash<int> () (render_pass_state.depth_compare));
-		hash_combine (h, std::hash<int> () (render_pass_state.depth_format));
 		hash_combine (
-			h, std::hash<int> () (render_pass_state.depth_stencil_format)
+			h, std::hash<uint8_t>{}(
+				   static_cast<uint8_t> (render_pass_state.depth_compare)
+			   )
 		);
 		hash_combine (
-			h, std::hash<bool> () (render_pass_state.has_depth_stencil_target)
+			h, std::hash<uint8_t>{}(
+				   static_cast<uint8_t> (render_pass_state.depth_format)
+			   )
+		);
+		hash_combine (
+			h, std::hash<uint8_t>{}(
+				   static_cast<uint8_t> (render_pass_state.depth_stencil_format)
+			   )
+		);
+		hash_combine (
+			h, std::hash<bool>{}(render_pass_state.has_depth_stencil_target)
 		);
 
 		for (const auto color_format : render_pass_state.color_formats) {
-			hash_combine (h, std::hash<int> () (color_format));
+			hash_combine (
+				h, std::hash<uint8_t>{}(static_cast<uint8_t> (color_format))
+			);
 		}
 
 		return h;

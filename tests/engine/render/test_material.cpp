@@ -10,9 +10,9 @@ class MaterialStateTest : public ::testing::Test {
 		base_state = {
 			.vertex_shader = "vertex_shader",
 			.fragment_shader = "fragement_shader",
-			.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-			.cull_mode = SDL_GPU_CULLMODE_BACK,
-			.compare_op = SDL_GPU_COMPAREOP_LESS,
+			.primitive_type = PrimitiveType::TriangleList,
+			.cull_mode = CullMode::Back,
+			.compare_op = CompareOp::Less,
 			.enable_depth_test = true,
 			.enable_depth_write = true
 		};
@@ -34,14 +34,14 @@ TEST_F (MaterialStateTest, EqualityOperatorFalseForDifferentShader) {
 
 TEST_F (MaterialStateTest, EqualityOperatorFalseForDifferentPrimitiveType) {
 	MaterialState other = base_state;
-	other.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP;
+	other.primitive_type = PrimitiveType::TriangleStrip;
 
 	EXPECT_FALSE (base_state == other);
 }
 
 TEST_F (MaterialStateTest, EqualityOperatorFalseForDifferentCullMode) {
 	MaterialState other = base_state;
-	other.cull_mode = SDL_GPU_CULLMODE_NONE;
+	other.cull_mode = CullMode::None;
 
 	EXPECT_FALSE (base_state == other);
 }
@@ -84,7 +84,7 @@ TEST_F (MaterialStateTest, DifferentPrimitiveTypeProducesDifferentHash) {
 	constexpr std::hash<MaterialState> hasher;
 
 	MaterialState other = base_state;
-	other.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP;
+	other.primitive_type = PrimitiveType::TriangleStrip;
 
 	EXPECT_NE (hasher (base_state), hasher (other));
 }
@@ -93,7 +93,7 @@ TEST_F (MaterialStateTest, DifferentCullModeProducesDifferentHash) {
 	constexpr std::hash<MaterialState> hasher;
 
 	MaterialState other = base_state;
-	other.cull_mode = SDL_GPU_CULLMODE_NONE;
+	other.cull_mode = CullMode::None;
 
 	EXPECT_NE (hasher (base_state), hasher (other));
 }
@@ -103,11 +103,11 @@ TEST_F (MaterialStateTest, CompareOpIgnoredWhenDepthTestDisabled) {
 
 	MaterialState a = base_state;
 	a.enable_depth_test = false;
-	a.compare_op = SDL_GPU_COMPAREOP_LESS;
+	a.compare_op = CompareOp::Less;
 
 	MaterialState b = base_state;
 	b.enable_depth_test = false;
-	b.compare_op = SDL_GPU_COMPAREOP_GREATER;
+	b.compare_op = CompareOp::Greater;
 
 	EXPECT_EQ (hasher (a), hasher (b));
 	EXPECT_TRUE (a == b);
@@ -117,10 +117,10 @@ TEST_F (MaterialStateTest, CompareOpAffectsHashWhenDepthTestEnabled) {
 	constexpr std::hash<MaterialState> hasher;
 
 	MaterialState a = base_state;
-	a.compare_op = SDL_GPU_COMPAREOP_LESS;
+	a.compare_op = CompareOp::Less;
 
 	MaterialState b = base_state;
-	b.compare_op = SDL_GPU_COMPAREOP_GREATER;
+	b.compare_op = CompareOp::Greater;
 
 	EXPECT_NE (hasher (a), hasher (b));
 	EXPECT_FALSE (a == b);

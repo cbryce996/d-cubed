@@ -21,6 +21,15 @@ class SDLPipelineFactory : public IPipelineFactory {
 
 	SDL_GPUVertexInputRate to_sdl_input_rate (InputRate input_rate);
 	SDL_GPUVertexElementFormat to_sdl_vertex_format (DataTypes data_type);
+
+	SDL_GPUTextureFormat to_sdl_texture_format (TextureFormat format);
+
+	SDL_GPUCompareOp to_sdl_compare_op (CompareOp op);
+
+	SDL_GPUCullMode to_sdl_cull_mode (CullMode mode);
+
+	SDL_GPUPrimitiveType to_sdl_primitive_type (PrimitiveType type);
+
 	Pipeline* create_pipeline (const PipelineState& pipeline_state) override;
 
   private:

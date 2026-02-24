@@ -16,7 +16,7 @@ class FrameManager {
   public:
 	[[nodiscard]] SDL_GPURenderPass* begin_render_pass (
 		const RenderPassInstance& render_pass_instance,
-		const BufferManager& buffer_manager
+		const RenderContext& render_context
 	) const;
 
 	void set_viewport (
