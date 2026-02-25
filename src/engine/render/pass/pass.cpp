@@ -14,6 +14,7 @@ namespace RenderPasses {
 RenderPassInstance UniformPass = {
 	.name = "uniform_pass",
 	.type = RenderPassType::Setup,
+	.depth_target = false,
 	.execute = [] (const RenderContext& render_context,
 				   RenderPassInstance& render_pass_instance) {
 		assert (render_context.camera_manager->get_active_camera ());
@@ -70,16 +71,17 @@ RenderPassInstance GeometryPass = {
 	.type = RenderPassType::Geometry,
 	.dependencies = {"uniform_pass"},
 	.state = {
-		.depth_compare = SDL_GPU_COMPAREOP_LESS,
-		.depth_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
-		.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
+		.depth_compare = CompareOp::Less,
+		.depth_format = TextureFormat::D32F,
+		.depth_stencil_format = TextureFormat::D32F,
 		.color_formats
-		= {SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT,
-		   SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT,
-		   SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM},
+		= {TextureFormat::RGBA16F,
+		   TextureFormat::RGBA16F,
+		   TextureFormat::RGBA8},
 		.has_depth_stencil_target = true,
 	},
-	.load_op = SDL_GPU_LOADOP_CLEAR,
+	.load_op = LoadOp::Clear,
+	.depth_target = true,
 	.clear_color = {0.0f, 0.0f, 0.0f, 0.0f},
 	.clear_depth = true,
 	.execute = [] (
@@ -88,21 +90,15 @@ RenderPassInstance GeometryPass = {
 			   ) {
 		assert (render_context.buffer_manager->depth_texture);
 
-		render_pass_instance.depth_target = render_context.buffer_manager->depth_texture;
-
-		Handle gbuffer_position_handle = render_context.texture_registry->gbuffer_position.read();
-		Handle gbuffer_normal_handle = render_context.texture_registry->gbuffer_normal.read();
-		Handle gbuffer_albedo_handle = render_context.texture_registry->gbuffer_albedo.read();
-
 		render_pass_instance.target_textures = {
-			render_context.texture_registry->resolve_texture(gbuffer_position_handle),
-			render_context.texture_registry->resolve_texture(gbuffer_normal_handle),
-			render_context.texture_registry->resolve_texture(gbuffer_albedo_handle)
+			render_context.texture_registry->gbuffer_position.read(),
+			render_context.texture_registry->gbuffer_normal.read(),
+			render_context.texture_registry->gbuffer_albedo.read()
 		};
 
 		render_pass_instance.sampled_textures.clear();
 
-		render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, *render_context.buffer_manager);
+		render_context.render_pass = render_context.frame_manager->begin_render_pass (render_pass_instance, render_context);
 
 		render_context.frame_manager->draw_mesh (
 			render_context, render_pass_instance.state
@@ -117,12 +113,12 @@ RenderPassInstance DeferredPass = {
 		.name = "deferred_pass",
 		.type = RenderPassType::Lighting,
 		.state = {
-			.color_formats = {SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM},
+			.color_formats = {TextureFormat::BGRA8},
 			.has_depth_stencil_target = false,
 		},
 		.dependencies = {"geometry_pass"},
-		.load_op = SDL_GPU_LOADOP_CLEAR,
-		.depth_target = nullptr,
+		.load_op = LoadOp::Clear,
+		.depth_target = false,
 		.clear_color = {0.0f, 0.0f, 0.0f, 0.0f},
 		.clear_depth = false,
 		.execute = [] (
@@ -137,46 +133,20 @@ RenderPassInstance DeferredPass = {
 				return;
 			}
 
-			const Handle viewport_write_handle =
-				render_context.texture_registry->viewport.write();
-
-			SDL_GPUTexture* viewport_output_texture =
-				render_context.texture_registry->resolve_texture(viewport_write_handle);
-
-			assert(viewport_output_texture);
-
 			render_pass_instance.target_textures = {
-				viewport_output_texture
+				render_context.texture_registry->viewport.write()
 			};
 
-			const Handle gbuffer_position_handle =
-				render_context.texture_registry->gbuffer_position.read();
-			const Handle gbuffer_normal_handle =
-				render_context.texture_registry->gbuffer_normal.read();
-			const Handle gbuffer_albedo_handle =
-				render_context.texture_registry->gbuffer_albedo.read();
-
-			SDL_GPUTexture* gbuffer_position_texture =
-				render_context.texture_registry->resolve_texture(gbuffer_position_handle);
-			SDL_GPUTexture* gbuffer_normal_texture =
-				render_context.texture_registry->resolve_texture(gbuffer_normal_handle);
-			SDL_GPUTexture* gbuffer_albedo_texture =
-				render_context.texture_registry->resolve_texture(gbuffer_albedo_handle);
-
-			assert(gbuffer_position_texture);
-			assert(gbuffer_normal_texture);
-			assert(gbuffer_albedo_texture);
-
 			render_pass_instance.sampled_textures = {
-				gbuffer_position_texture,
-				gbuffer_normal_texture,
-				gbuffer_albedo_texture
+				render_context.texture_registry->gbuffer_position.read(),
+				render_context.texture_registry->gbuffer_normal.read(),
+				render_context.texture_registry->gbuffer_albedo.read()
 			};
 
 			render_context.render_pass =
 				render_context.frame_manager->begin_render_pass(
 					render_pass_instance,
-					*render_context.buffer_manager
+					render_context
 				);
 
 			render_context.frame_manager->draw_screen(
@@ -195,30 +165,26 @@ RenderPassInstance UIPass = {
 		.name = "ui_pass",
 		.type = RenderPassType::UI,
 		.state = {
-			.color_formats = { SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM },
+			.color_formats = {TextureFormat::BGRA8},
 			.has_depth_stencil_target = false,
 		},
 		.dependencies = { "deferred_pass" },
-		.load_op = SDL_GPU_LOADOP_LOAD,
-		.depth_target = nullptr,
+		.load_op = LoadOp::Clear,
+		.swap_chain_target = true,
+		.depth_target = false,
 		.clear_color = {0.0f, 0.0f, 0.0f, 0.0f},
 		.clear_depth = false,
 		.execute = [] (
 			RenderContext& render_context,
-			RenderPassInstance& render_pass_instance
+			const RenderPassInstance& render_pass_instance
 		) {
-			assert(render_context.buffer_manager->swap_chain_texture);
-
-			render_pass_instance.target_textures = {
-				render_context.buffer_manager->swap_chain_texture
-			};
 
 			render_context.frame_manager->prepare_ui (*render_context.buffer_manager);
 
 			render_context.render_pass =
 				render_context.frame_manager->begin_render_pass(
 					render_pass_instance,
-					*render_context.buffer_manager
+					render_context
 				);
 
 			render_context.frame_manager->draw_ui (

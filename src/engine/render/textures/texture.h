@@ -9,33 +9,12 @@
 #include "core/storage/storage.h"
 #include "utils.h"
 
+enum class TextureUsage : uint32_t;
+enum class TextureFormat : uint8_t;
+
 struct TextureHandle {
 	uint32_t id = 0;
 };
-
-enum class TextureFormat : uint8_t {
-	Invalid,
-	RGBA8,
-	RGBA16F,
-	D32F,
-};
-
-enum class TextureUsage : uint32_t {
-	None = 0,
-	ColorTarget = 1u << 0,
-	DepthStencil = 1u << 1,
-	Sampled = 1u << 2,
-	Storage = 1u << 3,
-};
-
-inline TextureUsage operator| (TextureUsage a, TextureUsage b) {
-	return static_cast<TextureUsage> (
-		static_cast<uint32_t> (a) | static_cast<uint32_t> (b)
-	);
-}
-inline bool operator& (TextureUsage a, TextureUsage b) {
-	return (static_cast<uint32_t> (a) & static_cast<uint32_t> (b)) != 0;
-}
 
 struct TextureState final : IState<TextureState> {
 	int width;

@@ -7,6 +7,7 @@
 #include "core/storage/maps/slot.h"
 #include "core/storage/record.h"
 #include "core/storage/wrappers/target.h"
+#include "core/types.h"
 #include "sdl/factory.h"
 #include "texture.h"
 
